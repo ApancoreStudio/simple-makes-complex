@@ -1,0 +1,21 @@
+{
+	"completion": {
+		"enable": true,
+		"autoRequire": false,
+		"callSnippet": false,
+		"postfix": "@"
+	},
+	"diagnostics": {
+		"globals": [
+			"core",
+			"table"
+		]
+	},
+	"runtime": {
+	  "version": "LuaJIT",
+	  "requireLikeFunction": [],
+	  "frameworkVersions": [],
+	  "extensions": [],
+	  "requirePattern": []
+	}
+}

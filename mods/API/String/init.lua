@@ -12,9 +12,11 @@ local cyrillic_alphabet = {
 	["Ю"] = "ю", ["Я"] = "я",
 }
 
+string.replace = string.gsub
+
 --- Same as `string.lower` but with cyrillic support.
---- @param str string Input string.
---- @return    string
+--- @param str  string  Input string.
+--- @return     string
 function string.lower_cyrillic(str)
 	-- assert
 
@@ -27,8 +29,8 @@ function string.lower_cyrillic(str)
 end
 
 --- Same as `string.upper` but with cyrillic support.
---- @param str string Input string.
---- @return    string
+--- @param str  string  Input string.
+--- @return     string
 function string.upper_cyrillic(str)
 	-- assert
 
@@ -41,8 +43,8 @@ function string.upper_cyrillic(str)
 end
 
 --- Writes a string with a capital letter. Doesn't work with cyrillic.
---- @param str string Input string.
---- @return string
+--- @param str  string  Input string.
+--- @return     string
 function string.capitalize(str)
 	-- assert
 
@@ -50,8 +52,8 @@ function string.capitalize(str)
 end
 
 --- Capitalizes each word in a line. Doesn't work with cyrillic.
---- @param str string Input string.
---- @return string
+--- @param str  string  Input string.
+--- @return     string
 function string.to_title(str)
 	-- assert
 
@@ -64,8 +66,8 @@ function string.to_title(str)
 end
 
 --- Replaces underscores with spaces in a string.
---- @param str string Input string.
---- @return string
+--- @param str  string  Input string.
+--- @return     string
 function string.remove_underscores(str)
 	-- assert
 
@@ -73,9 +75,9 @@ function string.remove_underscores(str)
 end
 
 --- Checks if a string starts with `prefix`.
---- @param str    string String to check.
---- @param prefix string The string the `str` should start with.
---- @return       boolean
+--- @param str     string  String to check.
+--- @param prefix  string  The string the `str` should start with.
+--- @return        boolean
 function string.starts_with(str, prefix)
 	-- assert
 
@@ -84,9 +86,9 @@ end
 
 
 --- Checks if a string end with `prefix`.
---- @param str    string String to check.
---- @param suffix string The string the `str` should end with.
---- @return       boolean
+--- @param str     string  String to check.
+--- @param suffix  string  The string the `str` should end with.
+--- @return        boolean
 function string.ends_with(str, suffix)
 	-- assert
 
@@ -94,13 +96,11 @@ function string.ends_with(str, suffix)
 end
 
 --- Checks if the string contains a specific substring.
---- @param str        string String to check.
---- @param sub_string string The text segment to search for within the string.
---- @return           boolean
+--- @param str         string  String to check.
+--- @param sub_string  string  The text segment to search for within the string.
+--- @return            boolean
 function string.contains(str, sub_string)
 	-- assert
 
 	return str:find(sub_string, 1, true) ~= nil
 end
-
-string.replace = string.gsub

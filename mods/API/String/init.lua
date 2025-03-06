@@ -1,57 +1,22 @@
 local pairs, string_gsub
 	= pairs, string.gsub
 
--- Cyrillic symbols replacement dictionary.
-local cyrillic_alphabet = {
-	["А"] = "а", ["Б"] = "б", ["В"] = "в", ["Г"] = "г", ["Д"] = "д",
-	["Е"] = "е", ["Ё"] = "ё", ["Ж"] = "ж", ["З"] = "з", ["И"] = "и",
-	["Й"] = "й", ["К"] = "к", ["Л"] = "л", ["М"] = "м", ["Н"] = "н",
-	["О"] = "о", ["П"] = "п", ["Р"] = "р", ["С"] = "с", ["Т"] = "т",
-	["У"] = "у", ["Ф"] = "ф", ["Х"] = "х", ["Ц"] = "ц", ["Ч"] = "ч",
-	["Ш"] = "ш", ["Щ"] = "щ", ["Ъ"] = "ъ", ["Ь"] = "ь", ["Э"] = "э",
-	["Ю"] = "ю", ["Я"] = "я",
-}
+dofile(core.get_modpath(core.get_current_modname()).."/utf8.lua")
 
 string.replace = string.gsub
 
---- Same as `string.lower` but with cyrillic support.
---- @param str  string  Input string.
---- @return     string
-function string.lower_cyrillic(str)
-	-- assert
-
-	local new_str = string.lower(str)
-	for S, s in pairs(cyrillic_alphabet) do
-		new_str = string_gsub(new_str, S, s)
-	end
-
-	return new_str
-end
-
---- Same as `string.upper` but with cyrillic support.
---- @param str  string  Input string.
---- @return     string
-function string.upper_cyrillic(str)
-	-- assert
-
-	local new_str = string.upper(str)
-	for S, s in pairs(cyrillic_alphabet) do
-		new_str = string_gsub(new_str, s, S)
-	end
-
-	return new_str
-end
-
---- Writes a string with a capital letter. Doesn't work with cyrillic.
+--- Writes a string with a capital letter.
 --- @param str  string  Input string.
 --- @return     string
 function string.capitalize(str)
 	-- assert
+	local first_char = string_utf8.sub(str,1, 1)
+	first_char = string_utf8.upper(first_char)
 
-	return str:sub(1, 1):upper() .. str:sub(2, -1)
+	return first_char..string_utf8.sub(str,2, -1)
 end
 
---- Capitalizes each word in a line. Doesn't work with cyrillic.
+--- Capitalizes each word in a line.
 --- @param str  string  Input string.
 --- @return     string
 function string.to_title(str)

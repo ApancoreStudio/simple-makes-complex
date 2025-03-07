@@ -9,7 +9,9 @@
 		"globals": [
 			"core",
 			"table",
-			"Ensure"
+			"Ensure",
+			"string",
+			"string_utf8"
 		]
 	},
 	"runtime": {

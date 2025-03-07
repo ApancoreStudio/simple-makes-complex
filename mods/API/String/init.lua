@@ -7,7 +7,9 @@ string.replace = string.gsub
 --- @param str  string  Input string.
 --- @return     string
 function string.capitalize(str)
-	-- assert
+	Ensure.argType(str, "string", 1, "string.capitalize")
+	Ensure.argNotNil(str, 1,"string.capitalize")
+
 	local first_char = string_utf8.sub(str,1, 1)
 	first_char = string_utf8.upper(first_char)
 
@@ -18,7 +20,8 @@ end
 --- @param str  string  Input string.
 --- @return     string
 function string.to_title(str)
-	-- assert
+	Ensure.argType(str, "string", 1, "string.to_title")
+	Ensure.argNotNil(str, 1,"string.to_title")
 
 	local result = ""
 	for _, word in ipairs(str:split(" ")) do
@@ -32,7 +35,8 @@ end
 --- @param str  string  Input string.
 --- @return     string
 function string.remove_underscores(str)
-	-- assert
+	Ensure.argType(str, "string", 1, "string.remove_underscores")
+	Ensure.argNotNil(str, 1,"string.remove_underscores")
 
 	return str:gsub("_", " ")
 end
@@ -42,7 +46,11 @@ end
 --- @param prefix  string  The string the `str` should start with.
 --- @return        boolean
 function string.starts_with(str, prefix)
-	-- assert
+	Ensure.argType(str, "string", 1, "string.starts_with")
+	Ensure.argType(prefix, "string", 2, "string.starts_with")
+
+	Ensure.argNotNil(str, 1,"string.starts_with")
+	Ensure.argNotNil(prefix, 2,"string.starts_with")
 
 	return str:sub(1, #prefix) == prefix
 end
@@ -53,7 +61,11 @@ end
 --- @param suffix  string  The string the `str` should end with.
 --- @return        boolean
 function string.ends_with(str, suffix)
-	-- assert
+	Ensure.argType(str, "string", 1, "string.ends_with")
+	Ensure.argType(suffix, "string", 2, "string.ends_with")
+
+	Ensure.argNotNil(str, 1,"string.ends_with")
+	Ensure.argNotNil(suffix, 2,"string.ends_with")
 
 	return str:sub(-#suffix, -1) == suffix
 end
@@ -63,7 +75,11 @@ end
 --- @param sub_string  string  The text segment to search for within the string.
 --- @return            boolean
 function string.contains(str, sub_string)
-	-- assert
+	Ensure.argType(str, "string", 1, "string.contains")
+	Ensure.argType(sub_string, "string", 2, "string.contains")
+
+	Ensure.argNotNil(str, 1,"string.contains")
+	Ensure.argNotNil(sub_string, 2,"string.contains")
 
 	return str:find(sub_string, 1, true) ~= nil
 end

@@ -1,8 +1,6 @@
 local pairs, string_gsub
 	= pairs, string.gsub
 
-dofile(core.get_modpath(core.get_current_modname()).."/utf8.lua")
-
 string.replace = string.gsub
 
 --- Writes a string with a capital letter.

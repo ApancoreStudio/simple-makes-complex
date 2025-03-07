@@ -1,0 +1,3 @@
+[submodule "mods/API/utf8_api"]
+	path = mods/API/utf8_api
+	url = https://github.com/ApancoreStudio/utf8_api.git

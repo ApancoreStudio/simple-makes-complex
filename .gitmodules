@@ -1,3 +1,4 @@
-[submodule "mods/API/utf8_api"]
+[submodule "mods/API/Utf8"]
 	path = mods/API/Utf8
 	url = https://github.com/ApancoreStudio/utf8_api.git
+	branch = main

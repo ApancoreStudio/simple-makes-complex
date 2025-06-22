@@ -3,7 +3,7 @@ local sub, upper, ensureArgType
 
 --- Writes a string with a capital letter.
 --- @param str  string  Input string.
---- @return     string
+--- @return     string?
 function string.capitalize(str)
 	ensureArgType(str, "string", 1, "string.capitalize")
 

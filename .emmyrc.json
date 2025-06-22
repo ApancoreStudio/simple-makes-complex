@@ -1,27 +1,92 @@
 {
-	"completion": {
-		"enable": true,
-		"autoRequire": false,
-		"callSnippet": false,
-		"postfix": "@"
-	},
-	"diagnostics": {
-		"globals": [
-			"core",
-			"table",
-			"Ensure",
-			"string",
-			"string_utf8"
-		]
-	},
-	"workspace": {
-	  "ignoreSubmodules": true
-	},
-	"runtime": {
-	  "version": "Lua5.1",
-	  "requireLikeFunction": [],
-	  "frameworkVersions": [],
-	  "extensions": [],
-	  "requirePattern": []
-	}
+  "completion": {
+    "enable": true,
+    "autoRequire": false,
+    "autoRequireFunction": "require",
+    "autoRequireNamingConvention": "keep",
+    "autoRequireSeparator": ".",
+    "callSnippet": false,
+    "postfix": "@"
+  },
+  "diagnostics": {
+    "disable": [
+      "unnecessary-if"
+    ],
+    "enable": true,
+    "globals": [
+      "core",
+      "table",
+      "VoxelArea",
+      "Ensure",
+      "string",
+      "string_utf8"
+    ],
+    "globalsRegex": [],
+    "severity": {},
+    "enables": [],
+    "diagnosticInterval": null
+  },
+  "signature": {
+    "detailSignatureHelper": true
+  },
+  "hint": {
+    "enable": true,
+    "paramHint": true,
+    "indexHint": true,
+    "localHint": true,
+    "overrideHint": true
+  },
+  "runtime": {
+    "version": "LuaJIT",
+    "requireLikeFunction": [],
+    "frameworkVersions": [],
+    "extensions": [],
+    "requirePattern": [],
+    "classDefaultCall": {
+      "functionName": "",
+      "forceNonColon": false,
+      "forceReturnSelf": false
+    }
+  },
+  "workspace": {
+    "ignoreDir": [],
+    "ignoreGlobs": [],
+    "library": [],
+    "workspaceRoots": [],
+    "preloadFileSize": 0,
+    "encoding": "utf-8",
+    "moduleMap": [],
+    "reindexDuration": 5000,
+    "enableReindex": false
+  },
+  "resource": {
+    "paths": []
+  },
+  "codeLens": {
+    "enable": true
+  },
+  "strict": {
+    "requirePath": false,
+    "typeCall": false,
+    "arrayIndex": true,
+    "metaOverrideFileDefine": true,
+    "docBaseConstMatchBaseType": true
+  },
+  "semanticTokens": {
+    "enable": true
+  },
+  "references": {
+    "enable": true,
+    "fuzzySearch": true,
+    "shortStringSearch": false
+  },
+  "hover": {
+    "enable": true
+  },
+  "documentColor": {
+    "enable": true
+  },
+  "codeAction": {
+    "insertSpace": false
+  }
 }

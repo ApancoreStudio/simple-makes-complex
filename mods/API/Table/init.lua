@@ -22,7 +22,7 @@ end
 
 --- Returns all keys from the table `t` as an array.
 --- @param t  table<string, any>  Table to check
---- @return   any[]
+--- @return   string[] | number[]
 function table.get_keys(t)
 	ensureArgType(t, 'table', 1, 'table.get_keys')
 

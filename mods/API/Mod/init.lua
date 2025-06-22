@@ -1,12 +1,18 @@
-_G.Mod = {}
+Mod = {}
 
-function Mod:new(addToGlobal)
-	for key, value in pairs(addToGlobal) do
-		_G[key] = value
-	end
-	local modName = core.get_current_modname()
-	local modPath = core.get_modpath(modName)
+function Mod.getInfo()
+	local name = core.get_current_modname()
+	local path = core.get_modpath(name)
+	local require = Require.getModRequire(name, path)
+	
+	return {name = name, path = path, require = require}
+end
 
-	local modTable = ModTable:new(modName, modPath)
-	modTable.require = ModTable:getRequire()
+function Mod:new()
+	local mod = Mod.getInfo()
+
+	setmetatable(mod, self)
+	self.__index = self
+
+	return mod
 end

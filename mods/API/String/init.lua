@@ -20,7 +20,7 @@ end
 
 --- Capitalizes each word in a line.
 --- @param str  string  Input string.
---- @return     string
+--- @return     string?
 function string.to_title(str)
 	ensureArgType(str, "string", 1, "string.to_title")
 
@@ -38,8 +38,9 @@ end
 --- @return     string
 function string.remove_underscores(str)
 	ensureArgType(str, "string", 1, "string.remove_underscores")
+	local output = str:gsub("_", " ")
 
-	return str:gsub("_", " ")
+	return output
 end
 
 --- Checks if a string starts with `prefix`.

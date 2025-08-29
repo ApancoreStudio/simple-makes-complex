@@ -1,3 +1,4 @@
+-- TODO: ANNOTATE!!!!!!!!!!
 Mod = {}
 
 function Mod.getInfo()
@@ -7,6 +8,10 @@ function Mod.getInfo()
 	
 	return {name = name, path = path, require = require}
 end
+
+-- Mod.
+
+-- Mod Extend
 
 function Mod:new()
 	local mod = Mod.getInfo()

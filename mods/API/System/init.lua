@@ -16,7 +16,7 @@ local allowedDomains = {
 }
 
 --- Adds a mod to the global space under specified domain structure
----@param mod       table     The mod table containing functionality to expose -- TODO: !!!Make a Mod class!!!
+---@param mod       table     The mod table containing functionality to expose -- TODO: !!!Describe a Mod class to EmmyLua!!!
 ---@param location  string    Dot-separated path within domain structure (e.g. "Items.Log")
 ---@param force     boolean?  Whether to overwrite the target location.
 Api.addModToGlobalSpace = function(mod, location, force)

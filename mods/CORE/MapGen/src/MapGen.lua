@@ -1,19 +1,18 @@
 local modInfo     = Mod.getInfo()
 local require     = modInfo.require
-local MapGenUtils = require("MapGenUtils")
-local Layer       = require("Layer")
-local Region2D    = require("Region2D")
-local Region3D    = require("Region3D")
+local MapGenUtils = require("MapGen.Utils")
+local Layer       = require("MapGen.Layer")
+local Region2D    = require("MapGen.Region.Region2D")
+local Region3D    = require("MapGen.Region.Region3D")
 
 local core, table, math = core, table, math
-local pairs, ipairs = pairs, ipairs
+local ipairs = pairs, ipairs
 
+-- Main MapGen class
+local MapGen = {}
+MapGen.__index = MapGen
 
--- Main MapGenerator class
-local MapGenerator = {}
-MapGenerator.__index = MapGenerator
-
-function MapGenerator:new()
+function MapGen:new()
 	return setmetatable({
 		layersByName = {},
 		layersList = {},
@@ -26,53 +25,53 @@ function MapGenerator:new()
 	}, self)
 end
 
-function MapGenerator:registerLayer(name, minY, maxY)
+function MapGen:registerLayer(name, minY, maxY)
 	local layer = Layer:new(name, minY, maxY)
 	self.layersByName[name] = layer
 	table.insert(self.layersList, layer)
 	return layer
 end
 
-function MapGenerator:register2DRegion(params)
+function MapGen:register2DRegion(params)
 	local region = Region2D:new(params)
 	local layer = self.layersByName[params.layerName]
 	if not layer then error("Invalid layer: " .. params.layerName) end
 	layer:add2DRegion(region)
 end
 
-function MapGenerator:register3DRegion(params)
+function MapGen:register3DRegion(params)
 	local region = Region3D:new(params)
 	local layer = self.layersByName[params.layerName]
 	if not layer then error("Invalid layer: " .. params.layerName) end
 	layer:add3DRegion(region)
 end
 
-function MapGenerator:enable()
+function MapGen:enable()
 	core.register_on_generated(function(...)
 		self:onMapGenerated(...)
 	end)
 end
 
 -- Main generation logic
-function MapGenerator:onMapGenerated(minp, maxp, seed)
+function MapGen:onMapGenerated(minp, maxp, seed)
 	local vm, emin, emax = core.get_mapgen_object("voxelmanip")
 	local area = VoxelArea:new{MinEdge=emin, MaxEdge=emax}
 	local data = vm:get_data()
-	
+
 	-- Sort layers by maxY descending for processing priority
 	table.sort(self.layersList, function(a, b)
 		return a.maxY > b.maxY
 	end)
-	
+
 	local terrainCache = self:process2DRegions(minp, maxp)
 	self:process3DRegions(minp, maxp, data, area, terrainCache)
-	
+
 	vm:set_data(data)
 	vm:calc_lighting()
 	vm:write_to_map()
 end
 
-function MapGenerator:process2DRegions(minp, maxp)
+function MapGen:process2DRegions(minp, maxp)
 	local cache = {}
 	local width = maxp.x - minp.x + 1
 	local zSize = maxp.z - minp.z + 1
@@ -99,7 +98,7 @@ function MapGenerator:process2DRegions(minp, maxp)
 			regionNoiseCache[region] = noiseCache
 		end
 	end
-	
+
 	for x = minp.x, maxp.x do
 		cache[x] = {}
 		for z = minp.z, maxp.z do
@@ -107,17 +106,17 @@ function MapGenerator:process2DRegions(minp, maxp)
 			
 			for _, layer in ipairs(self.layersList) do
 				local bestHeight, bestWeight = nil, 0.0
-				
+
 				for _, region in ipairs(layer.regions2D) do
 					local noiseCache = regionNoiseCache[region]
 					local temp = noiseCache.temp[x][z]
 					local humid = noiseCache.humid[x][z]
-					
+
 					if MapGenUtils.isInRange(temp, region.tempRange) and MapGenUtils.isInRange(humid, region.humidRange) then
 						local tempWeight = MapGenUtils.calculateWeight(temp, region.tempRange.min, region.tempRange.max)
 						local heightWeight = MapGenUtils.calculateWeight(humid, region.humidRange.min, region.humidRange.max)
 						local weight = tempWeight * heightWeight
-						
+
 						if weight > bestWeight then
 							local heightNoise = noiseCache.height[x][z]
 							bestHeight = math.lerp(
@@ -129,18 +128,18 @@ function MapGenerator:process2DRegions(minp, maxp)
 						end
 					end
 				end
-				
+
 				if bestHeight then
 					cache[x][z][layer] = math.floor(math.clamp(bestHeight, layer.minY, layer.maxY))
 				end
 			end
 		end
 	end
-	
+
 	return cache
 end
 
-function MapGenerator:process3DRegions(minp, maxp, data, area, terrainCache)
+function MapGen:process3DRegions(minp, maxp, data, area, terrainCache)
 	-- Precompute 3D noise for regions
 	local region3DNoise = {}
 	for _, layer in ipairs(self.layersList) do
@@ -220,4 +219,4 @@ function MapGenerator:process3DRegions(minp, maxp, data, area, terrainCache)
 	end
 end
 
-return MapGenerator
+return MapGen

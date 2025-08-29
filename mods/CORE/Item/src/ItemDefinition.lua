@@ -1,5 +1,6 @@
---- @class ItemDefinition
---- @field settings table
+---@class ItemDefinition
+---@field settings  table
+---@field callbacks  table
 local ItemDefinition = {
 	settings = {
 		name = '',

@@ -1,10 +1,7 @@
 ---@class Item
 ---@field itemDef    Item.ItemDefinition
 ---@field luantiDef  table
-local Item = {
-	itemDef = nil,
-	luantiDef = nil,
-}
+local Item = {}
 
 ---@param itemDef  Item.ItemDefinition
 local function itemDefToLuantiDef(itemDef)
@@ -38,7 +35,9 @@ end
 ---@param itemDef Item.ItemDefinition
 ---@return Item
 function Item:new(itemDef)
-	local instance = {}
+	---@type Item
+	local instance = setmetatable({}, {__index = self})
+
 	local luantiDef = itemDefToLuantiDef(itemDef)
 	local visual = itemDef.settings.visual
 	itemDef.settings.visual = nil

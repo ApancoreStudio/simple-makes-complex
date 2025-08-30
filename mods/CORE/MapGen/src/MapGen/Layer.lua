@@ -6,13 +6,7 @@ local table, setmetatable = table, setmetatable
 ---@field maxY       number
 ---@field regions2D  MapGen.Region.Region2D[]
 ---@field regions3D  MapGen.Region.Region3D[]
-local Layer = {
-	name      = nil,
-	minY      = nil,
-	maxY      = nil,
-	regions2D = nil,
-	regions3D = nil,
-}
+local Layer = {}
 
 ---@return MapGen.Layer
 ---@param name  string

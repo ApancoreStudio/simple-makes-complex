@@ -4,16 +4,11 @@
 ---@field public path  string Path to the mod folder.
 ---@field public Class  table A public class that provides a mod.
 ---@field public require  fun(FileName:string)
-Mod = {
-	name = nil,
-	path = nil,
-	require = nil,
-	Class = nil,
-}
+Mod = {}
 
 
 --- Return table with mod name, path and require function.
----@return {name: string, path: string, require: fun(FileName : string)}
+---@return {name: string, path: string, require: fun(FileName : string): table}
 function Mod.getInfo()
 	local name = core.get_current_modname()
 	local path = core.get_modpath(name)

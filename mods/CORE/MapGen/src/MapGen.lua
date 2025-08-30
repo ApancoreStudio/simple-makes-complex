@@ -1,19 +1,40 @@
-local modInfo     = Mod.getInfo()
-local require     = modInfo.require
-local MapGenUtils = require("MapGen.Utils")
-local Layer       = require("MapGen.Layer")
-local Region2D    = require("MapGen.Region.Region2D")
-local Region3D    = require("MapGen.Region.Region3D")
-
 local core, table, math = core, table, math
 local ipairs = pairs, ipairs
 
--- Main MapGen class
-local MapGen = {}
-MapGen.__index = MapGen
+local modInfo     = Mod.getInfo()
+local require     = modInfo.require
 
+---@type MapGen.Utils
+local MapGenUtils = require("MapGen.Utils")
+
+---@type MapGen.Layer
+local Layer       = require("MapGen.Layer")
+
+---@type MapGen.Region.Region2D
+local Region2D    = require("MapGen.Region.Region2D")
+
+---@type MapGen.Region.Region3D
+local Region3D    = require("MapGen.Region.Region3D")
+
+---@class MapGen
+---@field layersByName         table
+---@field layersList           table
+---@field registeredRegions    table
+---@field material             table<string, number>
+local MapGen = {
+	layersByName      = nil,
+	layersList        = nil,
+	registeredRegions = nil,
+	materials = {
+		impassableWater  = nil,
+		impassableSeabed = nil,
+		air              = nil,
+	},
+}
+
+---@return MapGen
 function MapGen:new()
-	return setmetatable({
+	local instance = setmetatable({
 		layersByName = {},
 		layersList = {},
 		registeredRegions = {},
@@ -21,29 +42,58 @@ function MapGen:new()
 			impassableWater = core.get_content_id("impassable_water:water"),
 			impassableSeabed = core.get_content_id("impassable_water:seabed"),
 			air = core.get_content_id("air")
-		}
-	}, self)
+		},
+	}, {__index = self})
+
+	return instance
 end
 
+---@param name  string
+---@param minY  number
+---@param maxY  number
+---@return      MapGen.Layer
 function MapGen:registerLayer(name, minY, maxY)
+	---@type MapGen.Layer
 	local layer = Layer:new(name, minY, maxY)
+
 	self.layersByName[name] = layer
 	table.insert(self.layersList, layer)
+
 	return layer
 end
 
+---@param params  table
 function MapGen:register2DRegion(params)
+	---@type MapGen.Region.Region2D
 	local region = Region2D:new(params)
+
+	---@type MapGen.Layer
 	local layer = self.layersByName[params.layerName]
-	if not layer then error("Invalid layer: " .. params.layerName) end
+
+	if not layer then
+		error("Invalid layer: " .. params.layerName)
+	end
+
 	layer:add2DRegion(region)
+
+	-- TODO: тут не надо возвращать регион?
 end
 
+---@param params  table
 function MapGen:register3DRegion(params)
+	---@type MapGen.Region.Region3D
 	local region = Region3D:new(params)
+
+	---@type MapGen.Layer
 	local layer = self.layersByName[params.layerName]
-	if not layer then error("Invalid layer: " .. params.layerName) end
+
+	if not layer then
+		error("Invalid layer: " .. params.layerName)
+	end
+
 	layer:add3DRegion(region)
+
+	-- TODO: тут не надо возвращать регион?
 end
 
 function MapGen:enable()
@@ -52,7 +102,10 @@ function MapGen:enable()
 	end)
 end
 
--- Main generation logic
+--- Main generation logic
+---@param minp  table TODO: заменить тип на класс/вектор координат
+---@param maxp  table TODO: заменить тип на класс/вектор координат
+---@param seed  number
 function MapGen:onMapGenerated(minp, maxp, seed)
 	local vm, emin, emax = core.get_mapgen_object("voxelmanip")
 	local area = VoxelArea:new{MinEdge=emin, MaxEdge=emax}
@@ -71,11 +124,14 @@ function MapGen:onMapGenerated(minp, maxp, seed)
 	vm:write_to_map()
 end
 
+---@param minp  table TODO: заменить тип на класс/вектор координат
+---@param maxp  table TODO: заменить тип на класс/вектор координат
+---@return      table
 function MapGen:process2DRegions(minp, maxp)
 	local cache = {}
 	local width = maxp.x - minp.x + 1
 	local zSize = maxp.z - minp.z + 1
-	
+
 	-- Precompute noise for all 2D regions
 	local regionNoiseCache = {}
 	for _, layer in ipairs(self.layersList) do
@@ -103,7 +159,7 @@ function MapGen:process2DRegions(minp, maxp)
 		cache[x] = {}
 		for z = minp.z, maxp.z do
 			cache[x][z] = {}
-			
+
 			for _, layer in ipairs(self.layersList) do
 				local bestHeight, bestWeight = nil, 0.0
 
@@ -139,6 +195,11 @@ function MapGen:process2DRegions(minp, maxp)
 	return cache
 end
 
+---@param minp          table TODO: заменить тип на класс/вектор координат
+---@param maxp          table TODO: заменить тип на класс/вектор координат
+---@param data          void TODO: какой тип?
+---@param area          void
+---@param terrainCache  void
 function MapGen:process3DRegions(minp, maxp, data, area, terrainCache)
 	-- Precompute 3D noise for regions
 	local region3DNoise = {}
@@ -172,32 +233,32 @@ function MapGen:process3DRegions(minp, maxp, data, area, terrainCache)
 			local columnCache = terrainCache[x][z]
 			local baseIndex = area:index(x, minp.y, z)
 			local yStride = area.ystride
-			
+
 			for y = minp.y, maxp.y do
 				local idx = baseIndex + (y - minp.y) * yStride
 				local processed = false
-				
+
 				for _, layer in ipairs(self.layersList) do
 					if y >= layer.minY and y <= layer.maxY then
 						local surfaceY = columnCache[layer]
-						
+
 						if not surfaceY then
-							data[idx] = y == layer.minY and 
-								self.materials.impassableSeabed or 
+							data[idx] = y == layer.minY and
+								self.materials.impassableSeabed or
 								self.materials.impassableWater
 						else
 							-- Set default based on position relative to surface
-							local default = (y <= surfaceY) and 
-								self.materials.impassableSeabed or 
+							local default = (y <= surfaceY) and
+								self.materials.impassableSeabed or
 								self.materials.air
 							data[idx] = default
-							
+
 							-- Apply 3D regions (caves/structures)
 							for _, region in ipairs(layer.regions3D) do
 								local temp = region3DNoise[region].temp[y][x][z]
 								local humid = region3DNoise[region].humid[y][x][z]
 								local cave = region3DNoise[region].cave[y][x][z]
-								
+
 								if MapGenUtils.isInRange(temp, region.tempRange) and
 									MapGenUtils.isInRange(humid, region.humidRange) and cave > region.caveThreshold then
 									data[idx] = self.materials.air
@@ -205,12 +266,12 @@ function MapGen:process3DRegions(minp, maxp, data, area, terrainCache)
 								end
 							end
 						end
-						
+
 						processed = true
 						break -- Only process one layer per Y position
 					end
 				end
-				
+
 				if not processed then
 					data[idx] = self.materials.air
 				end

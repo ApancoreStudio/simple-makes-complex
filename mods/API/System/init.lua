@@ -30,6 +30,17 @@ local allowedDomains = {
 	Ui = true
 }
 
+
+--- Inherits a child class from a parent class
+---@param ParentClass  table
+---@param ChildClass   table?
+---@return table
+Api.getClassExtended = function(ParentClass, ChildClass)
+	local ChildClass = setmetatable(ChildClass or {}, { __index = ParentClass })
+
+	return ChildClass
+end
+
 --- Adds a mod to the global space under specified domain structure
 ---@param mod       Mod       The mod table containing functionality to expose
 ---@param location  string    Dot-separated path within domain structure (e.g. "Items.Log")

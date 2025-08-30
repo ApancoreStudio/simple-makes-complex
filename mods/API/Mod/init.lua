@@ -34,7 +34,7 @@ end
 -- TODO: возможно стоит создать какой-то абстрактный класс,
 -- который будет является алеасом на table и будет обозначать наш класс
 function Mod:getClassInstance()
-	local instance = setmetatable({}, { __index = self.Class })
+	local instance = self.Class:new()
 
 	return instance
 end

@@ -1,1 +1,3 @@
 Simple Makes Complex is a Luanti engine-based game focused on the multiplayer gameplay
+
+![image](/menu/icon.png)

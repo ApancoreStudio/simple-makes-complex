@@ -1,12 +1,12 @@
 ---@class Item
----@field itemDef    ItemDefinition
+---@field itemDef    Item.ItemDefinition
 ---@field luantiDef  table
 local Item = {
 	itemDef = nil,
 	luantiDef = nil,
 }
 
----@param itemDef  ItemDefinition
+---@param itemDef  Item.ItemDefinition
 local function itemDefToLuantiDef(itemDef)
 	itemDef = table.copy(itemDef)
 	local s = itemDef.settings
@@ -35,7 +35,7 @@ local function registerFlatItem(luantiDef)
 	core.register_craftitem(':'..name, luantiDef)
 end
 
----@param itemDef ItemDefinition
+---@param itemDef Item.ItemDefinition
 ---@return Item
 function Item:new(itemDef)
 	local instance = {}
@@ -58,7 +58,6 @@ function Item:new(itemDef)
 	instance.luantiDef = luantiDef
 	return instance
 end
-
 
 
 return Item

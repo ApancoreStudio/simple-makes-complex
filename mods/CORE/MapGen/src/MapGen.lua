@@ -21,16 +21,7 @@ local Region3D    = require("MapGen.Region.Region3D")
 ---@field layersList           table
 ---@field registeredRegions    table
 ---@field material             table<string, number>
-local MapGen = {
-	layersByName      = nil,
-	layersList        = nil,
-	registeredRegions = nil,
-	materials = {
-		impassableWater  = nil,
-		impassableSeabed = nil,
-		air              = nil,
-	},
-}
+local MapGen = {}
 
 ---@return MapGen
 function MapGen:new()

@@ -24,7 +24,7 @@
     "globalsRegex": [],
     "severity": {},
     "enables": [],
-    "diagnosticInterval": null
+    "diagnosticInterval": 1
   },
   "signature": {
     "detailSignatureHelper": true

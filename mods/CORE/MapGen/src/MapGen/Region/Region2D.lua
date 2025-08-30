@@ -1,11 +1,15 @@
-local modInfo = Mod.getInfo()
-local Region = modInfo.require()("Region")
-
 local core, setmetatable = core, setmetatable
 
--- 2D Region implementation
-local Region2D = setmetatable({}, {__index = Region})
+local modInfo = Mod.getInfo()
 
+---@type MapGen.Region
+local Region = modInfo.require("Region")
+
+---@class MapGen.Region.Region2D : MapGen.Region
+local Region2D = Api.getClassExtended(Region, {})
+
+---@param params  table
+---@return MapGen.Region.Region2D
 function Region2D:new(params)
 	local instance = Region.new(self, params)
 	instance.type = "2d"

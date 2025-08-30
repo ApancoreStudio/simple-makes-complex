@@ -1,13 +1,17 @@
-local modInfo = Mod.getInfo()
-local Region = modInfo.require()("Region")
-
 local core, setmetatable = core, setmetatable
 
--- 3D Region implementation
-local Region3D = setmetatable({}, {__index = Region})
+local modInfo = Mod.getInfo()
 
+---@type MapGen.Region
+local Region = modInfo.require("Region")
+
+---@class MapGen.Region.Region3D : MapGen.Region
+local Region3D = Api.getClassExtended(Region, {})
+
+---@param params  table
+---@return MapGen.Region.Region3D
 function Region3D:new(params)
-	local instance = Region.new(self, params)
+	local instance = Region:new(params)
 	instance.type = "3d"
 	return setmetatable(instance, {__index = Region3D})
 end

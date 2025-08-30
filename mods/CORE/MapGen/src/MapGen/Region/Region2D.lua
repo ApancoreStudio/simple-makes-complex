@@ -6,7 +6,7 @@ local modInfo = Mod.getInfo()
 local Region = modInfo.require("Region")
 
 ---@class MapGen.Region.Region2D : MapGen.Region
-local Region2D = Api.getClassExtended(Region, {})
+local Region2D = Mod:getClassExtended(Region, {})
 
 ---@param params  table
 ---@return MapGen.Region.Region2D

@@ -1,5 +1,5 @@
 ---@class Node : Item
-local Node = Core.Item:getClassExtended({
+local Node = Core.Item:getModClassExtended({
 	--TODO: Че тут писать?
 })
 

@@ -33,17 +33,30 @@ end
 ---@return table
 -- TODO: возможно стоит создать какой-то абстрактный класс,
 -- который будет является алеасом на table и будет обозначать наш класс
-function Mod:getClassInstance()
+function Mod:getModClassInstance()
 	local instance = self.Class:new()
 
 	return instance
 end
 
---- Inherit from a class provided by the mod
----@param ChildClass  table?
+--- Inherits a child class from a parent class
+---@static
+---@param ParentClass  table
+---@param ChildClass   table?
 ---@return table
-function Mod:getClassExtended(ChildClass)
-	ChildClass = Api.getClassExtended(self.Class, ChildClass or {})
+function Mod:getClassExtended(ParentClass, ChildClass)
+	local ChildClass = setmetatable(ChildClass or {}, { __index = ParentClass })
 
 	return ChildClass
 end
+
+--- Inherits a child class from a parent public class provided by the mod.
+---@static
+---@param ChildClass   table?
+---@return table
+function Mod:getModClassExtended(ChildClass)
+	local ChildClass = Mod:getClassExtended(self.Class, ChildClass or {})
+
+	return ChildClass
+end
+

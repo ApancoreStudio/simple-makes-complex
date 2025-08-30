@@ -1,6 +1,7 @@
 ---@class Item
 ---@field itemDef    Item.ItemDefinition
 ---@field luantiDef  table
+---@field getVisual  fun(): string
 local Item = {}
 
 ---@param itemDef  Item.ItemDefinition
@@ -49,6 +50,7 @@ function Item:new(itemDef)
 		registerFlatItem(luantiDef)
 	end
 
+	---@return string
 	function instance:getVisual()
 		return visual
 	end
@@ -57,6 +59,5 @@ function Item:new(itemDef)
 	instance.luantiDef = luantiDef
 	return instance
 end
-
 
 return Item

@@ -1,4 +1,4 @@
----@class ItemDefinition
+---@class Item.ItemDefinition
 ---@field settings  table
 ---@field callbacks  table
 local ItemDefinition = {

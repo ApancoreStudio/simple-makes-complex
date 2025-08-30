@@ -40,10 +40,10 @@ function Mod:getClassInstance()
 end
 
 --- Inherit from a class provided by the mod
----@param ChildClass  table
+---@param ChildClass  table?
 ---@return table
 function Mod:getClassExtended(ChildClass)
-	local instance = setmetatable(ChildClass or {}, { __index = self.Class })
+	ChildClass = Api.getClassExtended(self.Class, ChildClass or {})
 
-	return instance
+	return ChildClass
 end

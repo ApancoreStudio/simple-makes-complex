@@ -1,2 +1,5 @@
+local Node = Mod:new()
 
----local Node = Core.Item:extend()
+Node.Class = Node.require('Node')
+
+Api.addModToGlobalSpace(Node, 'Core.Node')

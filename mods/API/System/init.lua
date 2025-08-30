@@ -1,9 +1,24 @@
 Api = {}
+
+---@alias Domen     table<string,Mod|Subdomen> Global table for accessing public classes provided by mods.
+---@alias Subdomen  table<string,Mod>
+
+---@type Domen
 Core = {}
+
+---@type Domen
 Environment = {}
+
+---@type Domen
 Game = {}
+
+---@type Subdomen
 Game.Items = {}
+
+---@type Subdomen
 Game.Mobs = {}
+
+---@type Subdomen
 Game.Structures = {}
 Ui = {}
 
@@ -16,7 +31,7 @@ local allowedDomains = {
 }
 
 --- Adds a mod to the global space under specified domain structure
----@param mod       table     The mod table containing functionality to expose -- TODO: !!!Describe a Mod class to EmmyLua!!!
+---@param mod       Mod       The mod table containing functionality to expose
 ---@param location  string    Dot-separated path within domain structure (e.g. "Items.Log")
 ---@param force     boolean?  Whether to overwrite the target location.
 Api.addModToGlobalSpace = function(mod, location, force)

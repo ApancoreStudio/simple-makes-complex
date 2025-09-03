@@ -63,7 +63,7 @@ end
 local tableContains = table.contains
 
 --- Checks if the table `t` contains the specified key. Returns `true` if the key is found at least once, `false` otherwise.
---- Use when you need to check for key, avoiding metamethods intervention.  
+--- Use when you need to check for key, avoiding metamethods intervention.
 --- @param t    table<any, any> | any[]  Table to check
 --- @param key  any                      Value to compare against
 --- @return     boolean
@@ -139,7 +139,7 @@ local function mergeInPlace(target, source, recursively)
 	for key, value in pairs(source) do
 		local targetValue = target[key]
 		local valueType = type(value)
-		
+
 		if targetValue == nil then
 			-- Add new key with deep copy if needed
 			target[key] = (valueType == 'table') and tableCopy(value) or value

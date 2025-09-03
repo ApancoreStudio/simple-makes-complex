@@ -3,7 +3,7 @@
 ---@field public name  string Technical name of the mod.
 ---@field public path  string Path to the mod folder.
 ---@field public Class  table A public class that provides a mod.
----@field public require  fun(FileName:string)
+---@field public require  fun(FileName:string):table
 Mod = {}
 
 
@@ -25,11 +25,12 @@ function Mod:new()
 end
 
 --- Get an instance of a public class provided by a mod
----@return table
+---@param ... any?
+---@return    table
 -- TODO: возможно стоит создать какой-то абстрактный класс,
 -- который будет является алеасом на table и будет обозначать наш класс
-function Mod:getModClassInstance()
-	local instance = self.Class:new()
+function Mod:getModClassInstance(...)
+	local instance = self.Class:new(...)
 
 	return instance
 end

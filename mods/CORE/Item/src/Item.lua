@@ -1,3 +1,8 @@
+local modInfo     = Mod.getInfo()
+local require     = modInfo.require
+
+local VisualEnum = require('Item.VisualEnum')
+
 ---@class Item
 ---@field itemDef    Item.ItemDefinition
 ---@field luantiDef  table
@@ -43,10 +48,10 @@ function Item:new(itemDef)
 	local visual = itemDef.settings.visual
 	itemDef.settings.visual = nil
 
-	if visual == '3d' then
+	if visual == VisualEnum.ITEM_3D then
 		register3dItem(luantiDef)
 	else
-		visual = 'flat'
+		visual = VisualEnum.ITEM_2D
 		registerFlatItem(luantiDef)
 	end
 

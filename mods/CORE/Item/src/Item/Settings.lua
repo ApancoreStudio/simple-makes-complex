@@ -1,0 +1,35 @@
+---@class Item.Settings
+---@field name               string
+---@field title              string 1st line of item description
+---@field description        string the rest of item description
+---@field visual             Enum.EnumKey from ENUM `Item.VisualEnum`
+---
+---@field groups             table?
+---
+---@field inventory_image    string?
+---@field inventory_overlay  string?
+---
+---@field wield_image        string?
+---@field wield_overlay      string?
+---@field wield_scale        table?
+---
+---@field palette            string?
+---@field color              string?
+---
+---@field stack_max          number?
+---@field range              number?
+---@field liquids_pointable  boolean?
+---@field pointabilities     table?
+---@field light_source       number?
+---
+---@field tool_capabilities  table?
+---@field wear_color         table?
+---
+---@field node_placement_prediction  string?
+---@field node_dig_prediction        string?
+---@field touch_interaction          table?
+---
+---@field sound              table?
+local Settings = {}
+
+return Settings

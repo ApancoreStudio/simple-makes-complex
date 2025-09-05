@@ -1,6 +1,6 @@
 ---@class Item.ItemDefinition
----@field settings  Item.ItemDefinition.Settings
----@field callbacks  table
+---@field settings  Item.Settings
+---@field callbacks  Item.Callbacks
 local ItemDefinition = {}
 
 return ItemDefinition

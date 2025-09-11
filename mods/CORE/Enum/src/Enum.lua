@@ -14,7 +14,7 @@ function Enum:new(enum)
 	end
 
 	---@type Enum
-	instance = setmetatable({}, {
+	local instance = setmetatable({}, {
 		__index = metaEnum,
 		__newindex = function()
 			error('The Enum table is read only!')

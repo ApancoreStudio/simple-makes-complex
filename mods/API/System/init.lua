@@ -43,9 +43,10 @@ Api.addModToGlobalSpace = function(mod, location, force)
 	Ensure.stringArgNotEmpty(location, 2, 'Api.addModToGlobalSpace')
 
 	-- Ensure `location` matches this format: 'field.subfield.subsubfield.<...>'
-	if not location:match('^[%a_][%w_]*([%.][%a_][%w_]*)*$') then
+	-- TODO: баг: ликвидные имена не определяются шаблоном
+	--[[if not location:match('^[%a_][%w_]*([%.][%a_][%w_]*)*$') then
 		error('bad argument #2 to \'Api.addModToGlobalSpace\' (invalid format)')
-	end
+	end--]]
 
 	-- Split `location` into fields -- TODO: !!!Make a String function!!!
 	local fields = {}

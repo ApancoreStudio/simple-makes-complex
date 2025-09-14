@@ -2,17 +2,15 @@
 local VisualEnum = Core.Item.require('Item.VisualEnum')
 
 ---@class Node : Item
-local Node = Core.Item:getModClassExtended({
-	--TODO: Че тут писать?
-})
+local Node = Core.Item:getModClassExtended({})
 
----@param itemDef Item.ItemDefinition
+---@param nodeDef Node.NodeDefinition
 ---@return Node
-function Node:new(itemDef)
-	itemDef.settings.visual = VisualEnum.ITEM_3D
+function Node:new(nodeDef)
+	nodeDef.settings.visual = VisualEnum.ITEM_3D
 
 	---@type Node
-	local instance = Core.Item:getModClassInstance(itemDef)
+	local instance = Core.Item:getModClassInstance(nodeDef)
 
 	return instance
 end

@@ -1,24 +1,24 @@
 Api = {}
 
----@alias Domen     table<string,Mod|Subdomen> Global table for accessing public classes provided by mods.
----@alias Subdomen  table<string,Mod>
+---@alias Domain     table<string,Mod|SubDomain> Global table for accessing public classes provided by mods.
+---@alias SubDomain  table<string,Mod>
 
----@type Domen
+---@type Domain
 Core = {}
 
----@type Domen
+---@type Domain
 Environment = {}
 
----@type Domen
+---@type Domain
 Game = {}
 
----@type Subdomen
+---@type SubDomain
 Game.Items = {}
 
----@type Subdomen
+---@type SubDomain
 Game.Mobs = {}
 
----@type Subdomen
+---@type SubDomain
 Game.Structures = {}
 Ui = {}
 

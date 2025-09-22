@@ -15,7 +15,7 @@ Settings.description = nil
 
 ---Visual node type.
 ---Values ​​are specified via an enumeration `Item.VisualEnum`.
----@type Enum.EnumKey
+---@type Enum.EnumKey?
 Settings.visual = ""
 
 

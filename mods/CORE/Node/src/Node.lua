@@ -31,8 +31,8 @@ function Node:getExtended(defaultDef)
 end
 
 ---Returns an instance of the `Factory` class that can be used to mass-register identical items.
----@param defaultDef  Node.NodeDefinition
----@return                Factory
+---@param defaultDef?  Node.NodeDefinition
+---@return            Factory
 function Node:getFactory(defaultDef)
 	if defaultDef == nil then
 		defaultDef = self.defaultDef

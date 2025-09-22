@@ -101,8 +101,8 @@ function Item:getExtended(defaultDef)
 end
 
 ---Returns an instance of the `Factory` class that can be used to mass-register identical items.
----@param defaultDef  Item.ItemDefinition
----@return                Factory
+---@param defaultDef?  Item.ItemDefinition
+---@return            Factory
 function Item:getFactory(defaultDef)
 	if defaultDef == nil then
 		defaultDef = self.defaultDef

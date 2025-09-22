@@ -93,7 +93,7 @@ end
 ---@return Item
 function Item:getExtended(defaultDef)
 	---@type Item
-	ChildClass = Mod:getClassExtended(self, {
+	local ChildClass = Mod:getClassExtended(self, {
 		defaultDef = defaultDef,
 	})
 

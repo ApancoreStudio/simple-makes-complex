@@ -19,7 +19,7 @@ end
 ---The aleas `table.merge` for EmmyLua
 ---@type fun(...):(Item.ItemDefinition)
 local defMerge = function(...)
-	return table.merge(..., true)
+	return table.merge(...)
 end
 
 ---@param itemDefs  Item.ItemDefinition[] | Node.NodeDefinition[]  List of nodes with parameters unique to them.
@@ -28,7 +28,7 @@ function Factory:registerItems(itemDefs)
 	for _, nodeDef in ipairs(itemDefs) do
 
 		---@type Item.ItemDefinition
-		local nodeDef = defMerge(nodeDef, self.defaultDef)
+		local nodeDef = defMerge(nodeDef, self.defaultDef, true)
 
 		self.itemClass:new(nodeDef)
 

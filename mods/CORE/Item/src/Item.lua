@@ -11,8 +11,11 @@ local VisualEnum = require('Item.VisualEnum')
 local Item = {
 	defaultDef = {
 		settings = {
-			name = ""
-		}
+			name = "",
+			title = "",
+			description = "",
+		},
+		callbacks = {}
 	}
 }
 
@@ -48,14 +51,14 @@ end
 ---The aleas `table.merge` for EmmyLua
 ---@type fun(...):(Item.ItemDefinition)
 local defMerge = function(...)
-	return table.merge(..., true)
+	return table.merge(...)
 end
 
 ---@param itemDef Item.ItemDefinition
 ---@return Item
 function Item:new(itemDef)
 	---Adding default parameters
-	itemDef = defMerge(itemDef, self.defaultDef)
+	itemDef = defMerge(itemDef, self.defaultDef, true)
 
 	---@type Item
 	local instance = setmetatable({}, {__index = self})

@@ -38,7 +38,8 @@ function Node:getFactory(defaultDef)
 		defaultDef = self.defaultDef
 	end
 
-	local instance = Core.Factory():new(self, defaultDef)
+	---@type Factory
+	local instance = Core.Factory:getModClassInstance(self, defaultDef)
 
 	return instance
 end

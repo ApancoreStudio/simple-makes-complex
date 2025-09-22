@@ -1,15 +1,15 @@
 ---@class Factory
----@field defaultItemDef  Item.ItemDefinition | Node.NodeDefinition
+---@field defaultDef  Item.ItemDefinition | Node.NodeDefinition
 ---@field itemClass       Item | Node
 local Factory = {}
 
 ---@param itemClass       Item | Node
----@param defaultItemDef  Item.ItemDefinition | Node.NodeDefinition  Parameters that all nodes registered with this factory must have.
+---@param defaultDef  Item.ItemDefinition | Node.NodeDefinition  Parameters that all nodes registered with this factory must have.
 ---@return                Factory
-function Factory:new(itemClass, defaultItemDef)
+function Factory:new(itemClass, defaultDef)
 	---@type Factory
 	local instance = setmetatable({
-		defaultItemDef = defaultItemDef,
+		defaultDef = defaultDef,
 		itemClass      = itemClass,
 	}, {__index = self})
 
@@ -28,7 +28,7 @@ function Factory:registerItems(itemDefs)
 	for _, nodeDef in ipairs(itemDefs) do
 
 		---@type Item.ItemDefinition
-		local nodeDef = defMerge(nodeDef, self.defaultItemDef)
+		local nodeDef = defMerge(nodeDef, self.defaultDef)
 
 		self.itemClass:new(nodeDef)
 

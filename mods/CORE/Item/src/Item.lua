@@ -7,9 +7,9 @@ local VisualEnum = require('Item.VisualEnum')
 ---@field itemDef         Item.ItemDefinition
 ---@field luantiDef       table
 ---@field getVisual       fun(): string
----@field defaultItemDef  Item.ItemDefinition
+---@field defaultDef  Item.ItemDefinition
 local Item = {
-	defaultItemDef = {
+	defaultDef = {
 		settings = {
 			name = ""
 		}
@@ -55,7 +55,7 @@ end
 ---@return Item
 function Item:new(itemDef)
 	---Adding default parameters
-	itemDef = defMerge(itemDef, self.defaultItemDef)
+	itemDef = defMerge(itemDef, self.defaultDef)
 
 	---@type Item
 	local instance = setmetatable({}, {__index = self})
@@ -89,26 +89,26 @@ end
 ---Allows you to create a child class of an item by specifying
 ---default parameters that will be added to the item's parameters
 ---when an instance is received.
----@param defaultItemDef  Item.ItemDefinition
+---@param defaultDef  Item.ItemDefinition
 ---@return Item
-function Item:getExtended(defaultItemDef)
+function Item:getExtended(defaultDef)
 	---@type Item
 	ChildClass = Mod:getClassExtended(self, {
-		defaultItemDef = defaultItemDef,
+		defaultDef = defaultDef,
 	})
 
 	return ChildClass
 end
 
 ---Returns an instance of the `Factory` class that can be used to mass-register identical items.
----@param defaultItemDef  Item.ItemDefinition
+---@param defaultDef  Item.ItemDefinition
 ---@return                Factory
-function Item:getFactory(defaultItemDef)
-	if defaultItemDef == nil then
-		defaultItemDef = self.defaultItemDef
+function Item:getFactory(defaultDef)
+	if defaultDef == nil then
+		defaultDef = self.defaultDef
 	end
 
-	local instance = Core.Factory():new(self, defaultItemDef)
+	local instance = Core.Factory():new(self, defaultDef)
 
 	return instance
 end

@@ -1,20 +1,30 @@
 --- Luanti mod
 ---@class Mod
 ---@field public name  string Technical name of the mod.
+---@field public shortName  string
 ---@field public path  string Path to the mod folder.
 ---@field public Class  table A public class that provides a mod.
 ---@field public require  fun(FileName:string):table
 Mod = {}
 
+---Returns the mod name without prefixes
+---@param name  string
+---@return      string
+function Mod.getShortModName(name)
+	local shortName = string.gsub(name, '%w*__', '')
+
+	return shortName
+end
 
 --- Return table with mod name, path and require function.
----@return {name: string, path: string, require: fun(FileName : string): table}
+---@return {name: string, shortName: string, path: string, require: fun(FileName : string): table}
 function Mod.getInfo()
 	local name = core.get_current_modname()
+	local shortName = Mod.getShortModName(name)
 	local path = core.get_modpath(name)
 	local require = Require.getModRequire(name, path)
 
-	return {name = name, path = path, require = require}
+	return {name = name, shortName = shortName, path = path, require = require}
 end
 
 function Mod:new()

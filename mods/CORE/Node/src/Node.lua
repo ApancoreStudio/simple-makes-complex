@@ -24,7 +24,7 @@ end
 function Node:getExtended(defaultDef)
 	---@type Node
 	local ChildClass = Mod:getClassExtended(self, {
-		defaultNodeDef = defaultDef,
+		defaultDef = defaultDef,
 	})
 
 	return ChildClass

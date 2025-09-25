@@ -17,6 +17,7 @@
       "core",
       "table",
       "VoxelArea",
+	  "VoxelManip",
       "Ensure",
       "string",
       "string_utf8"

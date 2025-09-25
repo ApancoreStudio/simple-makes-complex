@@ -1,0 +1,61 @@
+---@class MapGenV.Layer
+---@field name         string
+---@field minY         number
+---@field maxY         number
+---@field regionsList      table
+local Layer = {
+	regionsList = {}
+}
+
+---@param name  string
+---@param minY  number
+---@param maxY  number
+---@return      MapGenV.Layer
+function Layer:new(name, minY, maxY)
+	---@type MapGenV.Layer
+	local instance = setmetatable({
+		name = name,
+		minY = minY,
+		maxY = maxY,
+	}, {__index = self})
+
+	return instance
+end
+
+---@param region  MapGenV.Region
+function Layer:addRegion(region)
+	table.insert(self.regionsList, region)
+end
+
+---@param xPos  number
+---@param yPos  number
+---@param zPos  number
+---@return      table
+function Layer:getRegionsByPos(xPos, yPos, zPos)
+	--- TODO: возможно здесь получится сделать более оптимизированный алгоритм
+	--- учитывая тот факт, что эта функция вызывается для каждой ноды в on_generated
+	--- и может быть даже не один раз
+	--- Можно подумать над тем, чтобы использовать сортированный список
+	local regions = {}
+
+	---@param region  MapGenV.Region
+	for _, region in  ipairs(self.regionsList) do
+
+		if  (
+			xPos >= region.minPos.x and
+			yPos >= region.minPos.y and
+			zPos >= region.minPos.z) and
+			(
+			xPos <= region.maxPos.x and
+			yPos <= region.maxPos.y and
+			zPos <= region.maxPos.z
+			) then
+				table.insert(regions, region)
+		end
+
+	end
+
+	return regions
+end
+
+return Layer

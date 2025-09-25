@@ -10,7 +10,7 @@ Mod = {}
 ---Returns the mod name without prefixes
 ---@param name  string
 ---@return      string
-function Mod.getShortModName(name)
+local function getShortModName(name)
 	local shortName = string.gsub(name, '%w*__', '')
 
 	return shortName
@@ -20,7 +20,7 @@ end
 ---@return {name: string, shortName: string, path: string, require: fun(FileName : string): table}
 function Mod.getInfo()
 	local name = core.get_current_modname()
-	local shortName = Mod.getShortModName(name)
+	local shortName = getShortModName(name)
 	local path = core.get_modpath(name)
 	local require = Require.getModRequire(name, path)
 

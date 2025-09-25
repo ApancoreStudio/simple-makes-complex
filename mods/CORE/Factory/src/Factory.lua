@@ -16,7 +16,7 @@ function Factory:new(itemClass, defaultDef)
 	return instance
 end
 
----The aleas `table.merge` for EmmyLua
+---The alias `table.merge` for EmmyLua
 ---@type fun(...):(Item.ItemDefinition)
 local defMerge = function(...)
 	return table.merge(...)

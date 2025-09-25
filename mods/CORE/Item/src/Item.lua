@@ -21,6 +21,7 @@ local Item = {
 
 ---@param itemDef  Item.ItemDefinition
 local function itemDefToLuantiDef(itemDef)
+	---@diagnostic disable-next-line: undefined-field
 	itemDef = table.copy(itemDef)
 	local s = itemDef.settings
 	local c = itemDef.callbacks

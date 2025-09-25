@@ -27,4 +27,4 @@ mapGenerator:RegisterRegion("world",
 	},
 	true)
 
-mapGenerator:enable()
+mapGenerator:run()

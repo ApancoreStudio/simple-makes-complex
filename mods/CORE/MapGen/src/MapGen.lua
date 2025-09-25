@@ -14,21 +14,18 @@ local id_air = id("air")
 local modInfo     = Mod.getInfo()
 local require     = modInfo.require
 
--- -@type MapGen.Utils
----local MapGenUtils = require("MapGen.Utils")
-
 ---@type MapGen.Layer
-local Layer  = require("MapGen.Layer")
+local Layer = require("MapGen.Layer")
 
 ---@type MapGen.Region
-local Region= require("MapGen.Region")
+local Region = require("MapGen.Region")
 
 ---@class MapGen
 ---@field layersByName  table
 ---@field layersList    table
----@field isEnable      boolean  A static field that guarantees that only one instance of the `MapGen` class will work.
+---@field isRunning     boolean  A static field that guarantees that only one instance of the `MapGen` class will work.
 local MapGen = {
-	isEnable = false,
+	isRunning = false,
 }
 
 ---@return MapGen
@@ -195,8 +192,8 @@ function MapGen:onMapGenerated(minPos, maxPos, blockseed)
 	voxelManip:write_to_map()
 end
 
-function MapGen:enable()
-	if MapGen.isEnable then
+function MapGen:run()
+	if MapGen.isRunning then
 		error('Only one instance of a `MapGen` class can be used.')
 	end
 
@@ -204,7 +201,7 @@ function MapGen:enable()
 		self:onMapGenerated(...)
 	end)
 
-	MapGen.isEnable = true
+	MapGen.isRunning = true
 end
 
 return MapGen

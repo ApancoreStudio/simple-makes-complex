@@ -17,7 +17,8 @@
       "core",
       "table",
       "VoxelArea",
-	  "VoxelManip",
+	    "VoxelManip",
+      "vector",
       "Ensure",
       "string",
       "string_utf8"

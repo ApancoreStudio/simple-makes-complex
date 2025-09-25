@@ -1,4 +1,4 @@
----@class MapGenV.Layer
+---@class MapGen.Layer
 ---@field name         string
 ---@field minY         number
 ---@field maxY         number
@@ -10,9 +10,9 @@ local Layer = {
 ---@param name  string
 ---@param minY  number
 ---@param maxY  number
----@return      MapGenV.Layer
+---@return      MapGen.Layer
 function Layer:new(name, minY, maxY)
-	---@type MapGenV.Layer
+	---@type MapGen.Layer
 	local instance = setmetatable({
 		name = name,
 		minY = minY,
@@ -22,7 +22,7 @@ function Layer:new(name, minY, maxY)
 	return instance
 end
 
----@param region  MapGenV.Region
+---@param region  MapGen.Region
 function Layer:addRegion(region)
 	table.insert(self.regionsList, region)
 end
@@ -38,7 +38,7 @@ function Layer:getRegionsByPos(xPos, yPos, zPos)
 	--- Можно подумать над тем, чтобы использовать сортированный список
 	local regions = {}
 
-	---@param region  MapGenV.Region
+	---@param region  MapGen.Region
 	for _, region in  ipairs(self.regionsList) do
 
 		if  (

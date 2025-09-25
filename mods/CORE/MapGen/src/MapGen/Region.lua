@@ -1,13 +1,13 @@
----@class MapGenV.Region
+---@class MapGen.Region
 ---@field minPos  table
 ---@field maxPos  table
----@field noises  MapGenV.Region.Noises
+---@field noises  MapGen.Region.Noises
 local Region = {}
 
----@param noisesParams  MapGenV.Region.Noises
----@return              MapGenV.Region.Noises
+---@param noisesParams  MapGen.Region.Noises
+---@return              MapGen.Region.Noises
 local function paramsToNoises(noisesParams)
-	---@type MapGenV.Region.Noises
+	---@type MapGen.Region.Noises
 	local noises = {}
 
 	for noiseName, noiseParams in pairs(noisesParams) do
@@ -19,10 +19,10 @@ end
 
 ---@param  minPos    table
 ---@param  maxPos    table
----@param  noisesParams    MapGenV.Region.Noises
----@return MapGenV.Region
+---@param  noisesParams    MapGen.Region.Noises
+---@return MapGen.Region
 function Region:new(minPos, maxPos, noisesParams)
-	---@type MapGenV.Region
+	---@type MapGen.Region
 	local instance = setmetatable({
 		minPos = minPos,
 		maxPos = maxPos,

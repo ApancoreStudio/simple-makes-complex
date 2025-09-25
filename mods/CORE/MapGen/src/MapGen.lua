@@ -17,13 +17,13 @@ local require     = modInfo.require
 -- -@type MapGen.Utils
 ---local MapGenUtils = require("MapGen.Utils")
 
----@type MapGenV.Layer
+---@type MapGen.Layer
 local Layer  = require("MapGen.Layer")
 
----@type MapGenV.Region
+---@type MapGen.Region
 local Region= require("MapGen.Region")
 
----@class MapGenV
+---@class MapGen
 ---@field layersByName  table
 ---@field layersList    table
 ---@field isEnable      boolean  A static field that guarantees that only one instance of the `MapGen` class will work.
@@ -43,14 +43,14 @@ function MapGen:new()
 end
 
 ---@param yPos  number
----@return      MapGenV.Layer?
+---@return      MapGen.Layer?
 function MapGen:getLayerByHeight(yPos)
 	--- TODO: возможно здесь получится сделать более оптимизированный алгоритм
 	--- учитывая тот факт, что эта функция вызывается для каждой ноды в on_generated
 	--- и может быть даже не один раз
 	--- Можно подумать над тем, чтобы использовать сортированный список
 
-	---@param layer  MapGenV.Layer
+	---@param layer  MapGen.Layer
 	for _, layer in  ipairs(self.layersList) do
 
 		if yPos >= layer.minY and yPos <= layer.maxY then
@@ -69,7 +69,7 @@ function MapGen:RegisterLayer(name, minY, maxY)
 		error('Registered layers must not overlap!')
 	end
 
-	---@type MapGenV.Layer
+	---@type MapGen.Layer
 	local layer = Layer:new(name, minY, maxY)
 
 	self.layersByName[name] = layer
@@ -87,7 +87,7 @@ end
 ---@param noises        table
 ---@param regionIs2D    boolean?
 function MapGen:RegisterRegion(layerName, minPos, maxPos, noises, regionIs2D)
-	---@type MapGenV.Layer
+	---@type MapGen.Layer
 	local layer = self.layersByName[layerName]
 
 	if not layer then
@@ -99,7 +99,7 @@ function MapGen:RegisterRegion(layerName, minPos, maxPos, noises, regionIs2D)
 		maxPos.y = layer.maxY
 	end
 
-	---@type MapGenV.Region
+	---@type MapGen.Region
 	local region = Region:new(minPos, maxPos, noises)
 
 	--TODO: реализовать регистрацию допольнительных регионов для сглаживания шумов
@@ -129,7 +129,7 @@ function MapGen:landscapeGeneration(data, area, x, y, z)
 	local noiseHeightValue = 0
 
 	-- The height noise values ​​of all regions that a node is part of are added together...
-	---@param region  MapGenV.Region
+	---@param region  MapGen.Region
 	for _, region in ipairs(regions) do
 		if region.noises.landscapeNoise ~= nil then
 			local noise = core.get_value_noise(region.noises.landscapeNoise)

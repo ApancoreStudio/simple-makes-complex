@@ -6,12 +6,12 @@ Api.addModToGlobalSpace(MapGen, 'Core.MapGen')
 
 -- DEBUG MAPGEN
 
----@type MapGenV
-local MapGen = MapGen.Class:new()
+---@type MapGen
+local mapGenerator = MapGen.Class:new()
 
-MapGen:RegisterLayer("world", -1000, 500)
+mapGenerator:RegisterLayer("world", -1000, 500)
 
-MapGen:RegisterRegion("world",
+mapGenerator:RegisterRegion("world",
 	{x = -1000, y = 0, z = -1000},
 	{x = 1000, y = 0, z = 1000},
 	{
@@ -27,4 +27,4 @@ MapGen:RegisterRegion("world",
 	},
 	true)
 
-MapGen:enable()
+mapGenerator:enable()

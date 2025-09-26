@@ -1,55 +1,50 @@
---============================================================
---=======================WARNING!!!===========================
---============================================================
---======================THIS=FILE=IS==========================
---=======================STILL==WIP===========================
---=========================BY==ME=============================
---============================================================
---===================================Doloment=================
---============================================================
-
 -- TODO: replace `table` with `vector` for minPos and maxPos
 ---@class MapGen.Region
----@field minPos  table
----@field maxPos  table
----@field noises  MapGen.Region.Noises
----@field noisesParams MapGen.Region.Noises -- ??? TODO: should be it's own class in EmmyLua
+
 local Region = {}
 
----@param noisesParams  MapGen.Region.Noises -- ??? TODO: should be it's own class in EmmyLua
----@return              MapGen.Region.Noises
-local function paramsToNoises(noisesParams)
-	---@type MapGen.Region.Noises
-	local noises = {}
+---@param multinoiseParams  MapGen.Region.MultinoiseParams -- ??? TODO: should be it's own class in EmmyLua
+---@return MapGen.Region.Multinoise
+local function multinoiseParamsToMultinoise(multinoiseParams)
+	---@type MapGen.Region.Multinoise
+	local multinoise = {}
 
-	for noiseName, noiseParams in pairs(noisesParams) do
-		noises[noiseName] = core.get_value_noise(noiseParams)
+	for noiseName, noiseParams in pairs(multinoiseParams) do
+		multinoise[noiseName] = core.get_value_noise(noiseParams)
 	end
 
-	return noises
+	return multinoise
 end
 
----@param  minPos        table
----@param  maxPos        table
----@param  noisesParams  MapGen.Region.Noises
+---@param  minPos            table
+---@param  maxPos            table
+---@param  multinoiseParams  MapGen.Region.MultinoiseParams
 ---@return MapGen.Region
-function Region:new(minPos, maxPos, noisesParams)
+function Region:new(minPos, maxPos, multinoiseParams)
 
 	local _minPos = minPos
 	local _maxPos = maxPos
-	local _noisesParams = noisesParams
+	local _multinoiseParams = multinoiseParams
 
-	local _noises = {}
+	local _multinoise = {}
 
 	local instance = setmetatable({}, {__index = self})
 
-	function instance:getMinPos()        return        _minPos end
-	function instance:getMaxPos()        return        _maxPos end
-	function instance:getNoisesParams()  return  _noisesParams end
-	function instance:getNoises()        return        _noises end
+	function instance:getMinPos()
+		return _minPos
+	end
+	function instance:getMaxPos()
+		return _maxPos
+	end
+	function instance:getMultinoiseParams()
+		return  _multinoiseParams
+	end
+	function instance:getMultinoise()
+		return _multinoise
+	end
 
-	function instance:initNoises()
-		_noises = paramsToNoises(_noisesParams)
+	function instance:initMultinoise()
+		_multinoise = multinoiseParamsToMultinoise(_multinoiseParams)
 	end
 
 	return instance

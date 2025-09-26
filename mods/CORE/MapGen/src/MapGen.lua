@@ -11,8 +11,8 @@ local id_air = id("air")
 
 -- --- End Node's IDs
 
-local modInfo     = Mod.getInfo()
-local require     = modInfo.require
+local modInfo = Mod.getInfo()
+local require = modInfo.require
 
 ---@type MapGen.Layer
 local Layer = require("MapGen.Layer")
@@ -81,9 +81,9 @@ end
 ---@param layerName     string
 ---@param minPos        table
 ---@param maxPos        table
----@param noises        table
+---@param multinoise        table
 ---@param regionIs2D    boolean?
-function MapGen:RegisterRegion(layerName, minPos, maxPos, noises, regionIs2D)
+function MapGen:RegisterRegion(layerName, minPos, maxPos, multinoise, regionIs2D)
 	---@type MapGen.Layer
 	local layer = self.layersByName[layerName]
 
@@ -97,7 +97,7 @@ function MapGen:RegisterRegion(layerName, minPos, maxPos, noises, regionIs2D)
 	end
 
 	---@type MapGen.Region
-	local region = Region:new(minPos, maxPos, noises)
+	local region = Region:new(minPos, maxPos, multinoise)
 
 	--TODO: реализовать регистрацию допольнительных регионов для сглаживания шумов
 
@@ -128,8 +128,8 @@ function MapGen:landscapeGeneration(data, area, x, y, z)
 	-- The height noise values ​​of all regions that a node is part of are added together...
 	---@param region  MapGen.Region
 	for _, region in ipairs(regions) do
-		if region.noises.landscapeNoise ~= nil then
-			local noise = core.get_value_noise(region.noises.landscapeNoise)
+		if region.multinoise.landscapeNoise ~= nil then
+			local noise = core.get_value_noise(region.multinoise.landscapeNoise)
 			noiseHeightValue = noiseHeightValue + noise:get_2d({x = x, y = z})
 
 		end

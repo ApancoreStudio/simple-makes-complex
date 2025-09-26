@@ -1,13 +1,13 @@
----@class Factory
+---@class ItemFactory
 ---@field defaultDef  Item.ItemDefinition | Node.NodeDefinition
 ---@field itemClass       Item | Node
-local Factory = {}
+local ItemFactory = {}
 
 ---@param itemClass       Item | Node
----@param defaultDef  Item.ItemDefinition | Node.NodeDefinition  Parameters that all nodes registered with this factory must have.
----@return                Factory
-function Factory:new(itemClass, defaultDef)
-	---@type Factory
+---@param defaultDef  Item.ItemDefinition | Node.NodeDefinition  Parameters that all nodes registered with this ItemFactory must have.
+---@return                ItemFactory
+function ItemFactory:new(itemClass, defaultDef)
+	---@type ItemFactory
 	local instance = setmetatable({
 		defaultDef = defaultDef,
 		itemClass  = itemClass,
@@ -24,7 +24,7 @@ end
 
 ---@param itemDefs    Item.ItemDefinition[] | Node.NodeDefinition[]  List of nodes with parameters unique to them.
 ---@param addModName  boolean  Whether to add the mod name to the settings.name. Default: `true`
-function Factory:registerItems(itemDefs, addModName)
+function ItemFactory:registerItems(itemDefs, addModName)
 	if addModName == nil then
 		addModName = true
 	end
@@ -44,9 +44,16 @@ function Factory:registerItems(itemDefs, addModName)
 	end
 end
 
+---The alias `table.merge` for EmmyLua
+---@type fun(...):(Node.NodeDefinition)
+local defMerge = function(...)
+	return table.merge(...)
+end
+
+
 ---@param shortNodeDefs  table  Table of the form `{ {name, title, description, tiles},  {name, title, description, tiles}, ...}`
 ---@param addModName     boolean?  Whether to add the mod name to the settings.name. Default: `true`
-function Factory:registerNodesByShortDef(shortNodeDefs, addModName)
+function ItemFactory:registerNodesByShortDef(shortNodeDefs, addModName)
 	if addModName == nil then
 		addModName = true
 	end
@@ -74,4 +81,4 @@ function Factory:registerNodesByShortDef(shortNodeDefs, addModName)
 	end
 end
 
-return Factory
+return ItemFactory

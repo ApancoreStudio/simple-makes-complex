@@ -105,15 +105,15 @@ function Item:getExtended(defaultDef)
 	return ChildClass
 end
 
----Returns an instance of the `Factory` class that can be used to mass-register identical items.
+---Returns an instance of the `ItemFactory` class that can be used to mass-register identical items.
 ---@param defaultDef?  Item.ItemDefinition
----@return            Factory
+---@return            ItemFactory
 function Item:getFactory(defaultDef)
 	if defaultDef == nil then
 		defaultDef = self.defaultDef
 	end
 
-	local instance = Core.Factory():new(self, defaultDef)
+	local instance = Core.ItemFactory():new(self, defaultDef)
 
 	return instance
 end

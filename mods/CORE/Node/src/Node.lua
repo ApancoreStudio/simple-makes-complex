@@ -30,16 +30,16 @@ function Node:getExtended(defaultDef)
 	return ChildClass
 end
 
----Returns an instance of the `Factory` class that can be used to mass-register identical items.
+---Returns an instance of the `ItemFactory` class that can be used to mass-register identical items.
 ---@param defaultDef?  Node.NodeDefinition
----@return            Factory
+---@return            ItemFactory
 function Node:getFactory(defaultDef)
 	if defaultDef == nil then
 		defaultDef = self.defaultDef
 	end
 
-	---@type Factory
-	local instance = Core.Factory:getModClassInstance(self, defaultDef)
+	---@type ItemFactory
+	local instance = Core.ItemFactory:getModClassInstance(self, defaultDef)
 
 	return instance
 end

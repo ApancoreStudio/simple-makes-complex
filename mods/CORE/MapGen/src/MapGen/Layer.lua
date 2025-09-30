@@ -42,13 +42,13 @@ function Layer:getRegionsByPos(xPos, yPos, zPos)
 	for _, region in  ipairs(self.regionsList) do
 
 		if  (
-			xPos >= region.minPos.x and
-			yPos >= region.minPos.y and
-			zPos >= region.minPos.z) and
+			xPos >= region:getMinPos().x and
+			yPos >= region:getMinPos().y and
+			zPos >= region:getMinPos().z) and
 			(
-			xPos <= region.maxPos.x and
-			yPos <= region.maxPos.y and
-			zPos <= region.maxPos.z
+			xPos <= region:getMaxPos().x and
+			yPos <= region:getMaxPos().y and
+			zPos <= region:getMaxPos().z
 			) then
 				table.insert(regions, region)
 		end

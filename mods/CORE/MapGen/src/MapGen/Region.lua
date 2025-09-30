@@ -1,6 +1,5 @@
 -- TODO: replace `table` with `vector` for minPos and maxPos
 ---@class MapGen.Region
-
 local Region = {}
 
 ---@param multinoiseParams  MapGen.Region.MultinoiseParams -- ??? TODO: should be it's own class in EmmyLua
@@ -30,6 +29,7 @@ function Region:new(minPos, maxPos, multinoiseParams)
 
 	local instance = setmetatable({}, {__index = self})
 
+	---@return  {x:number, y:number, z:number}
 	function instance:getMinPos()
 		return _minPos
 	end
@@ -39,6 +39,8 @@ function Region:new(minPos, maxPos, multinoiseParams)
 	function instance:getMultinoiseParams()
 		return  _multinoiseParams
 	end
+
+	---@return MapGen.Region.Multinoise
 	function instance:getMultinoise()
 		return _multinoise
 	end

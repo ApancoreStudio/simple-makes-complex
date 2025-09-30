@@ -21,10 +21,12 @@ local Layer = require("MapGen.Layer")
 local Region = require("MapGen.Region")
 
 ---@class MapGen
----@field layersByName  table
----@field layersList    table
----@field isRunning     boolean  A static field that guarantees that only one instance of the `MapGen` class will work.
+---@field layersByName           table
+---@field layersList             table
+---@field multinoiseInitialized  boolean  Is the fractal noise of the regions initialized? This is necessary for a one-time noise initialization.
+---@field isRunning              boolean  A static field that guarantees that only one instance of the `MapGen` class will work.
 local MapGen = {
+	multinoiseInitialized = false,
 	isRunning = false,
 }
 
@@ -99,16 +101,30 @@ function MapGen:RegisterRegion(layerName, minPos, maxPos, multinoise, regionIs2D
 	---@type MapGen.Region
 	local region = Region:new(minPos, maxPos, multinoise)
 
-	--TODO: реализовать регистрацию допольнительных регионов для сглаживания шумов
+	--TODO: реализовать регистрацию дополнительных регионов для сглаживания шумов
 
 	layer:addRegion(region)
 end
 
-function MapGen:landscapeGeneration(data, area, x, y, z)
-	local index = area:index(x, y, z)
+---Initialize region noise. This should be called after the map object is loaded.
+function MapGen:initRegionsMultinoise()
+	---@param layer  MapGen.Layer
+	for _, layer in ipairs(self.layersList) do
+
+		---@param region MapGen.Region
+		for _, region in ipairs(layer.regionsList) do
+			region:initMultinoise()
+		end
+
+	end
+
+	self.multinoiseInitialized = true
+end
+
+local function landscapeGeneration(mapGenerator, data, index, x, y, z)
 
 	-- If generation occurs outside the layers, then a void is generated
-	local layer = self:getLayerByHeight(y)
+	local layer = mapGenerator:getLayerByHeight(y)
 	if layer == nil then
 		data[index] = id_air
 
@@ -128,11 +144,9 @@ function MapGen:landscapeGeneration(data, area, x, y, z)
 	-- The height noise values ​​of all regions that a node is part of are added together...
 	---@param region  MapGen.Region
 	for _, region in ipairs(regions) do
-		if region.multinoise.landscapeNoise ~= nil then
-			local noise = core.get_value_noise(region.multinoise.landscapeNoise)
-			noiseHeightValue = noiseHeightValue + noise:get_2d({x = x, y = z})
+		local noise = region:getMultinoise().landscapeNoise
 
-		end
+		noiseHeightValue = noiseHeightValue + noise:get_2d({x = x, y = z})
 	end
 
 	-- ...And the average height is found: this provides smoothing
@@ -141,11 +155,12 @@ function MapGen:landscapeGeneration(data, area, x, y, z)
 	if y > noiseHeightValue then
 		data[index] = id_air
 	else
-		data[index] = core.get_content_id("rocks:tauitite") -- TODO: прописать заполнение камнем
+		data[index] = core.get_content_id("rocks:sylite") -- TODO: прописать заполнение камнем
 	end
+
 end
 
-function MapGen:postprocessGeneration(data, area, x, y, z)
+local function postprocessGeneration(mapGenerator, data, area, x, y, z)
 	local index = area:index(x, y, z)
 
 	-- TODO: генерация покрытия
@@ -159,19 +174,25 @@ end
 function MapGen:onMapGenerated(minPos, maxPos, blockseed)
 	-- We obtain a generation area for further manipulations
 	local voxelManip, eMin, eMax = core.get_mapgen_object("voxelmanip")
+
+	if not self.multinoiseInitialized then
+		self:initRegionsMultinoise()
+	end
+
 	local data = voxelManip:get_data()
-	local area = VoxelArea:new({MinEdge = eMin, MaxEdge = eMax})
 	-- local param2_data = voxelManip:get_param2_data()
+	local area = VoxelArea:new({MinEdge = eMin, MaxEdge = eMax})
 
 	-- Initial generation: landscape
 	for z = minPos.z, maxPos.z do
 	for y = minPos.y, maxPos.y do
-	for x = minPos.x, maxPos.x do
-		self:landscapeGeneration(data, area, x, y, z)
-		--core.handle_async(self.landscapeGeneration, callback, self, data, area, x, y, z)
-		-- вероятно благодаря 2D шуму высоты генерацию ландшафта можно оптимизировать
-		-- до генерации столбами (т. к. по x, z можно найти требуемый y)
-	end
+		local index = area:index(minPos.x, y, z)
+
+		for x = minPos.x, maxPos.x do
+			landscapeGeneration(self, data, index, x, y, z)
+
+			index = index + 1
+		end
 	end
 	end
 
@@ -179,7 +200,7 @@ function MapGen:onMapGenerated(minPos, maxPos, blockseed)
 	--[[for z = minPos.z, maxPos.z do
 	for y = minPos.y, maxPos.y do
 	for x = minPos.x, maxPos.x do
-		MapGen:postprocessGeneration(data, area, x, y, z)
+		postprocessGeneration(mapGenerator, data, area, x, y, z)
 	end
 	end
 	end --]]
@@ -189,6 +210,7 @@ function MapGen:onMapGenerated(minPos, maxPos, blockseed)
 	-- voxelManip:set_param2_data(param2_data)
 	voxelManip:update_liquids()
 	voxelManip:calc_lighting()
+
 	voxelManip:write_to_map()
 end
 

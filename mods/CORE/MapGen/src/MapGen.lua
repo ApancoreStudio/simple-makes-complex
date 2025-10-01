@@ -11,6 +11,20 @@ local id_air = id("air")
 
 -- --- End Node's IDs
 
+-- --- MapGen default moises ---
+local oceanNoise
+
+local oceanNoiseParams = {
+	offset = -30,
+	scale = 10,
+	spread = {x = 100, y = 100, z = 100},
+	seed = 47,
+	octaves = 8,
+	persistence = 0.4,
+	lacunarity = 2,
+}
+-- --- End default noises ---
+
 local modInfo = Mod.getInfo()
 local require = modInfo.require
 
@@ -101,8 +115,6 @@ function MapGen:RegisterRegion(layerName, minPos, maxPos, multinoise, regionIs2D
 	---@type MapGen.Region
 	local region = Region:new(minPos, maxPos, multinoise)
 
-	--TODO: реализовать регистрацию дополнительных регионов для сглаживания шумов
-
 	layer:addRegion(region)
 end
 
@@ -121,6 +133,21 @@ function MapGen:initRegionsMultinoise()
 	self.multinoiseInitialized = true
 end
 
+
+---@return  number
+local function calculateWeight(minPos, maxPos, x, z)
+	--TODO: написать поддержку коэффициента, чтобы функция была не линейной и отключение учитывание веса
+	local centerX = (minPos.x + maxPos.x) / 2
+	local centerZ = (minPos.z + maxPos.z) / 2
+
+	local distX = 1 - math.abs(x - centerX) / (math.abs((maxPos.x - minPos.x)) / 2)
+	local distZ = 1 - math.abs(z - centerZ) / (math.abs((maxPos.z - minPos.z)) / 2)
+
+	local weight = math.min(distX, distZ)
+
+	return weight
+end
+
 local function landscapeGeneration(mapGenerator, data, index, x, y, z)
 
 	-- If generation occurs outside the layers, then a void is generated
@@ -131,32 +158,33 @@ local function landscapeGeneration(mapGenerator, data, index, x, y, z)
 		return
 	end
 
-	-- If generation occurs outside the regions, then a ocean is generated
-	local regions = layer:getRegionsByPos(x, y, z)
-	if table.is_empty(regions) then
-		-- TODO: прописать генерацию океана
-
-		return
+	-- The ocean floor height is used as the default value.
+	if oceanNoise == nil then
+		oceanNoise = core.get_value_noise(oceanNoiseParams)
 	end
 
-	local noiseHeightValue = 0
+	local noiseHeightValue = oceanNoise:get_2d({x = x, y = z})
 
-	-- The height noise values ​​of all regions that a node is part of are added together...
+	local regions = layer:getRegionsByPos(x, y, z)
+
+	-- The height noise values ​​of all regions that a node is part of are added together.
 	---@param region  MapGen.Region
 	for _, region in ipairs(regions) do
 		local noise = region:getMultinoise().landscapeNoise
 
-		noiseHeightValue = noiseHeightValue + noise:get_2d({x = x, y = z})
+		-- The further a point is from the center of a region, the less noise affects it.
+		local weight = calculateWeight(region:getMinPos(), region:getMaxPos(), x, z)
+
+		noiseHeightValue = noiseHeightValue + ( noise:get_2d({x = x, y = z}) * weight )
 	end
 
-	-- ...And the average height is found: this provides smoothing
-	noiseHeightValue = mathCeil(noiseHeightValue / #regions)
-
-	if y > noiseHeightValue then
+	if y > noiseHeightValue and y >= 0 then
 		data[index] = id_air
+	elseif y < noiseHeightValue then
+		data[index] = core.get_content_id("rocks:falmyte")  -- TODO: сделать генерацию разных камней
 	else
-		data[index] = core.get_content_id("rocks:sylite") -- TODO: прописать заполнение камнем
-	end
+		data[index] = core.get_content_id("liquids:water_source")
+end
 
 end
 

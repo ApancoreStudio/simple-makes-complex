@@ -18,12 +18,17 @@ end
 ---@param  minPos            table
 ---@param  maxPos            table
 ---@param  multinoiseParams  MapGen.Region.MultinoiseParams
+---@param  weightFactor      number
 ---@return MapGen.Region
-function Region:new(minPos, maxPos, multinoiseParams)
+function Region:new(minPos, maxPos, multinoiseParams, weightFactor)
 
 	local _minPos = minPos
 	local _maxPos = maxPos
 	local _multinoiseParams = multinoiseParams
+
+	if weightFactor < 0 then
+		weightFactor = 1
+	end
 
 	local _multinoise = {}
 
@@ -47,6 +52,10 @@ function Region:new(minPos, maxPos, multinoiseParams)
 
 	function instance:initMultinoise()
 		_multinoise = multinoiseParamsToMultinoise(_multinoiseParams)
+	end
+
+	function instance.getWeightFactor()
+		return weightFactor
 	end
 
 	return instance

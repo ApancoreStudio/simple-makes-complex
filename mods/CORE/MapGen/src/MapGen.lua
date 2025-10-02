@@ -1,15 +1,5 @@
-local mathCeil,  id
-	= math.ceil, core.get_content_id
-
--- --- Node's IDs for generation ---
--- Specials
-local id_air = id("air")
-
--- Stones
-
--- Liquids
-
--- --- End Node's IDs
+local mathCeil,  mathAbs
+	= math.ceil, math.abs
 
 -- --- MapGen default moises ---
 local oceanNoise
@@ -39,16 +29,19 @@ local Region = require("MapGen.Region")
 ---@field layersList             table
 ---@field multinoiseInitialized  boolean  Is the fractal noise of the regions initialized? This is necessary for a one-time noise initialization.
 ---@field isRunning              boolean  A static field that guarantees that only one instance of the `MapGen` class will work.
+---@field nodeIDs                table<string, string>
 local MapGen = {
 	multinoiseInitialized = false,
 	isRunning = false,
 }
 
+---@param nodeIDs  table<string, string>
 ---@return MapGen
-function MapGen:new()
+function MapGen:new(nodeIDs)
 	local instance = setmetatable({
 		layersByName = {},
-		layersList = {},
+		layersList   = {},
+		nodeIDs      = nodeIDs,
 		--registeredRegions = {},
 	}, {__index = self})
 
@@ -97,9 +90,10 @@ end
 ---@param layerName     string
 ---@param minPos        table
 ---@param maxPos        table
----@param multinoise        table
+---@param multinoise    table
 ---@param regionIs2D    boolean?
-function MapGen:RegisterRegion(layerName, minPos, maxPos, multinoise, regionIs2D)
+---@param weightFactor  number?
+function MapGen:RegisterRegion(layerName, minPos, maxPos, multinoise, regionIs2D, weightFactor)
 	---@type MapGen.Layer
 	local layer = self.layersByName[layerName]
 
@@ -112,8 +106,12 @@ function MapGen:RegisterRegion(layerName, minPos, maxPos, multinoise, regionIs2D
 		maxPos.y = layer.maxY
 	end
 
+	if weightFactor == nil then
+		weightFactor = 1
+	end
+
 	---@type MapGen.Region
-	local region = Region:new(minPos, maxPos, multinoise)
+	local region = Region:new(minPos, maxPos, multinoise, weightFactor)
 
 	layer:addRegion(region)
 end
@@ -135,25 +133,41 @@ end
 
 
 ---@return  number
-local function calculateWeight(minPos, maxPos, x, z)
-	--TODO: написать поддержку коэффициента, чтобы функция была не линейной и отключение учитывание веса
+local function calculateWeight(minPos, maxPos, x, z, weightFactor)
+	if weightFactor == 0 then
+		return 1
+	end
+
 	local centerX = (minPos.x + maxPos.x) / 2
 	local centerZ = (minPos.z + maxPos.z) / 2
 
-	local distX = 1 - math.abs(x - centerX) / (math.abs((maxPos.x - minPos.x)) / 2)
-	local distZ = 1 - math.abs(z - centerZ) / (math.abs((maxPos.z - minPos.z)) / 2)
+	local distX = 1 - (mathAbs(x - centerX) / (mathAbs((maxPos.x - minPos.x)) / 2))^weightFactor
+	local distZ = 1 - (mathAbs(z - centerZ) / (mathAbs((maxPos.z - minPos.z)) / 2))^weightFactor
 
+	---@type number
 	local weight = math.min(distX, distZ)
 
 	return weight
 end
 
-local function landscapeGeneration(mapGenerator, data, index, x, y, z)
+local function generateNode(mapGenerator, hight, data, index, x, y, z)
+	local ids =  mapGenerator.nodeIDs
 
+	if y > hight and y >= 0 then
+		data[index] = ids.air
+	elseif y < hight then
+		data[index] = ids.sylite -- TODO: сделать генерацию разных камней
+	else
+		data[index] = ids.water
+	end
+end
+
+---@param mapGenerator  MapGen
+local function generatorHandler(mapGenerator, data, index, x, y, z)
 	-- If generation occurs outside the layers, then a void is generated
 	local layer = mapGenerator:getLayerByHeight(y)
 	if layer == nil then
-		data[index] = id_air
+		data[index] = mapGenerator.nodeIDs.air
 
 		return
 	end
@@ -173,27 +187,12 @@ local function landscapeGeneration(mapGenerator, data, index, x, y, z)
 		local noise = region:getMultinoise().landscapeNoise
 
 		-- The further a point is from the center of a region, the less noise affects it.
-		local weight = calculateWeight(region:getMinPos(), region:getMaxPos(), x, z)
+		local weight = calculateWeight(region:getMinPos(), region:getMaxPos(), x, z, region.getWeightFactor())
 
 		noiseHeightValue = noiseHeightValue + ( noise:get_2d({x = x, y = z}) * weight )
 	end
 
-	if y > noiseHeightValue and y >= 0 then
-		data[index] = id_air
-	elseif y < noiseHeightValue then
-		data[index] = core.get_content_id("rocks:falmyte")  -- TODO: сделать генерацию разных камней
-	else
-		data[index] = core.get_content_id("liquids:water_source")
-end
-
-end
-
-local function postprocessGeneration(mapGenerator, data, area, x, y, z)
-	local index = area:index(x, y, z)
-
-	-- TODO: генерация покрытия
-
-	-- TODO: генерация растительности
+	generateNode(mapGenerator, noiseHeightValue, data, index, x, y, z)
 end
 
 ---@param minPos      table
@@ -217,21 +216,12 @@ function MapGen:onMapGenerated(minPos, maxPos, blockseed)
 		local index = area:index(minPos.x, y, z)
 
 		for x = minPos.x, maxPos.x do
-			landscapeGeneration(self, data, index, x, y, z)
+			generatorHandler(self, data, index, x, y, z)
 
 			index = index + 1
 		end
 	end
 	end
-
-	-- Post-processing: adding cover and vegetation
-	--[[for z = minPos.z, maxPos.z do
-	for y = minPos.y, maxPos.y do
-	for x = minPos.x, maxPos.x do
-		postprocessGeneration(mapGenerator, data, area, x, y, z)
-	end
-	end
-	end --]]
 
 	-- We make changes back to LVM and recalculate light & liquids
 	voxelManip:set_data(data)

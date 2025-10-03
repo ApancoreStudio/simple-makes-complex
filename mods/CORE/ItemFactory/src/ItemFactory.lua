@@ -1,11 +1,11 @@
 ---@class ItemFactory
----@field defaultDef  Item.ItemDefinition | Node.NodeDefinition
----@field itemClass       Item | Node
+---@field defaultDef  Item.ItemDefinition|Node.NodeDefinition
+---@field itemClass   Item|Node
 local ItemFactory = {}
 
----@param itemClass       Item | Node
----@param defaultDef  Item.ItemDefinition | Node.NodeDefinition  Parameters that all nodes registered with this ItemFactory must have.
----@return                ItemFactory
+---@param itemClass   Item|Node
+---@param defaultDef  Item.ItemDefinition|Node.NodeDefinition  Parameters that all nodes registered with this ItemFactory must have.
+---@return            ItemFactory
 function ItemFactory:new(itemClass, defaultDef)
 	---@type ItemFactory
 	local instance = setmetatable({
@@ -22,7 +22,7 @@ local defMerge = function(...)
 	return table.merge(...)
 end
 
----@param itemDefs    Item.ItemDefinition[] | Node.NodeDefinition[]  List of nodes with parameters unique to them.
+---@param itemDefs    Item.ItemDefinition[]|Node.NodeDefinition[]  List of nodes with parameters unique to them.
 ---@param addModName  boolean  Whether to add the mod name to the settings.name. Default: `true`
 function ItemFactory:registerItems(itemDefs, addModName)
 	if addModName == nil then
@@ -50,7 +50,6 @@ local defMerge = function(...)
 	return table.merge(...)
 end
 
-
 ---@param shortNodeDefs  table  Table of the form `{ {name, title, description, tiles},  {name, title, description, tiles}, ...}`
 ---@param addModName     boolean?  Whether to add the mod name to the settings.name. Default: `true`
 function ItemFactory:registerNodesByShortDef(shortNodeDefs, addModName)
@@ -70,6 +69,7 @@ function ItemFactory:registerNodesByShortDef(shortNodeDefs, addModName)
 				tiles = shortNodeDef[4]
 			}
 		}
+
 		nodeDef = defMerge(nodeDef, self.defaultDef, true)
 
 		if addModName then

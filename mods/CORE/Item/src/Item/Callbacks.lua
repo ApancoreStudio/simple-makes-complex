@@ -1,7 +1,7 @@
 ---@class Item.Callbacks
 local Callbacks = {}
 
--- TODO: Вписать вместо `table` более определенные классы: ItemStack, ObjectRef и т.п.
+-- TODO: Разобраться с дубликатами аннотаций полей. Приоритетно брать аннотации из util/ide-helper
 
 ---Called when the 'place' key was pressed with the item in hand
 ---and pointing at a node.

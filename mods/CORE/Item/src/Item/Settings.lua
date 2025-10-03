@@ -1,6 +1,8 @@
 ---@class Item.Settings
 local Settings = {}
 
+-- TODO: Разобраться с дубликатами аннотаций полей. Приоритетно брать аннотации из util/ide-helper
+
 ---Technical name of the item. Must be unique and have the format `mod_name:item_name`
 ---@type string
 Settings.name = ""
@@ -70,7 +72,6 @@ Settings.color = nil
 
 ---Maximum amount of items that can be in a single stack.
 ---The default can be changed by the setting `default_stack_max`.
----TODO: сделать другой стак по умолчанию?
 ---@type number?
 Settings.stack_max = nil
 

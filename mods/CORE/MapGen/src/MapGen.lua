@@ -31,23 +31,24 @@ local Region = require("MapGen.Region")
 ---@field isRunning              boolean  A static field that guarantees that only one instance of the `MapGen` class will work.
 ---@field nodeIDs                table<string, string>
 local MapGen = {
+	layersByName          = {},
+	layersList            = {},
 	multinoiseInitialized = false,
-	isRunning = false,
+	isRunning             = false,
 }
 
 ---@param nodeIDs  table<string, string>
 ---@return MapGen
 function MapGen:new(nodeIDs)
+	---@type MapGen
 	local instance = setmetatable({
-		layersByName = {},
-		layersList   = {},
-		nodeIDs      = nodeIDs,
-		--registeredRegions = {},
+		nodeIDs = nodeIDs,
 	}, {__index = self})
 
 	return instance
 end
 
+---Determines which layer a node belongs to based on its height coordinate.
 ---@param yPos  number
 ---@return      MapGen.Layer?
 function MapGen:getLayerByHeight(yPos)
@@ -66,6 +67,9 @@ function MapGen:getLayerByHeight(yPos)
 	end
 end
 
+---Mark the world area between two heights as a `MapGen.Layer`.
+---
+---Note: layers must not overlap.
 ---@param name  string
 ---@param minY  number
 ---@param maxY  number
@@ -87,12 +91,15 @@ function MapGen:RegisterLayer(name, minY, maxY)
 	end)
 end
 
----@param layerName     string
----@param minPos        table
----@param maxPos        table
----@param multinoise    table
----@param regionIs2D    boolean?
----@param weightFactor  number?
+---Mark a region of the world as a cubic region by two opposite vertices.
+---
+---Regions must be included in layers and may overlap each other.
+---@param layerName     string  The name of the layer in which the new region will be included.
+---@param minPos        vector
+---@param maxPos        vector
+---@param multinoise    table     Noise that will be assigned to the region and that will influence map generation
+---@param regionIs2D    boolean?  If true, the transmitted Y coordinate will be overwritten by the layer boundaries.
+---@param weightFactor  number?   The coefficient by which the reduction in the impact of regional noise on generation will be calculated. If 0, there will be no reduction.
 function MapGen:RegisterRegion(layerName, minPos, maxPos, multinoise, regionIs2D, weightFactor)
 	---@type MapGen.Layer
 	local layer = self.layersByName[layerName]
@@ -105,6 +112,8 @@ function MapGen:RegisterRegion(layerName, minPos, maxPos, multinoise, regionIs2D
 		minPos.y = layer.minY
 		maxPos.y = layer.maxY
 	end
+
+	--TODO: Добавить проверку, что регион не выходит за границы слоя или/и автоматически обрубать регион до слоя
 
 	if weightFactor == nil then
 		weightFactor = 1
@@ -131,9 +140,18 @@ function MapGen:initRegionsMultinoise()
 	self.multinoiseInitialized = true
 end
 
-
----@return  number
-local function calculateWeight(minPos, maxPos, x, z, weightFactor)
+---Calculate the weight for noise based on
+---the distance of the point from the center of the region.
+---
+---If the `weightFactor` is `0`, then the region's
+---weight is not calculated and is always equal to `1`.
+---@param minPos        vector
+---@param maxPos        vector
+---@param x             number
+---@param z             number
+---@param weightFactor  number
+---@return              number
+local function calculateWeight2D(minPos, maxPos, x, z, weightFactor)
 	if weightFactor == 0 then
 		return 1
 	end
@@ -187,7 +205,7 @@ local function generatorHandler(mapGenerator, data, index, x, y, z)
 		local noise = region:getMultinoise().landscapeNoise
 
 		-- The further a point is from the center of a region, the less noise affects it.
-		local weight = calculateWeight(region:getMinPos(), region:getMaxPos(), x, z, region.getWeightFactor())
+		local weight = calculateWeight2D(region:getMinPos(), region:getMaxPos(), x, z, region.getWeightFactor())
 
 		noiseHeightValue = noiseHeightValue + ( noise:get_2d({x = x, y = z}) * weight )
 	end
@@ -232,9 +250,12 @@ function MapGen:onMapGenerated(minPos, maxPos, blockseed)
 	voxelManip:write_to_map()
 end
 
+---Run world generation through this mapgen object
+---
+---Note: only one instance of a `MapGen` class can be running.
 function MapGen:run()
 	if MapGen.isRunning then
-		error('Only one instance of a `MapGen` class can be used.')
+		error('Only one instance of a `MapGen` class can be running.')
 	end
 
 	core.register_on_generated(function(...)

@@ -6,7 +6,7 @@ local VisualEnum = Core.Item.require('Item.VisualEnum')
 local Node = Core.Item:getModClassExtended({})
 
 ---@param nodeDef Node.NodeDefinition
----@return Node
+---@return        Node
 function Node:new(nodeDef)
 	nodeDef.settings.visual = VisualEnum.ITEM_3D
 
@@ -20,7 +20,7 @@ end
 ---default parameters that will be added to the node's parameters
 ---when an instance is received.
 ---@param defaultDef  Node.NodeDefinition
----@return Node
+---@return            Node
 function Node:getExtended(defaultDef)
 	---@type Node
 	local ChildClass = Mod:getClassExtended(self, {
@@ -32,7 +32,7 @@ end
 
 ---Returns an instance of the `ItemFactory` class that can be used to mass-register identical items.
 ---@param defaultDef?  Node.NodeDefinition
----@return            ItemFactory
+---@return             ItemFactory
 function Node:getFactory(defaultDef)
 	if defaultDef == nil then
 		defaultDef = self.defaultDef

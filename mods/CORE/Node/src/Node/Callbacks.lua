@@ -1,6 +1,8 @@
 ---@type Item.Callbacks
 local ItemCallbacks = Core.Item.require('Item.Callbacks')
 
+-- TODO: Разобраться с дубликатами аннотаций полей. Приоритетно брать аннотации из util/ide-helper
+
 ---@class Node.Callbacks : Item.Callbacks
 local Callbacks = Mod:getClassExtended(ItemCallbacks, {})
 

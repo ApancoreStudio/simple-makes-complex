@@ -19,22 +19,27 @@ local Item = {
 	}
 }
 
+---The alias `table.merge` for EmmyLua
+---@type fun(...):(NodeDefinition|ItemDefinition)
+local defMerge = function(...)
+	return table.merge(...)
+end
+
 ---@param itemDef  Item.ItemDefinition
+---@return         NodeDefinition|ItemDefinition
 local function itemDefToLuantiDef(itemDef)
-	-- TODO: удалить следующую строчку, когда подключим ide-helper от Алека
-	---@diagnostic disable-next-line: undefined-field
 	itemDef = table.copy(itemDef)
 	local s = itemDef.settings
 	local c = itemDef.callbacks
 	local description = s.title .. "\n" .. s.description
 	s.title, s.description = nil, description
 
-	local luantiDef = table.merge(s, c)
+	local luantiDef = defMerge(s, c)
 
 	return luantiDef
 end
 
----@param luantiDef  table
+---@param luantiDef  NodeDefinition|ItemDefinition
 local function register3dItem(luantiDef)
 	local ld = luantiDef
 	local name = ld.name
@@ -42,7 +47,7 @@ local function register3dItem(luantiDef)
 	core.register_node(':'..name, luantiDef)
 end
 
----@param luantiDef  table
+---@param luantiDef  ItemDefinition
 local function registerFlatItem(luantiDef)
 	local ld = luantiDef
 	local name = ld.name
@@ -50,14 +55,14 @@ local function registerFlatItem(luantiDef)
 	core.register_craftitem(':'..name, luantiDef)
 end
 
----The aleas `table.merge` for EmmyLua
+---The alias `table.merge` for EmmyLua
 ---@type fun(...):(Item.ItemDefinition)
 local defMerge = function(...)
 	return table.merge(...)
 end
 
----@param itemDef Item.ItemDefinition
----@return Item
+---@param itemDef  Item.ItemDefinition
+---@return         Item
 function Item:new(itemDef)
 	---Adding default parameters
 	itemDef = defMerge(itemDef, self.defaultDef, true)
@@ -81,13 +86,13 @@ function Item:new(itemDef)
 		registerFlatItem(luantiDef)
 	end
 
-	---@return string
 	function instance:getVisual()
 		return visual
 	end
 
 	instance.itemDef = itemDef
 	instance.luantiDef = luantiDef
+
 	return instance
 end
 
@@ -95,7 +100,7 @@ end
 ---default parameters that will be added to the item's parameters
 ---when an instance is received.
 ---@param defaultDef  Item.ItemDefinition
----@return Item
+---@return            Item
 function Item:getExtended(defaultDef)
 	---@type Item
 	local ChildClass = Mod:getClassExtended(self, {
@@ -107,12 +112,13 @@ end
 
 ---Returns an instance of the `ItemFactory` class that can be used to mass-register identical items.
 ---@param defaultDef?  Item.ItemDefinition
----@return            ItemFactory
+---@return             ItemFactory
 function Item:getFactory(defaultDef)
 	if defaultDef == nil then
 		defaultDef = self.defaultDef
 	end
 
+	---@type ItemFactory
 	local instance = Core.ItemFactory():new(self, defaultDef)
 
 	return instance

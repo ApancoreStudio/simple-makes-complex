@@ -1,9 +1,10 @@
 ---For EmmyLua only
 
+ -- TODO: Когда в хелпер добавятся аннотации шумов, надо будет удалить этот класс и заменить его на хелперский
 ---@class MapGen.Region.NoiseParams
 ---@field offset       number
 ---@field scale        number
----@field spread       vector -- TODO: describe vector class from Luanti (push Alek)
+---@field spread       vector
 ---@field seed         number
 ---@field octaves      number
 ---@field persistence  number

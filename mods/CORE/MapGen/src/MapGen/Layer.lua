@@ -2,7 +2,7 @@
 ---@field name         string
 ---@field minY         number
 ---@field maxY         number
----@field regionsList      table
+---@field regionsList  table
 local Layer = {
 	regionsList = {}
 }
@@ -30,12 +30,14 @@ end
 ---@param xPos  number
 ---@param yPos  number
 ---@param zPos  number
----@return      table
+---@return      MapGen.Region[]
 function Layer:getRegionsByPos(xPos, yPos, zPos)
-	--- TODO: возможно здесь получится сделать более оптимизированный алгоритм
-	--- учитывая тот факт, что эта функция вызывается для каждой ноды в on_generated
-	--- и может быть даже не один раз
-	--- Можно подумать над тем, чтобы использовать сортированный список
+	-- TODO: возможно здесь получится сделать более оптимизированный алгоритм
+	-- учитывая тот факт, что эта функция вызывается для каждой ноды в on_generated
+	-- и может быть даже не один раз
+	-- Можно подумать над тем, чтобы использовать сортированный список
+
+	---@type MapGen.Region[]
 	local regions = {}
 
 	---@param region  MapGen.Region

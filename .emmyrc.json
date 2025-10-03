@@ -90,5 +90,8 @@
   },
   "codeAction": {
     "insertSpace": false
-  }
+  },
+  "workspace.library": [
+    "util/ide-helper"
+  ]
 }

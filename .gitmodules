@@ -2,3 +2,6 @@
 	path = mods/API/Utf8
 	url = https://github.com/ApancoreStudio/utf8_api.git
 	branch = main
+[submodule "util/ide-helper"]
+	path = util/ide-helper
+	url = https://github.com/Voxrame/luanti-ide-helper.git

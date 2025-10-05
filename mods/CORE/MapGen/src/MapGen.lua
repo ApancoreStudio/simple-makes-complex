@@ -4,10 +4,11 @@ local mathCeil,  mathAbs
 -- --- MapGen default moises ---
 local oceanNoise
 
+---@type NoiseParams
 local oceanNoiseParams = {
 	offset = -30,
 	scale = 10,
-	spread = {x = 100, y = 100, z = 100},
+	spread = vector.new(100, 100, 100),
 	seed = 47,
 	octaves = 8,
 	persistence = 0.4,
@@ -204,10 +205,12 @@ local function generatorHandler(mapGenerator, data, index, x, y, z)
 	for _, region in ipairs(regions) do
 		local noise = region:getMultinoise().landscapeNoise
 
+		if noise ~= nil then
 		-- The further a point is from the center of a region, the less noise affects it.
-		local weight = calculateWeight2D(region:getMinPos(), region:getMaxPos(), x, z, region.getWeightFactor())
+			local weight = calculateWeight2D(region:getMinPos(), region:getMaxPos(), x, z, region.getWeightFactor())
 
-		noiseHeightValue = noiseHeightValue + ( noise:get_2d({x = x, y = z}) * weight )
+			noiseHeightValue = noiseHeightValue + ( noise:get_2d(vector.new(x, z, 0)) * weight )
+		end
 	end
 
 	generateNode(mapGenerator, noiseHeightValue, data, index, x, y, z)

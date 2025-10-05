@@ -26,7 +26,7 @@ Settings.visual = ""
 ---`key` = name, `value` = rating; `rating` = number.
 ---
 ---If rating not applicable, use 1.
----@type table?
+---@type table<string,number>?
 Settings.groups = nil
 
 
@@ -52,7 +52,7 @@ Settings.wield_image = nil
 Settings.wield_overlay = nil
 
 ---Scale for the item when held in hand.
----@type table?
+---@type Position?
 Settings.wield_scale = nil
 
 
@@ -67,7 +67,7 @@ Settings.palette = nil
 
 ---Color the item is colorized with. The palette overrides this.
 ---It is a colorspec.
----@type string?
+---@type string|ColorSpec|nil
 Settings.color = nil
 
 ---Maximum amount of items that can be in a single stack.
@@ -154,8 +154,7 @@ Settings.node_dig_prediction = nil
 ---* * The behavior of "user" may change in the future.
 ---The default value is "user".
 ---
----TODO: сделать или подтянуть из какого-нибудь helpers тип этой таблицы
----@type table?
+---@type table<string,SimpleSoundSpec>?
 Settings.touch_interaction = nil
 
 
@@ -163,8 +162,7 @@ Settings.touch_interaction = nil
 ---Definition of item sounds to be played at various events.
 ---All fields in this table are optional.
 ---
----TODO: сделать или подтянуть из какого-нибудь helpers тип этой таблицы
----@type table?
+---@type table<string,SimpleSoundSpec>?
 Settings.sound = nil
 
 

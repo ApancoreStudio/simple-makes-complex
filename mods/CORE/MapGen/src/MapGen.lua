@@ -1,7 +1,8 @@
-local mathCeil,  mathAbs
-	= math.ceil, math.abs
+local mathCeil,  mathAbs,  mathRound,  mathMin
+	= math.ceil, math.abs, math.round, math.min
 
 -- --- MapGen default moises ---
+---@type ValueNoise
 local oceanNoise
 
 ---@type NoiseParams
@@ -14,6 +15,21 @@ local oceanNoiseParams = {
 	persistence = 0.4,
 	lacunarity = 2,
 }
+
+---@type ValueNoise
+local rocksNoise
+
+---@type NoiseParams
+local rocksNoiseParams ={
+	offset = 4,
+	scale = 2,
+	spread = {x = 30, y = 30, z = 30},
+	seed = 47,
+	octaves = 3,
+	persistence = 0.5,
+	lacunarity = 4,
+}
+
 -- --- End default noises ---
 
 local modInfo = Mod.getInfo()
@@ -164,9 +180,35 @@ local function calculateWeight2D(minPos, maxPos, x, z, weightFactor)
 	local distZ = 1 - (mathAbs(z - centerZ) / (mathAbs((maxPos.z - minPos.z)) / 2))^weightFactor
 
 	---@type number
-	local weight = math.min(distX, distZ)
+	local weight = mathMin(distX, distZ)
 
 	return weight
+end
+
+local function generateRock(ids, data, index, x, y, z)
+
+	if rocksNoise == nil then
+		rocksNoise = core.get_value_noise(rocksNoiseParams)
+	end
+
+	local noiseRocksValue = mathRound(rocksNoise:get_3d({x = x, y = y, z = z}))
+	if     noiseRocksValue == 1 then
+		data[index] = ids.malachite
+	elseif noiseRocksValue == 2 then
+		data[index] = ids.hapcoryte
+	elseif noiseRocksValue == 3 then
+		data[index] = ids.iyellite
+	elseif noiseRocksValue == 4 then
+		data[index] = ids.sylite
+	elseif noiseRocksValue == 5 then
+		data[index] = ids.tauitite
+	elseif noiseRocksValue == 6 then
+		data[index] = ids.falmyte
+	elseif noiseRocksValue == 7 then
+		data[index] = ids.burcite
+	elseif noiseRocksValue == 8 then
+		data[index] = ids.felhor
+	end
 end
 
 local function generateNode(mapGenerator, hight, data, index, x, y, z)
@@ -175,7 +217,7 @@ local function generateNode(mapGenerator, hight, data, index, x, y, z)
 	if y > hight and y >= 0 then
 		data[index] = ids.air
 	elseif y < hight then
-		data[index] = ids.sylite -- TODO: сделать генерацию разных камней
+		generateRock(ids, data, index, x, y, z)
 	else
 		data[index] = ids.water
 	end

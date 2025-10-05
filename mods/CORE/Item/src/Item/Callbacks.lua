@@ -10,10 +10,8 @@ local Callbacks = {}
 ---The placer may be any ObjectRef or nil.
 ---
 ---default: core.item_place
----@type nil | fun(itemstack : table, placer : table, pointed_thing : table):table?
-Callbacks.on_place = function(itemstack, placer, pointed_thing)
-	return core.item_place(itemstack, placer, pointed_thing)
-end
+---@type (fun(itemstack:ItemStack, placer:Player|ObjectRef|nil, pointed_thing:pointed_thing):ItemStack|nil, Position|vector|nil)?
+Callbacks.on_place = core.item_place
 
 ---Same as on_place but called when not pointing at a node.
 ---Function must return either nil if inventory shall not be modified,
@@ -21,19 +19,15 @@ end
 ---The user may be any ObjectRef or nil.
 ---
 ---default: core.item_secondary_use
----@type nil | fun(itemstack : table, user : table, pointed_thing : table):table?
-Callbacks.on_secondary_use = function(itemstack, user, pointed_thing)
-	return core.item_secondary_use(itemstack, user, pointed_thing)
-end
+---@type fun(itemstack:ItemStack, user:Player|ObjectRef|nil, pointed_thing:pointed_thing)?
+Callbacks.on_secondary_use = nil
 
 ---Shall drop item and return the leftover itemstack.
 ---The dropper may be any ObjectRef or nil.
 ---
 ---default: core.item_drop
----@type nil | fun(itemstack : table, dropper : table, pos : table):table
-Callbacks.on_drop = function(itemstack, dropper, pos)
-	return core.item_drop(itemstack, dropper, pos)
-end
+---@type (fun(itemstack:ItemStack|ItemStackString, dropper:Player|ObjectRef|nil, pos:Position):ItemStack)?
+Callbacks.on_drop = core.item_drop
 
 ---Called when a dropped item is punched by a player.
 ---Shall pick-up the item and return the leftover itemstack or nil to not
@@ -45,10 +39,8 @@ end
 ---* `pointed_thing`: the dropped item (a `"__builtin:item"` luaentity) as `type="object"` `pointed_thing`
 ---* `time_from_last_punch`: other parameters from `luaentity:on_punch`
 ---* `...`: other parameters from `luaentity:on_punch`
----@type nil | fun(itemstack : table, picker : table, pointed_thing : table?, time_from_last_punch : number?, ... : any?):table?
-Callbacks.on_pickup = function(itemstack, picker, pointed_thing, time_from_last_punch, ...)
-	return core.item_pickup(itemstack, picker, pointed_thing, time_from_last_punch, ...)
-end
+---@type fun(itemstack:ItemStack, picker:Player|ObjectRef|nil, pointed_thing:pointed_thing, time_from_last_punch, ...)?
+Callbacks.on_pickup = core.item_pickup
 
 ---Called when user presses the 'punch/dig' key with the item in hand.
 ---Function must return either nil if inventory shall not be modified,
@@ -60,10 +52,8 @@ end
 ---server.
 ---
 ---default: nil
----@type nil | fun(itemstack : table, user : table, pointed_thing : table):table?
-Callbacks.on_use = function(itemstack, user, pointed_thing)
-
-end
+---@type (fun(itemstack:ItemStack, user:Player|ObjectRef|nil, pointed_thing:pointed_thing):ItemStack|nil)?
+Callbacks.on_use = nil
 
 ---Called after a tool is used to dig a node and will replace the default
 ---tool wear-out handling.
@@ -73,10 +63,7 @@ end
 ---
 ---default: nil
 ---
----TODO: разобраться какие типы должны быть у node и diagrams
----@type nil | fun(itemstack : table, user : table?, node : any?, diagrams : any?):table?
-Callbacks.after_use = function(itemstack, user, node, digparams)
-
-end
+---@type fun(itemstack:ItemStack, user:Player|ObjectRef|nil, node, digparams)?
+Callbacks.after_use = nil
 
 return Callbacks

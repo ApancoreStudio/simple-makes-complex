@@ -23,7 +23,7 @@ local defMerge = function(...)
 end
 
 ---@param itemDefs    Item.ItemDefinition[]|Node.NodeDefinition[]  List of nodes with parameters unique to them.
----@param addModName  boolean  Whether to add the mod name to the settings.name. Default: `true`
+---@param addModName  boolean?  Whether to add the mod name to the settings.name. Default: `true`
 function ItemFactory:registerItems(itemDefs, addModName)
 	if addModName == nil then
 		addModName = true

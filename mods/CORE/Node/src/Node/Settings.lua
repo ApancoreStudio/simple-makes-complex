@@ -16,7 +16,7 @@ Settings.drawtype = nil
 ---node. For torchlike, the image will start at the surface to which the
 ---node "attaches". For the other drawtypes the image will be centered
 ---on the node.
----@type table?
+---@type number?
 Settings.visual_scale = nil
 
 
@@ -24,7 +24,7 @@ Settings.visual_scale = nil
 ---Textures of node: +Y, -Y, +X, -X, +Z, -Z.
 ---
 ---List can be shortened to needed length.
----@type table
+---@type (string[]|TileDefinition[])?
 Settings.tiles = {}
 
 ---Same as `tiles`, but these textures are drawn on top of the base
@@ -32,13 +32,13 @@ Settings.tiles = {}
 ---texture. If the texture name is an empty string, that overlay is not
 ---drawn. Since such tiles are drawn twice, it is not recommended to use
 ---overlays on very common nodes.
----@type table?
+---@type (string[]|TileDefinition[])?
 Settings.overlay_tiles = nil
 
 ---Special textures of node; used rarely.
 ---
 ---List can be shortened to needed length.
----@type table?
+---@type (string[]|TileDefinition[])?
 Settings.special_tiles = nil
 
 
@@ -46,7 +46,7 @@ Settings.special_tiles = nil
 ---The node's original color will be multiplied with this color.
 ---If the node has a palette, then this setting only has an effect in
 ---the inventory and on the wield item.
----@type string?
+---@type (string|ColorSpec)?
 Settings.color = nil
 
 ---Specifies how the texture's alpha channel will be used for rendering.
@@ -329,8 +329,7 @@ Settings.waving = nil
 ---Definition of node sounds to be played at various events.
 ---All fields in this table are optional.
 ---
---- TODO: вписать специализированный тип с аннотациями
----@type table?
+---@type nil|table<string,SimpleSoundSpec|string?>
 Settings.sounds = nil
 
 ---Name of dropped item when dug.

@@ -63,6 +63,7 @@ function Region:new(minPos, maxPos, multinoiseParams, weightFactor)
 
 	function instance:initMultinoise()
 		_multinoise = multinoiseParamsToMultinoise(_multinoiseParams)
+		print(dump(_multinoise))
 	end
 
 	function instance.getWeightFactor()

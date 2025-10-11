@@ -1,7 +1,15 @@
-local mathCeil,  mathAbs,  mathRound,  mathMin
-	= math.ceil, math.abs, math.round, math.min
+local modInfo = Mod.getInfo()
+local require = modInfo.require
 
--- --- MapGen default moises ---
+local InterpolationPresets = require("MapGen.InterpolationPresets")
+local Layer = require("MapGen.Layer")
+local Region = require("MapGen.Region")
+local Biome = require("MapGen.Biome")
+
+local mathRound, mathHuge
+	= math.round, math.huge
+
+-- --- MapGen default noises ---
 ---@type ValueNoise
 local oceanNoise
 
@@ -60,20 +68,8 @@ tempNoiseParams = {
 	lacunarity = 2,
 }
 
+-- --- End of default noises ---
 
--- --- End default noises ---
-
-local modInfo = Mod.getInfo()
-local require = modInfo.require
-
----@type MapGen.Layer
-local Layer = require("MapGen.Layer")
-
----@type MapGen.Region
-local Region = require("MapGen.Region")
-
----@type MapGen.Biome
-local Biome = require("MapGen.Biome")
 
 ---@class MapGen
 ---@field layersByName           table
@@ -87,7 +83,7 @@ local MapGen = {
 	layersByName          = {},
 	layersList            = {},
 	biomesList            = {},
-	biomesDiagram            = {},
+	biomesDiagram         = {},
 	multinoiseInitialized = false,
 	isRunning             = false,
 }
@@ -149,35 +145,24 @@ end
 ---Mark a region of the world as a cubic region by two opposite vertices.
 ---
 ---Regions must be included in layers and may overlap each other.
----@param layerName     string  The name of the layer in which the new region will be included.
----@param minPos        vector
----@param maxPos        vector
----@param multinoise    MapGen.Region.MultinoiseParams     Noise that will be assigned to the region and that will influence map generation
----@param regionIs2D    boolean?  If true, the transmitted Y coordinate will be overwritten by the layer boundaries.
----@param weightFactor  number?   The coefficient by which the reduction in the impact of regional noise on generation will be calculated. If 0, there will be no reduction.
-function MapGen:RegisterRegion(layerName, minPos, maxPos, multinoise, regionIs2D, weightFactor)
-	---@type MapGen.Layer
+---@param regionName           string
+---@param layerName            string                          Name of the layer in which the new region will be contained.
+---@param polyhedron           Polyhedron
+---@param multinoiseParams     MapGen.Region.MultinoiseParams  Noise that will be assigned to the region and that will influence map generation
+---@param bufferZone           MapGen.Region.BufferZone                          
+function MapGen:RegisterRegion(regionName, layerName, polyhedron, multinoiseParams, bufferZone)
+	local interpolationPreset = bufferZone.preset or "linear"
 	local layer = self.layersByName[layerName]
+	if not layer then error("Invalid layer: " .. layerName) end
 
-	if not layer then
-		error("Invalid layer: " .. layerName)
+	-- Check for intersections with existing regions
+	for _, existingRegion in ipairs(layer.regionsList) do
+		if polyhedron:intersects(existingRegion:getPolyhedron()) then
+			error("Regions cannot intersect! Region '" .. regionName .. "' intersects with existing region.")
+		end
 	end
 
-	if regionIs2D then
-		minPos.y = layer.minY
-		maxPos.y = layer.maxY
-	end
-
-	--TODO: добавить проверку, что координаты вершин региона не совпадают (регион не является линией толщиной в 1 блок)
-	--TODO: Добавить проверку, что регион не выходит за границы слоя или/и автоматически обрубать регион до слоя
-
-	if weightFactor == nil then
-		weightFactor = 1
-	end
-
-	---@type MapGen.Region
-	local region = Region:new(minPos, maxPos, multinoise, weightFactor)
-
+	local region = Region:new(polyhedron, multinoiseParams, bufferZone)
 	layer:addRegion(region)
 end
 
@@ -214,7 +199,7 @@ function MapGen:initBiomesDiagram()
 		diagram[temp] = {}
 
 		for humidity = 0, 100 do
-			local minDistance = math.huge
+			local minDistance = mathHuge
 			local closestBiome = nil
 
 			---@param biome MapGen.Biome
@@ -230,34 +215,6 @@ function MapGen:initBiomesDiagram()
 			diagram[temp][humidity] = closestBiome
 		end
 	end
-end
-
----Calculate the weight for noise based on
----the distance of the point from the center of the region.
----
----If the `weightFactor` is `0`, then the region's
----weight is not calculated and is always equal to `1`.
----@param minPos        vector
----@param maxPos        vector
----@param x             number
----@param z             number
----@param weightFactor  number
----@return              number
-local function calculateWeight2D(minPos, maxPos, x, z, weightFactor)
-	if weightFactor == 0 then
-		return 1
-	end
-
-	local centerX = (minPos.x + maxPos.x) / 2
-	local centerZ = (minPos.z + maxPos.z) / 2
-
-	local distX = 1 - (mathAbs(x - centerX) / (mathAbs((maxPos.x - minPos.x)) / 2))^weightFactor
-	local distZ = 1 - (mathAbs(z - centerZ) / (mathAbs((maxPos.z - minPos.z)) / 2))^weightFactor
-
-	---@type number
-	local weight = distX * distZ -- mathMin(distX, distZ)
-
-	return weight
 end
 
 local function generateSoil(biome, data, index, x, y, z)
@@ -307,68 +264,55 @@ local function generateNode(mapGenerator, hight, temp, humidity, data, index, x,
 end
 
 ---@param mapGenerator  MapGen
-local function generatorHandler(mapGenerator, data, index, x, y, z)
-	-- If generation occurs outside the layers, then a void is generated
+local function generatorHandler3D(mapGenerator, data, index, x, y, z)
 	local layer = mapGenerator:getLayerByHeight(y)
 	if layer == nil then
 		data[index] = mapGenerator.nodeIDs.air
-
 		return
 	end
 
-	-- The ocean floor height is used as the default value.
-	if oceanNoise == nil then
-		oceanNoise = core.get_value_noise(oceanNoiseParams)
-	end
+	-- Initialize base noises if needed
+	if oceanNoise == nil then oceanNoise = core.get_value_noise(oceanNoiseParams) end
+	if tempNoise == nil then tempNoise = core.get_value_noise(tempNoiseParams) end
+	if humidityNoise == nil then humidityNoise = core.get_value_noise(humidityNoiseParams) end
 
-	-- Default noise's values.
-	local noiseHeightValue   = oceanNoise:get_2d({x = x, y = z})
-	local noiseTempValue     = 0.0
-	local noiseHumidityValue = 0.0
+	-- Base values (outside any region)
+	local baseHeight = oceanNoise:get_3d({x = x, y = y, z = z})
+	local baseTemp = tempNoise:get_3d({x = x, y = y, z = z})
+	local baseHumidity = humidityNoise:get_3d({x = x, y = y, z = z})
 
-	local tempValuesCount     = 0
-	local humidityValuesCount = 0
+	local finalHeight = baseHeight
+	local finalTemp = baseTemp
+	local finalHumidity = baseHumidity
 
-	local regions = layer:getRegionsByPos(x, y, z)
-
-	-- The height noise values ​​of all regions that a node is part of are added together.
-	---@param region  MapGen.Region
-	for _, region in ipairs(regions) do
-		local heightNoise   = region:getMultinoise().landscapeNoise
-		local tempNoise     = region:getMultinoise().tempNoise
-		local humidityNoise = region:getMultinoise().humidityNoise
-
-		if heightNoise ~= nil then
-		-- The further a point is from the center of a region, the less noise affects it.
-			local weight = calculateWeight2D(region:getMinPos(), region:getMaxPos(), x, z, region.getWeightFactor())
-
-			noiseHeightValue = noiseHeightValue + ( heightNoise:get_2d({x = x, y = z}) * weight )
+	local region = layer:getRegionByPos(x, y, z)
+	local polyhedron = region:getPolyhedron()
+	local distance = polyhedron:distanceToSurface(vector.new(x, y, z))
+	local bufferZone = region:getBufferZone()
+	
+	if distance <= bufferZone.thickness then
+		local regionNoises = region:getMultinoise()
+		local blendFactor = InterpolationPresets[region:getInterpolationPreset()](distance, bufferZone.thickness)
+		
+		-- 3D noise interpolation
+		if regionNoises.landscapeNoise then
+			local regionHeight = regionNoises.landscapeNoise:get_3d({x = x, y = y, z = z})
+			finalHeight = baseHeight + (regionHeight - baseHeight) * blendFactor
 		end
-
-		if tempNoise ~= nil then
-			noiseTempValue = noiseTempValue + tempNoise:get_2d({x = x, y = z})
-
-			tempValuesCount = tempValuesCount + 1
+		
+		if regionNoises.tempNoise then
+			local regionTemp = regionNoises.tempNoise:get_3d({x = x, y = y, z = z})
+			finalTemp = baseTemp + (regionTemp - baseTemp) * blendFactor
 		end
-
-		if humidityNoise ~= nil then
-			noiseHumidityValue = noiseHumidityValue + humidityNoise:get_2d({x = x, y = z})
-
-			humidityValuesCount = humidityValuesCount + 1
+		
+		if regionNoises.humidityNoise then
+			local regionHumidity = regionNoises.humidityNoise:get_3d({x = x, y = y, z = z})
+			finalHumidity = baseHumidity + (regionHumidity - baseHumidity) * blendFactor
 		end
 	end
 
-	noiseHeightValue = mathRound(noiseHeightValue)
-
-	if tempValuesCount ~= 0 then
-		noiseTempValue = mathRound( noiseTempValue / tempValuesCount )
-	end
-
-	if humidityValuesCount ~= 0 then
-		noiseHumidityValue = mathRound( noiseHumidityValue / humidityValuesCount )
-	end
-
-	generateNode(mapGenerator, noiseHeightValue, noiseTempValue, noiseHumidityValue, data, index, x, y, z)
+	generateNode(mapGenerator, mathRound(finalHeight), mathRound(finalTemp), 
+				 mathRound(finalHumidity), data, index, x, y, z)
 end
 
 ---@param minPos      table
@@ -392,7 +336,7 @@ function MapGen:onMapGenerated(minPos, maxPos, blockseed)
 		local index = area:index(minPos.x, y, z)
 
 		for x = minPos.x, maxPos.x do
-			generatorHandler(self, data, index, x, y, z)
+			generatorHandler3D(self, data, index, x, y, z)
 
 			index = index + 1
 		end

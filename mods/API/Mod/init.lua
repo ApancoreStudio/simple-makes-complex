@@ -3,7 +3,7 @@
 ---@field name       string Technical name of the mod.
 ---@field shortName  string
 ---@field path       string Path to the mod folder.
----@field Class      table A public class that provides a mod.
+---@field Class      any    A public class that provides a mod.
 ---@field require    fun(FileName:string):table
 Mod = {}
 
@@ -17,9 +17,10 @@ local function getShortModName(name)
 end
 
 ---Return table with mod name, path and require function.
+---@param modname?  string  Specify a name of mod to get its info
 ---@return {name: string, shortName: string, path: string, require: fun(FileName : string): table}
-function Mod.getInfo()
-	local name = core.get_current_modname()
+function Mod.getInfo(modname)
+	local name = modname or core.get_current_modname()
 	local shortName = getShortModName(name)
 	local path = core.get_modpath(name)
 	local require = Require.getModRequire(name, path)

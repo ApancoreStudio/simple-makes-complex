@@ -24,25 +24,28 @@ end
 ---@param  bufferZone        MapGen.Region.BufferZone
 ---@return MapGen.Region
 function Region:new(polyhedron, multinoiseParams, bufferZone)
-    local _polyhedron = polyhedron
-    local _multinoiseParams = multinoiseParams
-    local _bufferZone = bufferZone
-    local _interpolationPreset = bufferZone.preset or "linear"
-    local _multinoise = {}
+	local _polyhedron = polyhedron
+	local _multinoiseParams = multinoiseParams
+	local _bufferZone = bufferZone
+	local _interpolationPreset = bufferZone.preset or "linear"
+	local _multinoise = {}
 
-    local instance = setmetatable({}, {__index = self})
+	local instance = setmetatable({}, {__index = self})
 
-    function instance:getPolyhedron() return _polyhedron end
-    function instance:getMultinoiseParams() return _multinoiseParams end
-    function instance:getMultinoise() return _multinoise end
-    function instance:getBufferZone() return _bufferZone end
-    function instance:getInterpolationPreset() return _interpolationPreset end
-    
-    function instance:initMultinoise()
-        _multinoise = multinoiseParamsToMultinoise(_multinoiseParams)
-    end
+	function instance:getPolyhedron() return _polyhedron end
+	function instance:getMultinoiseParams() return _multinoiseParams end
+	function instance:getMultinoise() return _multinoise end
+	function instance:getBufferZone() return _bufferZone end
+	function instance:getInterpolationPreset() return _interpolationPreset end
+	
+	function instance:initMultinoise()
+		print("WTF:::")
+		print(type(_multinoise))
+		print(dump(_multinoise))
+		_multinoise = multinoiseParamsToMultinoise(_multinoiseParams)
+	end
 
-    return instance
+	return instance
 end
 
 return Region

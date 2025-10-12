@@ -11,20 +11,6 @@ local mathRound, mathHuge
 
 -- --- MapGen default noises ---
 ---@type ValueNoise
-local oceanNoise
-
----@type NoiseParams
-local oceanNoiseParams = {
-	offset = -30,
-	scale = 10,
-	spread = vector.new(100, 100, 100),
-	seed = 47,
-	octaves = 8,
-	persistence = 0.4,
-	lacunarity = 2,
-}
-
----@type ValueNoise
 local rocksNoise
 
 ---@type NoiseParams
@@ -37,58 +23,27 @@ local rocksNoiseParams ={
 	persistence = 0.5,
 	lacunarity = 4,
 }
-
----DEBUG NOISES
---- TODO удалить, после реализации климата от регионов
----@type ValueNoise
-local humidityNoise
-
----@type NoiseParams
-humidityNoiseParams = {
-	offset = 50,
-	scale = 25,
-	spread = {x = 10, y = 10, z = 10},
-	seed = 47,
-	octaves = 2,
-	persistence = 0.6,
-	lacunarity = 2,
-}
-
----@type ValueNoise
-local tempNoise
-
----@type NoiseParams
-tempNoiseParams = {
-	offset = 50,
-	scale = 25,
-	spread = {x = 10, y = 10, z = 10},
-	seed = 12,
-	octaves = 2,
-	persistence = 0.6,
-	lacunarity = 2,
-}
-
 -- --- End of default noises ---
 
 
 ---@class MapGen
----@field layersByName           table
----@field layersList             table
----@field biomesList             table
----@field biomesDiagram           table
----@field multinoiseInitialized  boolean  Is the fractal noise of the regions initialized? This is necessary for a one-time noise initialization.
----@field isRunning              boolean  A static field that guarantees that only one instance of the `MapGen` class will work.
----@field nodeIDs                table<string, string>
+---@field layersByName             table
+---@field layersList               table
+---@field biomesList               table
+---@field biomesDiagram            table
+---@field isMultinoiseInitialized  boolean  Is the fractal noise of the regions initialized? This is necessary for a one-time noise initialization.
+---@field isRunning                boolean  A static field that guarantees that only one instance of the `MapGen` class will work.
+---@field nodeIDs                  table<string, number>
 local MapGen = {
-	layersByName          = {},
-	layersList            = {},
-	biomesList            = {},
-	biomesDiagram         = {},
-	multinoiseInitialized = false,
-	isRunning             = false,
+	layersByName            = {},
+	layersList              = {},
+	biomesList              = {},
+	biomesDiagram           = {},
+	isMultinoiseInitialized = false,
+	isRunning               = false,
 }
 
----@param nodeIDs  table<string, string>
+---@param nodeIDs  table<string, number>
 ---@return MapGen
 function MapGen:new(nodeIDs)
 	---@type MapGen
@@ -99,23 +54,13 @@ function MapGen:new(nodeIDs)
 	return instance
 end
 
----Determines which layer a node belongs to based on its height coordinate.
----@param yPos  number
----@return      MapGen.Layer?
 function MapGen:getLayerByHeight(yPos)
-	--- TODO: возможно здесь получится сделать более оптимизированный алгоритм
-	--- учитывая тот факт, что эта функция вызывается для каждой ноды в on_generated
-	--- и может быть даже не один раз
-	--- Можно подумать над тем, чтобы использовать сортированный список
-
-	---@param layer  MapGen.Layer
-	for _, layer in  ipairs(self.layersList) do
-
+	for _, layer in ipairs(self.layersList) do
 		if yPos >= layer.minY and yPos <= layer.maxY then
 			return layer
 		end
-
 	end
+	return nil
 end
 
 ---Mark the world area between two heights as a `MapGen.Layer`.
@@ -126,7 +71,7 @@ end
 ---@param maxY  number
 function MapGen:RegisterLayer(name, minY, maxY)
 	---Checking if layers overlap
-	if self:getLayerByHeight(minY) ~= nil and self:getLayerByHeight(maxY) ~= nil then
+	if self:getLayerByHeight(minY) ~= nil or self:getLayerByHeight(maxY) ~= nil then
 		error('Registered layers must not overlap!')
 	end
 
@@ -168,17 +113,33 @@ end
 
 ---Initialize region noise. This should be called after the map object is loaded.
 function MapGen:initRegionsMultinoise()
-	---@param layer  MapGen.Layer
+	-- Generate rocks noise once
+	rocksNoise = core.get_value_noise(rocksNoiseParams)
+	
 	for _, layer in ipairs(self.layersList) do
-
-		---@param region MapGen.Region
+		print("INIT DEFAULT NOISES")
+		layer.defaultRegion:initMultinoise()
+		
 		for _, region in ipairs(layer.regionsList) do
 			region:initMultinoise()
 		end
-
 	end
+	self.isMultinoiseInitialized = true
+end
 
-	self.multinoiseInitialized = true
+-- Precompute noise for entire chunk
+local function precomputeNoiseForChunk(noise, minPos, maxPos)
+	local noiseMap = {}
+	local index = 1
+	for z = minPos.z, maxPos.z do
+		for y = minPos.y, maxPos.y do
+			for x = minPos.x, maxPos.x do
+				noiseMap[index] = mathRound(noise:get_3d(vector.new(x, y, z)))
+				index = index + 1
+			end
+		end
+	end
+	return noiseMap
 end
 
 ---@param name           string
@@ -190,6 +151,13 @@ function MapGen:RegisterBiome(name, tempPoint, humidityPoint, groundNodes, soilH
 	local biome = Biome:new(name, tempPoint, humidityPoint, groundNodes, soilHeight)
 
 	table.insert(self.biomesList, biome)
+end
+
+function MapGen:precomputeNodeIDs()
+	for _, biome in ipairs(self.biomesList) do
+		biome.groundNodes.turf = self.nodeIDs[biome.groundNodes.turf] or biome.groundNodes.turf
+		biome.groundNodes.soil = self.nodeIDs[biome.groundNodes.soil] or biome.groundNodes.soil
+	end
 end
 
 function MapGen:initBiomesDiagram()
@@ -217,17 +185,17 @@ function MapGen:initBiomesDiagram()
 	end
 end
 
-local function generateSoil(biome, data, index, x, y, z)
-	data[index] = core.get_content_id(biome.groundNodes.turf)  -- TODO: убрать тут get_content_id(), переместить его куда-то "выше"
+local function generateSoil(biome, data, index, pos)
+	data[index] = biome.groundNodes.turf
 end
 
-local function generateRock(ids, data, index, x, y, z)
+local function generateRock(ids, data, index, pos)
 
 	if rocksNoise == nil then
 		rocksNoise = core.get_value_noise(rocksNoiseParams)
 	end
 
-	local noiseRocksValue = mathRound(rocksNoise:get_3d({x = x, y = y, z = z}))
+	local noiseRocksValue = mathRound(rocksNoise:get_3d(pos))
 	if     noiseRocksValue == 1 then
 		data[index] = ids.malachite
 	elseif noiseRocksValue == 2 then
@@ -247,108 +215,160 @@ local function generateRock(ids, data, index, x, y, z)
 	end
 end
 
-local function generateNode(mapGenerator, hight, temp, humidity, data, index, x, y, z)
-	local ids =  mapGenerator.nodeIDs
+function MapGen:generateNode(self, hight, temp, humidity, data, index, pos)
+	local ids =  self.nodeIDs
 
-	local biome = mapGenerator.biomesDiagram[temp][humidity]
+	local biome = self.biomesDiagram[temp][humidity]
 
-	if y > hight and y > 0 then
+	if pos.y > hight and pos.y > 0 then
 		data[index] = ids.air
-	elseif y == hight and y > 0 then
-		generateSoil(biome, data, index, x, y, z)
-	elseif y < hight then
-		generateRock(ids, data, index, x, y, z)
+	elseif pos.y == hight and pos.y > 0 then
+		generateSoil(biome, data, index, pos)
+	elseif pos.y < hight then
+		generateRock(ids, data, index, pos)
 	else
 		data[index] = ids.water
 	end
 end
 
----@param mapGenerator  MapGen
-local function generatorHandler3D(mapGenerator, data, index, x, y, z)
-	local layer = mapGenerator:getLayerByHeight(y)
-	if layer == nil then
-		data[index] = mapGenerator.nodeIDs.air
-		return
-	end
 
-	-- Initialize base noises if needed
-	if oceanNoise == nil then oceanNoise = core.get_value_noise(oceanNoiseParams) end
-	if tempNoise == nil then tempNoise = core.get_value_noise(tempNoiseParams) end
-	if humidityNoise == nil then humidityNoise = core.get_value_noise(humidityNoiseParams) end
-
-	-- Base values (outside any region)
-	local baseHeight = oceanNoise:get_3d({x = x, y = y, z = z})
-	local baseTemp = tempNoise:get_3d({x = x, y = y, z = z})
-	local baseHumidity = humidityNoise:get_3d({x = x, y = y, z = z})
-
+-- КАРОЧИ. Надо оптимизировать вот это говно. Оно срабатывает для каждого блока и поэтому все так лагаетю
+function MapGen:generateVoxelOptimized(data, index, pos, layer, rocksNoiseMap, area, minPos, maxPos)
+	-- Fast region lookup with spatial partitioning
+	local region = layer:getRegionByPos(pos)
+	
+	-- Get base values from default region
+	local defaultRegion = layer:getDefaultRegion()
+	local defaultNoises = defaultRegion:getMultinoise()
+	
+	local baseHeight = defaultNoises.landscapeNoise:get_3d(pos)
+	local baseTemp = defaultNoises.tempNoise:get_3d(pos)
+	local baseHumidity = defaultNoises.humidityNoise:get_3d(pos)
+	
 	local finalHeight = baseHeight
 	local finalTemp = baseTemp
 	local finalHumidity = baseHumidity
-
-	local region = layer:getRegionByPos(x, y, z)
-	local polyhedron = region:getPolyhedron()
-	local distance = polyhedron:distanceToSurface(vector.new(x, y, z))
-	local bufferZone = region:getBufferZone()
 	
-	if distance <= bufferZone.thickness then
-		local regionNoises = region:getMultinoise()
-		local blendFactor = InterpolationPresets[region:getInterpolationPreset()](distance, bufferZone.thickness)
+	-- Apply region-specific noises if needed
+	if region ~= defaultRegion then
+		local polyhedron = region:getPolyhedron()
+		local distance = polyhedron:distanceToSurface(pos)
+		local bufferZone = region:getBufferZone()
 		
-		-- 3D noise interpolation
-		if regionNoises.landscapeNoise then
-			local regionHeight = regionNoises.landscapeNoise:get_3d({x = x, y = y, z = z})
-			finalHeight = baseHeight + (regionHeight - baseHeight) * blendFactor
-		end
-		
-		if regionNoises.tempNoise then
-			local regionTemp = regionNoises.tempNoise:get_3d({x = x, y = y, z = z})
-			finalTemp = baseTemp + (regionTemp - baseTemp) * blendFactor
-		end
-		
-		if regionNoises.humidityNoise then
-			local regionHumidity = regionNoises.humidityNoise:get_3d({x = x, y = y, z = z})
-			finalHumidity = baseHumidity + (regionHumidity - baseHumidity) * blendFactor
+		if distance <= bufferZone.thickness then
+			local regionNoises = region:getMultinoise()
+			local blendFactor = InterpolationPresets[region:getInterpolationPreset()](distance, bufferZone.thickness)
+			
+			if regionNoises.landscapeNoise then
+				local regionHeight = regionNoises.landscapeNoise:get_3d(pos)
+				finalHeight = baseHeight + (regionHeight - baseHeight) * blendFactor
+			end
+			
+			if regionNoises.tempNoise then
+				local regionTemp = regionNoises.tempNoise:get_3d(pos)
+				finalTemp = baseTemp + (regionTemp - baseTemp) * blendFactor
+			end
+			
+			if regionNoises.humidityNoise then
+				local regionHumidity = regionNoises.humidityNoise:get_3d(pos)
+				finalHumidity = baseHumidity + (regionHumidity - baseHumidity) * blendFactor
+			end
 		end
 	end
+	
+	-- Generate the actual node
+	self:generateNodeOptimized(mathRound(finalHeight), mathRound(finalTemp),
+							  mathRound(finalHumidity), data, index, pos, rocksNoiseMap, minPos, maxPos)
+end
 
-	generateNode(mapGenerator, mathRound(finalHeight), mathRound(finalTemp), 
-				 mathRound(finalHumidity), data, index, x, y, z)
+function MapGen:generateNodeOptimized(height, temp, humidity, data, index, pos, rocksNoiseMap, minPos, maxPos)
+	local ids = self.nodeIDs
+	local biome = self.biomesDiagram[temp][humidity]
+	
+	if pos.y > height and pos.y > 0 then
+		data[index] = ids.air
+	elseif pos.y == height and pos.y > 0 then
+		data[index] = biome.groundNodes.turf
+	elseif pos.y < height then
+		-- Calculate index without creating vectors
+		local noiseIndex = ((pos.z - minPos.z) * (maxPos.y - minPos.y + 1) * (maxPos.x - minPos.x + 1) +
+						   (pos.y - minPos.y) * (maxPos.x - minPos.x + 1) +
+						   (pos.x - minPos.x)) + 1
+		local noiseValue = rocksNoiseMap[noiseIndex]
+		
+		-- Use lookup table for rock types
+		local rockTypes = {
+			[1] = ids.malachite, [2] = ids.hapcoryte, [3] = ids.iyellite,
+			[4] = ids.sylite, [5] = ids.tauitite, [6] = ids.falmyte,
+			[7] = ids.burcite, [8] = ids.felhor
+		}
+		
+		data[index] = rockTypes[noiseValue] or ids.stone
+	else
+		data[index] = ids.water
+	end
 end
 
 ---@param minPos      table
 ---@param maxPos      table
 ---@param blockseed   number
 function MapGen:onMapGenerated(minPos, maxPos, blockseed)
-	-- We obtain a generation area for further manipulations
+	print("Stage 1: entering loop")
+
 	local voxelManip, eMin, eMax = core.get_mapgen_object("voxelmanip")
-
-	if not self.multinoiseInitialized then
-		self:initRegionsMultinoise()
-	end
-
 	local data = voxelManip:get_data()
-	-- local param2_data = voxelManip:get_param2_data()
+	-- local param2_data = voxelManip:get_param2_data()	
 	local area = VoxelArea:new({MinEdge = eMin, MaxEdge = eMax})
 
-	-- Initial generation: landscape
-	for z = minPos.z, maxPos.z do
-	for y = minPos.y, maxPos.y do
-		local index = area:index(minPos.x, y, z)
+	
+	print("Stage 2: generating initial landscape")
 
-		for x = minPos.x, maxPos.x do
-			generatorHandler3D(self, data, index, x, y, z)
+	-- Cache frequently accessed values
+	local nodeIDs = self.nodeIDs
+	local biomesDiagram = self.biomesDiagram
 
-			index = index + 1
+	-- Precompute rocks noise for entire chunk
+	local rocksNoiseMap = precomputeNoiseForChunk(rocksNoise, minPos, maxPos)
+
+	local vec = vector.zero()
+	local areaIndex = area.index
+
+	-- Process by layers to minimize context switching
+	local a, b, c, d = 0, 0, 0, 0
+	for _, layer in ipairs(self.layersList) do
+		a = a+1
+		b, c, d = 0, 0, 0
+		local layerMinY = math.max(minPos.y, layer.minY)
+		local layerMaxY = math.min(maxPos.y, layer.maxY)
+		
+		if layerMinY <= layerMaxY then
+			for z = minPos.z, maxPos.z do
+				b = b+1
+				c, d = 0, 0
+				vec.z = z
+				for y = layerMinY, layerMaxY do
+					c = c+1
+					d = 0
+					vec.y = y
+					local index = areaIndex(area, minPos.x, y, z)
+					
+					for x = minPos.x, maxPos.x do
+						d = d+1
+						vec.x = x
+						self:generateVoxelOptimized(data, index, vec, layer, rocksNoiseMap, area, minPos, maxPos)
+						index = index + 1
+						print(a..":"..b..":"..c..":"..d)
+					end
+				end
+			end
 		end
 	end
-	end
 
-	-- We make changes back to LVM and recalculate light & liquids
+	print("Stage 3: applying changes")
 	voxelManip:set_data(data)
 	-- voxelManip:set_param2_data(param2_data)
 	voxelManip:update_liquids()
 	voxelManip:calc_lighting()
-
 	voxelManip:write_to_map()
 end
 
@@ -360,11 +380,17 @@ function MapGen:run()
 		error('Only one instance of a `MapGen` class can be running.')
 	end
 
+	-- Initialize default systems
+	self:precomputeNodeIDs()
+	self:initBiomesDiagram()
+
 	core.register_on_generated(function(...)
+		if not self.isMultinoiseInitialized then
+			self:initRegionsMultinoise()
+		end
+
 		self:onMapGenerated(...)
 	end)
-
-	self:initBiomesDiagram()
 
 	MapGen.isRunning = true
 end

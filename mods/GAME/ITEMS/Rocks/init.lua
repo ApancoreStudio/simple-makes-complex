@@ -16,7 +16,7 @@ local defaultRock = Core.Node.Class:getExtended(defaultRockDef)
 local rockFactory = defaultRock:getFactory()
 
 ---@type TileSheet
-local ts = Core.TileSheet:getModClassInstance("rocks_sheet.png", 7, 15)
+local ts = Core.TileSheet:getModClassInstance("rocks_sheet.png", 16, 16)
 
 rockFactory:registerNodesByShortDef({
 	{"sylite",    "Sylite",    nil, {ts:t(0, 0)}},

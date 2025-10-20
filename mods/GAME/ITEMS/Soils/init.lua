@@ -17,7 +17,7 @@ local defaultSoil = Core.Node.Class:getExtended(defaultSoilDef)
 local soilFactory = defaultSoil:getFactory()
 
 ---@type TileSheet
-local ts = Core.TileSheet:getModClassInstance("soils_sheet.png", 7, 1)
+local ts = Core.TileSheet:getModClassInstance("soils_sheet.png", 16, 16)
 
 local clayTiles = {
 	ts:t(0,0)

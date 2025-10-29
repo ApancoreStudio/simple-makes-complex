@@ -1,50 +1,80 @@
 {
-  "codeAction": {
-    "insertSpace": false
-  },
-  "codeLens": {
-    "enable": true
-  },
   "completion": {
+    "enable": true,
     "autoRequire": false,
     "autoRequireFunction": "require",
     "autoRequireNamingConvention": "keep",
     "autoRequireSeparator": ".",
     "callSnippet": false,
-    "enable": true,
     "postfix": "@"
   },
   "diagnostics": {
-    "diagnosticInterval": 1,
     "disable": [
-      "unnecessary-if",
-      "redefined-local"
+      "unnecessary-if"
     ],
     "enable": true,
-    "enables": [],
     "globals": [
       "core",
       "table",
       "VoxelArea",
-      "VoxelManip",
+	    "VoxelManip",
       "vector",
       "Ensure",
       "string",
       "string_utf8"
     ],
-    "globalsRegex": []
+    "globalsRegex": [],
+    "severity": {},
+    "enables": [],
+    "diagnosticInterval": 1
   },
-  "documentColor": {
-    "enable": true
+  "signature": {
+    "detailSignatureHelper": true
   },
   "hint": {
     "enable": true,
+    "paramHint": true,
     "indexHint": true,
     "localHint": true,
-    "overrideHint": true,
-    "paramHint": true
+    "overrideHint": true
   },
-  "hover": {
+  "runtime": {
+    "version": "LuaJIT",
+    "requireLikeFunction": [],
+    "frameworkVersions": [],
+    "extensions": [],
+    "requirePattern": [],
+    "classDefaultCall": {
+      "functionName": "",
+      "forceNonColon": false,
+      "forceReturnSelf": false
+    }
+  },
+  "workspace": {
+    "ignoreDir": [],
+    "ignoreGlobs": [],
+    "library": [],
+    "workspaceRoots": [],
+    "preloadFileSize": 0,
+    "encoding": "utf-8",
+    "moduleMap": [],
+    "reindexDuration": 5000,
+    "enableReindex": false
+  },
+  "resource": {
+    "paths": []
+  },
+  "codeLens": {
+    "enable": true
+  },
+  "strict": {
+    "requirePath": false,
+    "typeCall": false,
+    "arrayIndex": true,
+    "metaOverrideFileDefine": true,
+    "docBaseConstMatchBaseType": true
+  },
+  "semanticTokens": {
     "enable": true
   },
   "references": {
@@ -52,45 +82,16 @@
     "fuzzySearch": true,
     "shortStringSearch": false
   },
-  "resource": {
-    "paths": []
-  },
-  "runtime": {
-    "classDefaultCall": {
-      "forceNonColon": false,
-      "forceReturnSelf": false,
-      "functionName": ""
-    },
-    "extensions": [],
-    "frameworkVersions": [],
-    "requireLikeFunction": [],
-    "requirePattern": [],
-    "version": "LuaJIT"
-  },
-  "semanticTokens": {
+  "hover": {
     "enable": true
   },
-  "signature": {
-    "detailSignatureHelper": true
+  "documentColor": {
+    "enable": true
   },
-  "strict": {
-    "arrayIndex": true,
-    "docBaseConstMatchBaseType": true,
-    "metaOverrideFileDefine": true,
-    "requirePath": false,
-    "typeCall": false
+  "codeAction": {
+    "insertSpace": false
   },
-  "workspace": {
-    "enableReindex": false,
-    "encoding": "utf-8",
-    "ignoreDir": [],
-    "ignoreGlobs": [],
-    "library": [
-      "util/ide-helper"
-    ],
-    "moduleMap": [],
-    "preloadFileSize": 0,
-    "reindexDuration": 5000,
-    "workspaceRoots": []
-  }
+  "workspace.library": [
+    "util/ide-helper"
+  ]
 }

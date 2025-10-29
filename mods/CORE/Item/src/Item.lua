@@ -1,5 +1,5 @@
-local modInfo     = Mod.getInfo()
-local require     = modInfo.require
+local modInfo = Mod.getInfo()
+local require = modInfo.require
 
 local VisualEnum = require('Item.VisualEnum')
 

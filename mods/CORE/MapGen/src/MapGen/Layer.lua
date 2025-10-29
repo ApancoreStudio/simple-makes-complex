@@ -2,9 +2,9 @@
 ---@field name         string
 ---@field minY         number
 ---@field maxY         number
----@field regionsList  table
+---@field cellsList  table
 local Layer = {
-	regionsList = {}
+	cellsList = {}
 }
 
 ---@param name  string
@@ -22,42 +22,54 @@ function Layer:new(name, minY, maxY)
 	return instance
 end
 
----@param region  MapGen.Region
-function Layer:addRegion(region)
-	table.insert(self.regionsList, region)
+---@param cell  MapGen.Cell
+function Layer:addCell(cell)
+	table.insert(self.cellsList, cell)
+	-- TODO: добавить сортировку массива для оптимизации.
+	-- Вероятно будет лучше в отдельной фунции и засунуть её в MapGen.run
 end
 
+---Returns the two closest cells.
 ---@param xPos  number
 ---@param yPos  number
 ---@param zPos  number
----@return      MapGen.Region[]
-function Layer:getRegionsByPos(xPos, yPos, zPos)
-	-- TODO: возможно здесь получится сделать более оптимизированный алгоритм
-	-- учитывая тот факт, что эта функция вызывается для каждой ноды в on_generated
-	-- и может быть даже не один раз
-	-- Можно подумать над тем, чтобы использовать сортированный список
+---@return      MapGen.Cell?, MapGen.Cell?
+function Layer:getCellsByPos(xPos, yPos, zPos)
+	-- TODO: дописать алгоритмы оптимизации:
+	--     * по сортированному массиву
+	--     * с помощью минимальных расстояний-гарантов
 
-	---@type MapGen.Region[]
-	local regions = {}
+	---@type MapGen.Cell, MapGen.Cell
+	local cellA, cellB
 
-	---@param region  MapGen.Region
-	for _, region in  ipairs(self.regionsList) do
+	-- Note: to optimize the distance, the dots are always in a square.
+	local pastDistance = math.huge
+	local newDistance  = 0.0
 
-		if  (
-			xPos >= region:getMinPos().x and
-			yPos >= region:getMinPos().y and
-			zPos >= region:getMinPos().z) and
-			(
-			xPos <= region:getMaxPos().x and
-			yPos <= region:getMaxPos().y and
-			zPos <= region:getMaxPos().z
-			) then
-				table.insert(regions, region)
+	--- @type vector
+	local cellPos
+
+	---@param cell  MapGen.Cell
+	for _, cell in  ipairs(self.cellsList) do
+
+		if cellA == nil then
+			cellA = cell
+			goto continue
 		end
 
+		cellPos = cell.getCellPos()
+		newDistance = (xPos - cellPos.x)^2 + (yPos - cellPos.y)^2 + (zPos - cellPos.z)^2
+
+		if newDistance < pastDistance then
+			cellB = cellA
+			cellA = cellB
+			pastDistance = newDistance
+		end
+
+		::continue::
 	end
 
-	return regions
+	return cellA, cellB
 end
 
 return Layer

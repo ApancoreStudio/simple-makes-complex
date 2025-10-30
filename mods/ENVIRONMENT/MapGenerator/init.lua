@@ -21,9 +21,8 @@ local mapGenerator = Core.MapGen.Class:new({
 
 mapGenerator:RegisterLayer("world", -1000, 500)
 
-mapGenerator:RegisterRegion("world",
+mapGenerator:RegisterCell("world",
 	vector.new(-150,0,-150),
-	vector.new(150,0,150),
 	{
 		landscapeNoise = {
 			offset = 50,

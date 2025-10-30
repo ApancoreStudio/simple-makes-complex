@@ -30,37 +30,6 @@ local rocksNoiseParams ={
 	lacunarity = 4,
 }
 
----DEBUG NOISES
---- TODO удалить, после реализации климата от регионов
----@type ValueNoise
-local humidityNoise
-
----@type NoiseParams
-humidityNoiseParams = {
-	offset = 50,
-	scale = 25,
-	spread = {x = 10, y = 10, z = 10},
-	seed = 47,
-	octaves = 2,
-	persistence = 0.6,
-	lacunarity = 2,
-}
-
----@type ValueNoise
-local tempNoise
-
----@type NoiseParams
-tempNoiseParams = {
-	offset = 50,
-	scale = 25,
-	spread = {x = 10, y = 10, z = 10},
-	seed = 12,
-	octaves = 2,
-	persistence = 0.6,
-	lacunarity = 2,
-}
-
-
 -- --- End default noises ---
 
 local modInfo = Mod.getInfo()
@@ -69,8 +38,8 @@ local require = modInfo.require
 ---@type MapGen.Layer
 local Layer = require("MapGen.Layer")
 
----@type MapGen.Region
-local Region = require("MapGen.Region")
+---@type MapGen.Cell
+local Cell = require("MapGen.Cell")
 
 ---@type MapGen.Biome
 local Biome = require("MapGen.Biome")
@@ -80,7 +49,7 @@ local Biome = require("MapGen.Biome")
 ---@field layersList             table
 ---@field biomesList             table
 ---@field biomesDiagram           table
----@field multinoiseInitialized  boolean  Is the fractal noise of the regions initialized? This is necessary for a one-time noise initialization.
+---@field multinoiseInitialized  boolean  Is the fractal noise of the cells initialized? This is necessary for a one-time noise initialization.
 ---@field isRunning              boolean  A static field that guarantees that only one instance of the `MapGen` class will work.
 ---@field nodeIDs                table<string, string>
 local MapGen = {
@@ -146,16 +115,16 @@ function MapGen:RegisterLayer(name, minY, maxY)
 	end)
 end
 
----Mark a region of the world as a cubic region by two opposite vertices.
+-- TODO: переписать описание функции
+---Mark a cell of the world as a cubic cell by two opposite vertices.
 ---
----Regions must be included in layers and may overlap each other.
----@param layerName     string  The name of the layer in which the new region will be included.
----@param minPos        vector
----@param maxPos        vector
----@param multinoise    MapGen.Region.MultinoiseParams     Noise that will be assigned to the region and that will influence map generation
----@param regionIs2D    boolean?  If true, the transmitted Y coordinate will be overwritten by the layer boundaries.
----@param weightFactor  number?   The coefficient by which the reduction in the impact of regional noise on generation will be calculated. If 0, there will be no reduction.
-function MapGen:RegisterRegion(layerName, minPos, maxPos, multinoise, regionIs2D, weightFactor)
+---Cells must be included in layers and may overlap each other.
+---@param layerName     string  The name of the layer in which the new cell will be included.
+---@param cellPos        vector
+---@param multinoise    MapGen.Cell.MultinoiseParams     Noise that will be assigned to the cell and that will influence map generation
+---@param cellIs2D    boolean?  If true, the transmitted Y coordinate will be overwritten by the layer boundaries.
+---@param weightFactor  number?   The coefficient by which the reduction in the impact of cellal noise on generation will be calculated. If 0, there will be no reduction.
+function MapGen:RegisterCell(layerName, cellPos, multinoise, cellIs2D, weightFactor)
 	---@type MapGen.Layer
 	local layer = self.layersByName[layerName]
 
@@ -163,32 +132,33 @@ function MapGen:RegisterRegion(layerName, minPos, maxPos, multinoise, regionIs2D
 		error("Invalid layer: " .. layerName)
 	end
 
-	if regionIs2D then
-		minPos.y = layer.minY
-		maxPos.y = layer.maxY
+	-- TODO: вероятно стоит убрать 2D ячейки
+	if cellIs2D then
+		cellPos.y = 0
 	end
 
-	--TODO: добавить проверку, что координаты вершин региона не совпадают (регион не является линией толщиной в 1 блок)
-	--TODO: Добавить проверку, что регион не выходит за границы слоя или/и автоматически обрубать регион до слоя
+	--TODO: добавить проверку, что координата ячейки не совпадают
+	--TODO: Добавить проверку, что координата ячейки не выходит за границы слоя
 
+	-- TODO: вероятно стоит убрать вес
 	if weightFactor == nil then
 		weightFactor = 1
 	end
 
-	---@type MapGen.Region
-	local region = Region:new(minPos, maxPos, multinoise, weightFactor)
+	---@type MapGen.Cell
+	local cell = Cell:new(cellPos, multinoise, weightFactor)
 
-	layer:addRegion(region)
+	layer:addCell(cell)
 end
 
----Initialize region noise. This should be called after the map object is loaded.
-function MapGen:initRegionsMultinoise()
+---Initialize cell noise. This should be called after the map object is loaded.
+function MapGen:initCellsMultinoise()
 	---@param layer  MapGen.Layer
 	for _, layer in ipairs(self.layersList) do
 
-		---@param region MapGen.Region
-		for _, region in ipairs(layer.regionsList) do
-			region:initMultinoise()
+		---@param cell MapGen.Cell
+		for _, cell in ipairs(layer.cellsList) do
+			cell:initMultinoise()
 		end
 
 	end
@@ -233,9 +203,9 @@ function MapGen:initBiomesDiagram()
 end
 
 ---Calculate the weight for noise based on
----the distance of the point from the center of the region.
+---the distance of the point from the center of the cell.
 ---
----If the `weightFactor` is `0`, then the region's
+---If the `weightFactor` is `0`, then the cell's
 ---weight is not calculated and is always equal to `1`.
 ---@param minPos        vector
 ---@param maxPos        vector
@@ -306,6 +276,69 @@ local function generateNode(mapGenerator, hight, temp, humidity, data, index, x,
 	end
 end
 
+local function oneCellGeneratorHandler(mapGenerator, cell, data, index, x, y, z)
+	---@type ValueNoise
+	local heightNoise   = cell:getMultinoise().landscapeNoise
+	---@type ValueNoise
+	local tempNoise     = cell:getMultinoise().tempNoise
+	---@type ValueNoise
+	local humidityNoise = cell:getMultinoise().humidityNoise
+
+	-- Default noise's values.
+	local noiseHeightValue   = oceanNoise:get_2d({x = x, y = z})
+	local noiseTempValue     = 0.0
+	local noiseHumidityValue = 0.0
+
+	if heightNoise ~= nil then
+		noiseHeightValue = mathRound(heightNoise:get_2d({x = x, y = z}))
+	end
+
+	if tempNoise ~= nil then
+		noiseTempValue = mathRound(tempNoise:get_2d({x = x, y = z}))
+	end
+
+	if humidityNoise ~= nil then
+		noiseHumidityValue = mathRound(humidityNoise:get_2d({x = x, y = z}))
+	end
+
+	generateNode(mapGenerator, noiseHeightValue, noiseTempValue, noiseHumidityValue, data, index, x, y, z)
+end
+
+local function bufferZoneGeneratorHanler(mapGenerator, cellA, cellB, distanceA, distanceB, data, index, x, y, z)
+	---@type ValueNoise
+	local heightNoiseA   = cellA:getMultinoise().landscapeNoise
+	---@type ValueNoise
+	local tempNoiseA     = cellA:getMultinoise().tempNoise
+	---@type ValueNoise
+	local humidityNoiseA = cellA:getMultinoise().humidityNoise
+
+	---@type ValueNoise
+	local heightNoiseB   = cellB:getMultinoise().landscapeNoise
+	---@type ValueNoise
+	local tempNoiseB     = cellB:getMultinoise().tempNoise
+	---@type ValueNoise
+	local humidityNoiseB = cellB:getMultinoise().humidityNoise
+
+	-- Default noise's values.
+	local noiseHeightValue   = oceanNoise:get_2d({x = x, y = z})
+	local noiseTempValue     = 0.0
+	local noiseHumidityValue = 0.0
+
+	if heightNoiseA ~= nil and heightNoiseB ~= nil then
+		noiseHeightValue = mathRound(heightNoiseA:get_2d({x = x, y = z})) --TODO интерполяция
+	end
+
+	if tempNoiseA ~= nil and tempNoiseB ~= nil then
+		noiseTempValue = mathRound(tempNoiseA:get_2d({x = x, y = z}))  --TODO интерполяция
+	end
+
+	if humidityNoiseA ~= nil and humidityNoiseB ~= nil then
+		noiseHumidityValue = mathRound(humidityNoiseA:get_2d({x = x, y = z}))  --TODO интерполяция
+	end
+
+	generateNode(mapGenerator, noiseHeightValue, noiseTempValue, noiseHumidityValue, data, index, x, y, z)
+end
+
 ---@param mapGenerator  MapGen
 local function generatorHandler(mapGenerator, data, index, x, y, z)
 	-- If generation occurs outside the layers, then a void is generated
@@ -321,54 +354,38 @@ local function generatorHandler(mapGenerator, data, index, x, y, z)
 		oceanNoise = core.get_value_noise(oceanNoiseParams)
 	end
 
-	-- Default noise's values.
-	local noiseHeightValue   = oceanNoise:get_2d({x = x, y = z})
-	local noiseTempValue     = 0.0
-	local noiseHumidityValue = 0.0
+	--- We get the two nearest cells.
+	---@type MapGen.Cell, MapGen.Cell?
+	local cellA, cellB = layer:getCellsByPos(x, y, z)
 
-	local tempValuesCount     = 0
-	local humidityValuesCount = 0
-
-	local regions = layer:getRegionsByPos(x, y, z)
-
-	-- The height noise values ​​of all regions that a node is part of are added together.
-	---@param region  MapGen.Region
-	for _, region in ipairs(regions) do
-		local heightNoise   = region:getMultinoise().landscapeNoise
-		local tempNoise     = region:getMultinoise().tempNoise
-		local humidityNoise = region:getMultinoise().humidityNoise
-
-		if heightNoise ~= nil then
-		-- The further a point is from the center of a region, the less noise affects it.
-			local weight = calculateWeight2D(region:getMinPos(), region:getMaxPos(), x, z, region.getWeightFactor())
-
-			noiseHeightValue = noiseHeightValue + ( heightNoise:get_2d({x = x, y = z}) * weight )
-		end
-
-		if tempNoise ~= nil then
-			noiseTempValue = noiseTempValue + tempNoise:get_2d({x = x, y = z})
-
-			tempValuesCount = tempValuesCount + 1
-		end
-
-		if humidityNoise ~= nil then
-			noiseHumidityValue = noiseHumidityValue + humidityNoise:get_2d({x = x, y = z})
-
-			humidityValuesCount = humidityValuesCount + 1
-		end
+	--- The second cell may not exist, so we will generate only the first one.
+	if cellB == nil then
+		oneCellGeneratorHandler(mapGenerator, cellA, data, index, x, y, z)
+		return
 	end
 
-	noiseHeightValue = mathRound(noiseHeightValue)
+	--- We calculate the distance to the cell centers
+	local cellPos = cellA.getCellPos()
+	local distanceA = (x - cellPos.x)^2 + (y - cellPos.y)^2 + (z - cellPos.z)^2
+	cellPos = cellB.getCellPos()
+	local distanceB = (x - cellPos.x)^2 + (y - cellPos.y)^2 + (z - cellPos.z)^2
 
-	if tempValuesCount ~= 0 then
-		noiseTempValue = mathRound( noiseTempValue / tempValuesCount )
+	--- If the point is in the buffer zone...
+	if mathAbs(distanceA - distanceB) <= 1 then
+		--- ... we will smooth out the noise.
+		bufferZoneGeneratorHanler()
+		return
+	else
+		--- ... otherwise we will use the nearest cell.
+		oneCellGeneratorHandler(mapGenerator, cellA, data, index, x, y, z)
+		return
 	end
 
-	if humidityValuesCount ~= 0 then
-		noiseHumidityValue = mathRound( noiseHumidityValue / humidityValuesCount )
-	end
-
-	generateNode(mapGenerator, noiseHeightValue, noiseTempValue, noiseHumidityValue, data, index, x, y, z)
+	--- The function must terminate earlier.
+	--- The algorithm is based on eliminating options.
+	--- If the function execution has reached this point,
+	--- it means the algorithm is not taking some situation into account.
+	error('If you see this error, something went wrong in the map generation.')
 end
 
 ---@param minPos      table
@@ -379,7 +396,7 @@ function MapGen:onMapGenerated(minPos, maxPos, blockseed)
 	local voxelManip, eMin, eMax = core.get_mapgen_object("voxelmanip")
 
 	if not self.multinoiseInitialized then
-		self:initRegionsMultinoise()
+		self:initCellsMultinoise()
 	end
 
 	local data = voxelManip:get_data()

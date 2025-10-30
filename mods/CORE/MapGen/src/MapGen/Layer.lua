@@ -33,7 +33,7 @@ end
 ---@param xPos  number
 ---@param yPos  number
 ---@param zPos  number
----@return      MapGen.Cell?, MapGen.Cell?
+---@return      MapGen.Cell, MapGen.Cell?
 function Layer:getCellsByPos(xPos, yPos, zPos)
 	-- TODO: дописать алгоритмы оптимизации:
 	--     * по сортированному массиву

@@ -25,6 +25,7 @@ end
 ---@param cell  MapGen.Cell
 function Layer:addCell(cell)
 	table.insert(self.cellsList, cell)
+	print(dump(self.cellsList))
 	-- TODO: добавить сортировку массива для оптимизации.
 	-- Вероятно будет лучше в отдельной фунции и засунуть её в MapGen.run
 end
@@ -33,18 +34,20 @@ end
 ---@param xPos  number
 ---@param yPos  number
 ---@param zPos  number
----@return      MapGen.Cell, MapGen.Cell?
+---@return      MapGen.Cell, MapGen.Cell?, MapGen.Cell?
 function Layer:getCellsByPos(xPos, yPos, zPos)
 	-- TODO: дописать алгоритмы оптимизации:
 	--     * по сортированному массиву
 	--     * с помощью минимальных расстояний-гарантов
 
-	---@type MapGen.Cell, MapGen.Cell
-	local cellA, cellB
+	---@type MapGen.Cell, MapGen.Cell, MapGen.Cell
+	local cellA, cellB, cellC
 
 	-- Note: to optimize the distance, the dots are always in a square.
-	local pastDistance = math.huge
-	local newDistance  = 0.0
+	local pastDistanceA = math.huge
+	local pastDistanceB = math.huge
+	local pastDistanceC = math.huge
+	local newDistance
 
 	--- @type vector
 	local cellPos
@@ -54,22 +57,49 @@ function Layer:getCellsByPos(xPos, yPos, zPos)
 
 		if cellA == nil then
 			cellA = cell
+			cellPos = cell.getCellPos()
+			pastDistanceA = (xPos - cellPos.x)^2 + (yPos - cellPos.y)^2 + (zPos - cellPos.z)^2
+
 			goto continue
 		end
 
 		cellPos = cell.getCellPos()
 		newDistance = (xPos - cellPos.x)^2 + (yPos - cellPos.y)^2 + (zPos - cellPos.z)^2
 
-		if newDistance < pastDistance then
+		if newDistance < pastDistanceA then
+			cellC = cellB
 			cellB = cellA
-			cellA = cellB
-			pastDistance = newDistance
+			cellA = cell
+
+			pastDistanceC = pastDistanceB
+			pastDistanceB = pastDistanceA
+			pastDistanceA = newDistance
+
+			goto continue
+		end
+
+		if newDistance < pastDistanceB then
+			cellC = cellB
+			cellB = cell
+
+			pastDistanceC = pastDistanceB
+			pastDistanceB = newDistance
+
+			goto continue
+		end
+
+		if newDistance < pastDistanceC then
+			cellC = cell
+
+			pastDistanceC = newDistance
+
+			goto continue
 		end
 
 		::continue::
 	end
 
-	return cellA, cellB
+	return cellA, cellB, cellC
 end
 
 return Layer

@@ -1,6 +1,8 @@
 local mathCeil,  mathAbs,  mathRound,  mathMin
 	= math.ceil, math.abs, math.round, math.min
 
+local BUFFER_ZONE_WIDTH = 30
+
 -- --- MapGen default moises ---
 ---@type ValueNoise
 local oceanNoise
@@ -51,7 +53,7 @@ local Biome = require("MapGen.Biome")
 ---@field biomesDiagram           table
 ---@field multinoiseInitialized  boolean  Is the fractal noise of the cells initialized? This is necessary for a one-time noise initialization.
 ---@field isRunning              boolean  A static field that guarantees that only one instance of the `MapGen` class will work.
----@field nodeIDs                table<string, string>
+---@field nodeIDs                table<string, number>
 local MapGen = {
 	layersByName          = {},
 	layersList            = {},
@@ -234,6 +236,12 @@ local function generateSoil(biome, data, index, x, y, z)
 	data[index] = core.get_content_id(biome.groundNodes.turf)  -- TODO: убрать тут get_content_id(), переместить его куда-то "выше"
 end
 
+---@param ids           table<string, number>
+---@param data          number[]
+---@param index         number
+---@param x             number
+---@param y             number
+---@param z             number
 local function generateRock(ids, data, index, x, y, z)
 
 	if rocksNoise == nil then
@@ -260,6 +268,15 @@ local function generateRock(ids, data, index, x, y, z)
 	end
 end
 
+---@param mapGenerator  MapGen
+---@param hight         number
+---@param temp          number
+---@param humidity      number
+---@param data          number[]
+---@param index         number
+---@param x             number
+---@param y             number
+---@param z             number
 local function generateNode(mapGenerator, hight, temp, humidity, data, index, x, y, z)
 	local ids =  mapGenerator.nodeIDs
 
@@ -276,12 +293,19 @@ local function generateNode(mapGenerator, hight, temp, humidity, data, index, x,
 	end
 end
 
+---@param mapGenerator  MapGen
+---@param cell          MapGen.Cell
+---@param data          number[]
+---@param index         number
+---@param x             number
+---@param y             number
+---@param z             number
 local function oneCellGeneratorHandler(mapGenerator, cell, data, index, x, y, z)
-	---@type ValueNoise
+	---@type ValueNoise?
 	local heightNoise   = cell:getMultinoise().landscapeNoise
-	---@type ValueNoise
+	---@type ValueNoise?
 	local tempNoise     = cell:getMultinoise().tempNoise
-	---@type ValueNoise
+	---@type ValueNoise?
 	local humidityNoise = cell:getMultinoise().humidityNoise
 
 	-- Default noise's values.
@@ -304,19 +328,40 @@ local function oneCellGeneratorHandler(mapGenerator, cell, data, index, x, y, z)
 	generateNode(mapGenerator, noiseHeightValue, noiseTempValue, noiseHumidityValue, data, index, x, y, z)
 end
 
-local function bufferZoneGeneratorHanler(mapGenerator, cellA, cellB, distanceA, distanceB, data, index, x, y, z)
-	---@type ValueNoise
+---@return number
+local function smootherstep2(valueA, valueB, x)
+	x = x + (BUFFER_ZONE_WIDTH / 2)
+	-- Clamp x to the range [edge0, edge1] and normalize to [0, 1]
+	---@type number
+	local t = math.max(0, math.min(1, x / BUFFER_ZONE_WIDTH ))
+	-- Quintic polynomial: 6t^5 - 15t^4 + 10t^3
+	local new_t = t * t * t * (t * (t * 6 - 15) + 10)
+
+	return valueB + (valueA - valueB) * t--new_t
+end
+
+---@param mapGenerator  MapGen
+---@param cellA         MapGen.Cell
+---@param cellB         MapGen.Cell
+---@param distance      number
+---@param data          number[]
+---@param index         number
+---@param x             number
+---@param y             number
+---@param z             number
+local function twoCellsGeneratorHanler(mapGenerator, cellA, cellB, distance, data, index, x, y, z)
+	---@type ValueNoise?
 	local heightNoiseA   = cellA:getMultinoise().landscapeNoise
-	---@type ValueNoise
+	---@type ValueNoise?
 	local tempNoiseA     = cellA:getMultinoise().tempNoise
-	---@type ValueNoise
+	---@type ValueNoise?
 	local humidityNoiseA = cellA:getMultinoise().humidityNoise
 
-	---@type ValueNoise
+	---@type ValueNoise?
 	local heightNoiseB   = cellB:getMultinoise().landscapeNoise
-	---@type ValueNoise
+	---@type ValueNoise?
 	local tempNoiseB     = cellB:getMultinoise().tempNoise
-	---@type ValueNoise
+	---@type ValueNoise?
 	local humidityNoiseB = cellB:getMultinoise().humidityNoise
 
 	-- Default noise's values.
@@ -325,7 +370,10 @@ local function bufferZoneGeneratorHanler(mapGenerator, cellA, cellB, distanceA, 
 	local noiseHumidityValue = 0.0
 
 	if heightNoiseA ~= nil and heightNoiseB ~= nil then
-		noiseHeightValue = mathRound(heightNoiseA:get_2d({x = x, y = z})) --TODO интерполяция
+		noiseHeightValue = mathRound(smootherstep2(
+			heightNoiseA:get_2d({x = x, y = z}),
+			heightNoiseB:get_2d({x = x, y = z}),
+			distance))
 	end
 
 	if tempNoiseA ~= nil and tempNoiseB ~= nil then
@@ -339,7 +387,119 @@ local function bufferZoneGeneratorHanler(mapGenerator, cellA, cellB, distanceA, 
 	generateNode(mapGenerator, noiseHeightValue, noiseTempValue, noiseHumidityValue, data, index, x, y, z)
 end
 
+---@return number
+local function smootherstep3(valueA, valueB, valueC, x, y)
+	x = x + (BUFFER_ZONE_WIDTH / 2)
+	y = y + (BUFFER_ZONE_WIDTH / 2)
+	-- Clamp x to the range [edge0, edge1] and normalize to [0, 1]
+	---@type number
+	local tx = math.max(0, math.min(1, x / BUFFER_ZONE_WIDTH ))
+	-- Quintic polynomial: 6t^5 - 15t^4 + 10t^3
+	--local new_t = t * t * t * (t * (t * 6 - 15) + 10)
+
+	local valueAB = valueB + (valueA - valueB) * tx--new_t
+
+	local ty = math.max(0, math.min(1, y / BUFFER_ZONE_WIDTH ))
+	--new_t = t * t * t * (t * (t * 6 - 15) + 10)
+
+	local T = 1 + tx + ty
+
+	local valueAC = valueC + (valueA - valueC) * ty--new_t
+	return (valueA * math.min(tx, ty) + valueB * (1-tx) + valueC * (1-ty))/(math.min(tx, ty) + (1-tx) + (1-tx))-- + valueC * (ty/T)) --(valueAC + valueAB)/2--valueA + (valueB - valueA) * tx + (valueC - valueA) * ty
+end
+
 ---@param mapGenerator  MapGen
+---@param cellA         MapGen.Cell
+---@param cellB         MapGen.Cell
+---@param cellC         MapGen.Cell
+---@param distanceAB     number
+---@param distanceAC     number
+---@param data          number[]
+---@param index         number
+---@param x             number
+---@param y             number
+---@param z             number
+local function threeCellsGeneratorHanler(mapGenerator, cellA, cellB, cellC, distanceAB, distanceAC, data, index, x, y, z)
+	---@type ValueNoise?
+	local heightNoiseA   = cellA:getMultinoise().landscapeNoise
+	---@type ValueNoise?
+	local tempNoiseA     = cellA:getMultinoise().tempNoise
+	---@type ValueNoise?
+	local humidityNoiseA = cellA:getMultinoise().humidityNoise
+
+	---@type ValueNoise?
+	local heightNoiseB   = cellB:getMultinoise().landscapeNoise
+	---@type ValueNoise?
+	local tempNoiseB     = cellB:getMultinoise().tempNoise
+	---@type ValueNoise?
+	local humidityNoiseB = cellB:getMultinoise().humidityNoise
+
+	---@type ValueNoise?
+	local heightNoiseC   = cellC:getMultinoise().landscapeNoise
+	---@type ValueNoise?
+	local tempNoiseC     = cellC:getMultinoise().tempNoise
+	---@type ValueNoise?
+	local humidityNoiseC = cellC:getMultinoise().humidityNoise
+
+	-- Default noise's values.
+	local noiseHeightValue   = oceanNoise:get_2d({x = x, y = z})
+	local noiseTempValue     = 0.0
+	local noiseHumidityValue = 0.0
+
+	local cellPos = (cellC.getCellPos() + cellB.getCellPos())/2
+	local distanceBC =  (x - cellPos.x)^2 + (y - cellPos.y)^2 + (z - cellPos.z)^2
+
+	if heightNoiseA ~= nil and heightNoiseB ~= nil and heightNoiseC ~=nil then
+		noiseHeightValue = mathRound(smootherstep3(
+			heightNoiseA:get_2d({x = x, y = z}),
+			heightNoiseB:get_2d({x = x, y = z}),
+			heightNoiseC:get_2d({x = x, y = z}),
+			distanceAB,
+			distanceAC))
+	end
+
+	if tempNoiseA ~= nil and tempNoiseB ~= nil then
+		noiseTempValue = mathRound(tempNoiseA:get_2d({x = x, y = z}))  --TODO интерполяция
+	end
+
+	if humidityNoiseA ~= nil and humidityNoiseB ~= nil then
+		noiseHumidityValue = mathRound(humidityNoiseA:get_2d({x = x, y = z}))  --TODO интерполяция
+	end
+
+	generateNode(mapGenerator, noiseHeightValue, noiseTempValue, noiseHumidityValue, data, index, x, y, z)
+end
+
+---@param pos0 vector
+---@param pos1 vector
+---@return     number
+local function calcDistance(pos0, pos1, posN)
+	-- We find the direction vector of line.
+	local v = pos1 - pos0
+
+	-- We find the coefficients for the parametric notation of the line equation.
+	local a = pos1.x - pos0.x
+	local b = pos1.y - pos0.y
+	local c = pos1.z - pos0.z
+
+	-- We find the parameter `t` based on the perpendicular
+	-- from the point of the generated node to the line.
+	local t = (a * (posN.x - pos0.x) + b * (posN.y - pos0.y) + c * (posN.z - pos0.z)) / (a^2 + b^2 + c^2)
+
+	-- We find the projection point of the generated
+	-- node point through the parametric equation.
+	local projection = pos0 + t*v
+
+	-- We find the distance between the generated node's point and its projection
+	-- (we obtain the length of the perpendicular to line).
+	return math.sqrt((pos0.x - projection.x)^2 + (pos0.y - projection.y)^2 + (pos0.z - projection.z)^2)
+end
+
+---@param mapGenerator  MapGen
+---@param data          number[]
+---@param index         number
+---@param x             number
+---@param y             number
+---@param z             number
 local function generatorHandler(mapGenerator, data, index, x, y, z)
 	-- If generation occurs outside the layers, then a void is generated
 	local layer = mapGenerator:getLayerByHeight(y)
@@ -355,8 +515,8 @@ local function generatorHandler(mapGenerator, data, index, x, y, z)
 	end
 
 	--- We get the two nearest cells.
-	---@type MapGen.Cell, MapGen.Cell?
-	local cellA, cellB = layer:getCellsByPos(x, y, z)
+	---@type MapGen.Cell, MapGen.Cell?, MapGen.Cell?
+	local cellA, cellB, cellC = layer:getCellsByPos(x, y, z)
 
 	--- The second cell may not exist, so we will generate only the first one.
 	if cellB == nil then
@@ -364,16 +524,74 @@ local function generatorHandler(mapGenerator, data, index, x, y, z)
 		return
 	end
 
-	--- We calculate the distance to the cell centers
+	--[[- We calculate the distance to the cell centers
 	local cellPos = cellA.getCellPos()
 	local distanceA = (x - cellPos.x)^2 + (y - cellPos.y)^2 + (z - cellPos.z)^2
 	cellPos = cellB.getCellPos()
 	local distanceB = (x - cellPos.x)^2 + (y - cellPos.y)^2 + (z - cellPos.z)^2
 
+
+
+	if cellC ~= nil then
+		cellPos = cellC.getCellPos()
+		local distanceC = (x - cellPos.x)^2 + (y - cellPos.y)^2 + (z - cellPos.z)^2
+
+		if  mathAbs(distanceB - distanceA) <= BUFFER_ZONE_WIDTH^2 and
+			mathAbs(distanceC - distanceB) <= BUFFER_ZONE_WIDTH^2 and
+			mathAbs(distanceC - distanceA) <= BUFFER_ZONE_WIDTH^2
+		then
+			threeCellsGeneratorHanler(mapGenerator, cellA, cellB, cellC, distanceA, distanceB, distanceC, data, index, x, y, z)
+			return
+		end
+	end
+
+	if x == -45 then
+		print(x, math.sqrt(distanceB), math.sqrt(distanceA))
+	end
 	--- If the point is in the buffer zone...
-	if mathAbs(distanceA - distanceB) <= 1 then
+	if mathAbs(math.sqrt(distanceB) - math.sqrt(distanceA)) <= BUFFER_ZONE_WIDTH^2 then
 		--- ... we will smooth out the noise.
-		bufferZoneGeneratorHanler()
+		twoCellsGeneratorHanler(mapGenerator, cellA, cellB, distanceA, distanceB, data, index, x, y, z)
+		return
+	else
+		--- ... otherwise we will use the nearest cell.
+		oneCellGeneratorHandler(mapGenerator, cellA, data, index, x, y, z)
+		return
+	end--]]
+
+	--[[local pos0 = ( cellB.getCellPos() + cellA.getCellPos() ) / 2
+	local posB = cellB.getCellPos()
+	local a = posB.x - pos0.x
+	local b = posB.y - pos0.y
+	local c = posB.z - pos0.z
+
+	local t = (a * (x - pos0.x) + b * (y - pos0.y) + c * (z - pos0.z)) / (a^2 + b^2 + c^2)
+
+	local projection = vector.new(
+		pos0.x + a * t,
+		pos0.y + a * t,
+		pos0.z + a * t
+	)--]]
+
+	local posA = cellA.getCellPos()
+	local posB = cellB.getCellPos()
+	local distanceAB = calcDistance( (posB + posA) / 2, posB, vector.new(x,y,z))
+
+	if cellC ~= nil then
+		local posC = cellC.getCellPos()
+		local distanceAC = calcDistance( (posC + posA) / 2, posC, vector.new(x,y,z))
+		local distanceBC = calcDistance( (posC + posB) / 2, posC, vector.new(x,y,z))
+
+		if distanceAC <= BUFFER_ZONE_WIDTH / 2 and  distanceAB <= BUFFER_ZONE_WIDTH / 2 and distanceBC <= BUFFER_ZONE_WIDTH / 2 then
+			threeCellsGeneratorHanler(mapGenerator, cellA, cellB, cellC, distanceAB, distanceAC, data, index, x, y, z)
+			return
+		end
+	end
+
+	--- If the point is in the buffer zone...
+	if distanceAB <= BUFFER_ZONE_WIDTH / 2 then
+		--- ... we will smooth out the noise.
+		twoCellsGeneratorHanler(mapGenerator, cellA, cellB, distanceAB, data, index, x, y, z)
 		return
 	else
 		--- ... otherwise we will use the nearest cell.

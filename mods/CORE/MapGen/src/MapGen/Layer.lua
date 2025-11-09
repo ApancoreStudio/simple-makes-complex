@@ -1,10 +1,14 @@
+local mathSqrt = math.sqrt
+
 ---@class MapGen.Layer
----@field name         string
----@field minY         number
----@field maxY         number
----@field cellsList  table
+---@field name           string
+---@field minY           number
+---@field maxY           number
+---@field peaksList      MapGen.Peak[]
+---@field trianglesList  MapGen.Triangle[]
 local Layer = {
-	cellsList = {}
+	peaksList     = {},
+	trianglesList = {},
 }
 
 ---@param name  string
@@ -22,84 +26,48 @@ function Layer:new(name, minY, maxY)
 	return instance
 end
 
----@param cell  MapGen.Cell
-function Layer:addCell(cell)
-	table.insert(self.cellsList, cell)
-	print(dump(self.cellsList))
+---@param peak  MapGen.Peak
+function Layer:addPeak(peak)
+	table.insert(self.peaksList, peak)
+	print(dump(self.peaksList))
 	-- TODO: добавить сортировку массива для оптимизации.
 	-- Вероятно будет лучше в отдельной фунции и засунуть её в MapGen.run
 end
 
----Returns the two closest cells.
+---Returns a list of tables of the form `{peak, weight}`.
+---
+---Maybe return an empty table.
 ---@param xPos  number
 ---@param yPos  number
 ---@param zPos  number
----@return      MapGen.Cell, MapGen.Cell?, MapGen.Cell?
-function Layer:getCellsByPos(xPos, yPos, zPos)
-	-- TODO: дописать алгоритмы оптимизации:
-	--     * по сортированному массиву
-	--     * с помощью минимальных расстояний-гарантов
-
-	---@type MapGen.Cell, MapGen.Cell, MapGen.Cell
-	local cellA, cellB, cellC
-
-	-- Note: to optimize the distance, the dots are always in a square.
-	local pastDistanceA = math.huge
-	local pastDistanceB = math.huge
-	local pastDistanceC = math.huge
-	local newDistance
-
+---@return      {peak : MapGen.Peak, weight : number}[] | table, number
+function Layer:getPeaksByPos(xPos, yPos, zPos, radius)
+	---@type MapGen.Peak[]
+	local peaks = {}
 	--- @type vector
-	local cellPos
+	local peakPos
+	---@type number
+	local distance
+	---@type number
+	local weight
+	---@type number
+	local totalWeight = 0
 
-	---@param cell  MapGen.Cell
-	for _, cell in  ipairs(self.cellsList) do
+	---@param peak  MapGen.Peak
+	for _, peak in  ipairs(self.peaksList) do
+		peakPos = peak.getPeakPos()
+		distance = mathSqrt((xPos - peakPos.x)^2 + (yPos - peakPos.y)^2 + (zPos - peakPos.z)^2)
 
-		if cellA == nil then
-			cellA = cell
-			cellPos = cell.getCellPos()
-			pastDistanceA = (xPos - cellPos.x)^2 + (yPos - cellPos.y)^2 + (zPos - cellPos.z)^2
+		if distance <= radius then
+			weight = 1 / distance --/ radius
 
-			goto continue
+			table.insert(peaks, {peak = peak, weight = weight})
+
+			totalWeight = totalWeight + weight
 		end
-
-		cellPos = cell.getCellPos()
-		newDistance = (xPos - cellPos.x)^2 + (yPos - cellPos.y)^2 + (zPos - cellPos.z)^2
-
-		if newDistance < pastDistanceA then
-			cellC = cellB
-			cellB = cellA
-			cellA = cell
-
-			pastDistanceC = pastDistanceB
-			pastDistanceB = pastDistanceA
-			pastDistanceA = newDistance
-
-			goto continue
-		end
-
-		if newDistance < pastDistanceB then
-			cellC = cellB
-			cellB = cell
-
-			pastDistanceC = pastDistanceB
-			pastDistanceB = newDistance
-
-			goto continue
-		end
-
-		if newDistance < pastDistanceC then
-			cellC = cell
-
-			pastDistanceC = newDistance
-
-			goto continue
-		end
-
-		::continue::
 	end
 
-	return cellA, cellB, cellC
+	return peaks, totalWeight
 end
 
 return Layer

@@ -1,6 +1,6 @@
 ---For EmmyLua only
 
----@class MapGen.Cell.MultinoiseParams
+---@class MapGen.Peak.MultinoiseParams
 ---@field landscapeNoise  NoiseParams?
 ---@field tempNoise       NoiseParams?
 ---@field humidityNoise   NoiseParams?

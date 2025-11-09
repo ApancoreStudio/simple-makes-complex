@@ -1,7 +1,8 @@
 local mathCeil,  mathAbs,  mathRound,  mathMin
 	= math.ceil, math.abs, math.round, math.min
 
-local BUFFER_ZONE_WIDTH = 30
+local BUFFER_ZONE_WIDTH = 3000
+local MAX_DISTANCE = 3000
 
 -- --- MapGen default moises ---
 ---@type ValueNoise
@@ -40,25 +41,28 @@ local require = modInfo.require
 ---@type MapGen.Layer
 local Layer = require("MapGen.Layer")
 
----@type MapGen.Cell
-local Cell = require("MapGen.Cell")
+---@type MapGen.Peak
+local Peak = require("MapGen.Peak")
 
 ---@type MapGen.Biome
 local Biome = require("MapGen.Biome")
+
+---@type MapGen.Triangulation
+local Triangulation = require("MapGen.Triangulation")
 
 ---@class MapGen
 ---@field layersByName           table
 ---@field layersList             table
 ---@field biomesList             table
----@field biomesDiagram           table
----@field multinoiseInitialized  boolean  Is the fractal noise of the cells initialized? This is necessary for a one-time noise initialization.
+---@field biomesDiagram          table
+---@field multinoiseInitialized  boolean  Is the fractal noise of the peaks initialized? This is necessary for a one-time noise initialization.
 ---@field isRunning              boolean  A static field that guarantees that only one instance of the `MapGen` class will work.
 ---@field nodeIDs                table<string, number>
 local MapGen = {
 	layersByName          = {},
 	layersList            = {},
 	biomesList            = {},
-	biomesDiagram            = {},
+	biomesDiagram         = {},
 	multinoiseInitialized = false,
 	isRunning             = false,
 }
@@ -117,16 +121,25 @@ function MapGen:RegisterLayer(name, minY, maxY)
 	end)
 end
 
+function MapGen:initLayersTrianglesList()
+	---@param layer  MapGen.Layer
+	for _, layer in ipairs(self.layersList) do
+		print('A: ', #layer.peaksList)
+		layer.trianglesList = Triangulation.triangulate(layer.peaksList)
+		print('ABOBA:', dump(layer.trianglesList))
+	end
+end
+
 -- TODO: переписать описание функции
----Mark a cell of the world as a cubic cell by two opposite vertices.
+---Mark a peak of the world as a cubic peak by two opposite vertices.
 ---
----Cells must be included in layers and may overlap each other.
----@param layerName     string  The name of the layer in which the new cell will be included.
----@param cellPos        vector
----@param multinoise    MapGen.Cell.MultinoiseParams     Noise that will be assigned to the cell and that will influence map generation
----@param cellIs2D    boolean?  If true, the transmitted Y coordinate will be overwritten by the layer boundaries.
----@param weightFactor  number?   The coefficient by which the reduction in the impact of cellal noise on generation will be calculated. If 0, there will be no reduction.
-function MapGen:RegisterCell(layerName, cellPos, multinoise, cellIs2D, weightFactor)
+---Peaks must be included in layers and may overlap each other.
+---@param layerName     string  The name of the layer in which the new peak will be included.
+---@param peakPos        vector
+---@param multinoise    MapGen.Peak.MultinoiseParams     Noise that will be assigned to the peak and that will influence map generation
+---@param peakIs2D    boolean?  If true, the transmitted Y coordinate will be overwritten by the layer boundaries.
+---@param weightFactor  number?   The coefficient by which the reduction in the impact of peakal noise on generation will be calculated. If 0, there will be no reduction.
+function MapGen:RegisterPeak(layerName, peakPos, multinoise, peakIs2D, weightFactor)
 	---@type MapGen.Layer
 	local layer = self.layersByName[layerName]
 
@@ -135,8 +148,8 @@ function MapGen:RegisterCell(layerName, cellPos, multinoise, cellIs2D, weightFac
 	end
 
 	-- TODO: вероятно стоит убрать 2D ячейки
-	if cellIs2D then
-		cellPos.y = 0
+	if peakIs2D then
+		peakPos.y = 0
 	end
 
 	--TODO: добавить проверку, что координата ячейки не совпадают
@@ -147,20 +160,22 @@ function MapGen:RegisterCell(layerName, cellPos, multinoise, cellIs2D, weightFac
 		weightFactor = 1
 	end
 
-	---@type MapGen.Cell
-	local cell = Cell:new(cellPos, multinoise, weightFactor)
+	---@type MapGen.Peak
+	local peak = Peak:new(peakPos, multinoise, weightFactor)
 
-	layer:addCell(cell)
+	layer:addPeak(peak)
+
+	return peak --TODO: временно?
 end
 
----Initialize cell noise. This should be called after the map object is loaded.
-function MapGen:initCellsMultinoise()
+---Initialize peak noise. This should be called after the map object is loaded.
+function MapGen:initPeaksMultinoise()
 	---@param layer  MapGen.Layer
 	for _, layer in ipairs(self.layersList) do
 
-		---@param cell MapGen.Cell
-		for _, cell in ipairs(layer.cellsList) do
-			cell:initMultinoise()
+		---@param peak MapGen.Peak
+		for _, peak in ipairs(layer.peaksList) do
+			peak:initMultinoise()
 		end
 
 	end
@@ -205,9 +220,9 @@ function MapGen:initBiomesDiagram()
 end
 
 ---Calculate the weight for noise based on
----the distance of the point from the center of the cell.
+---the distance of the point from the center of the peak.
 ---
----If the `weightFactor` is `0`, then the cell's
+---If the `weightFactor` is `0`, then the peak's
 ---weight is not calculated and is always equal to `1`.
 ---@param minPos        vector
 ---@param maxPos        vector
@@ -280,7 +295,7 @@ end
 local function generateNode(mapGenerator, hight, temp, humidity, data, index, x, y, z)
 	local ids =  mapGenerator.nodeIDs
 
-	local biome = mapGenerator.biomesDiagram[temp][humidity]
+	local biome = mapGenerator.biomesDiagram[mathRound(temp)][mathRound(humidity)]
 
 	if y > hight and y > 0 then
 		data[index] = ids.air
@@ -293,205 +308,75 @@ local function generateNode(mapGenerator, hight, temp, humidity, data, index, x,
 	end
 end
 
----@param mapGenerator  MapGen
----@param cell          MapGen.Cell
----@param data          number[]
----@param index         number
----@param x             number
----@param y             number
----@param z             number
-local function oneCellGeneratorHandler(mapGenerator, cell, data, index, x, y, z)
-	---@type ValueNoise?
-	local heightNoise   = cell:getMultinoise().landscapeNoise
-	---@type ValueNoise?
-	local tempNoise     = cell:getMultinoise().tempNoise
-	---@type ValueNoise?
-	local humidityNoise = cell:getMultinoise().humidityNoise
-
-	-- Default noise's values.
-	local noiseHeightValue   = oceanNoise:get_2d({x = x, y = z})
-	local noiseTempValue     = 0.0
-	local noiseHumidityValue = 0.0
-
-	if heightNoise ~= nil then
-		noiseHeightValue = mathRound(heightNoise:get_2d({x = x, y = z}))
+local function pointInTriangle(px, py, x1, y1, x2, y2, x3, y3)
+	-- Функция для вычисления векторного произведения
+	local function crossProduct(ax, ay, bx, by)
+		return ax * by - ay * bx
 	end
 
-	if tempNoise ~= nil then
-		noiseTempValue = mathRound(tempNoise:get_2d({x = x, y = z}))
-	end
+	-- Векторы от вершин к точке и между вершинами
+	local d1 = crossProduct(x2 - x1, y2 - y1, px - x1, py - y1)
+	local d2 = crossProduct(x3 - x2, y3 - y2, px - x2, py - y2)
+	local d3 = crossProduct(x1 - x3, y1 - y3, px - x3, py - y3)
 
-	if humidityNoise ~= nil then
-		noiseHumidityValue = mathRound(humidityNoise:get_2d({x = x, y = z}))
-	end
+	-- Проверка знаков векторных произведений
+	local has_positive = (d1 > 0) or (d2 > 0) or (d3 > 0)
+	local has_negative = (d1 < 0) or (d2 < 0) or (d3 < 0)
 
-	generateNode(mapGenerator, noiseHeightValue, noiseTempValue, noiseHumidityValue, data, index, x, y, z)
+	-- Точка внутри, если все произведения одного знака
+	return not (has_positive and has_negative)
 end
 
----@return number
-local function smootherstep2(valueA, valueB, x)
-	x = x + (BUFFER_ZONE_WIDTH / 2)
-	-- Clamp x to the range [edge0, edge1] and normalize to [0, 1]
-	---@type number
-	local t = math.max(0, math.min(1, x / BUFFER_ZONE_WIDTH ))
-	-- Quintic polynomial: 6t^5 - 15t^4 + 10t^3
-	local new_t = t * t * t * (t * (t * 6 - 15) + 10)
+---@param height  MapGen.Triangulation.Edge
+---@param x         number
+---@param y         number
+---@param z         number
+---@return          number
+local function calcWeight(height, x, y, z)
+	local pos1 = vector.new(x, y, z)
+	local pos2 = height.p1:getPeakPos()
+	local pos3 = height.p2:getPeakPos()
 
-	return valueB + (valueA - valueB) * t--new_t
+	local v = pos3 - pos2
+	---@type vector
+	local w = pos1 - pos2
+
+	-- Formula: (w * v) / (v * v)
+	-- When * the dot product.
+	local t = w:dot(v) / v:dot(v)
+
+	local posP = pos2 + v * t
+
+	return 1 - vector.distance(pos2, posP) / height:length()
 end
 
----@param mapGenerator  MapGen
----@param cellA         MapGen.Cell
----@param cellB         MapGen.Cell
----@param distance      number
----@param data          number[]
----@param index         number
----@param x             number
----@param y             number
----@param z             number
-local function twoCellsGeneratorHanler(mapGenerator, cellA, cellB, distance, data, index, x, y, z)
-	---@type ValueNoise?
-	local heightNoiseA   = cellA:getMultinoise().landscapeNoise
-	---@type ValueNoise?
-	local tempNoiseA     = cellA:getMultinoise().tempNoise
-	---@type ValueNoise?
-	local humidityNoiseA = cellA:getMultinoise().humidityNoise
+---@param triangle  MapGen.Triangle
+---@param x         number
+---@param y         number
+---@param z         number
+---@return          number
+local function calcNoiseHeightValue(triangle, x, y, z)
+	local peak1 = triangle.p1
+	local peak2 = triangle.p2
+	local peak3 = triangle.p3
 
-	---@type ValueNoise?
-	local heightNoiseB   = cellB:getMultinoise().landscapeNoise
-	---@type ValueNoise?
-	local tempNoiseB     = cellB:getMultinoise().tempNoise
-	---@type ValueNoise?
-	local humidityNoiseB = cellB:getMultinoise().humidityNoise
+	local noiseHeightValue = 0
 
-	-- Default noise's values.
-	local noiseHeightValue   = oceanNoise:get_2d({x = x, y = z})
-	local noiseTempValue     = 0.0
-	local noiseHumidityValue = 0.0
+	local totalWeight = 0.0
 
-	if heightNoiseA ~= nil and heightNoiseB ~= nil then
-		noiseHeightValue = mathRound(smootherstep2(
-			heightNoiseA:get_2d({x = x, y = z}),
-			heightNoiseB:get_2d({x = x, y = z}),
-			distance))
-	end
+	local weight = calcWeight(triangle.h1, x, y, z)
+	noiseHeightValue = noiseHeightValue + peak1:getMultinoise().landscapeNoise:get_2d({x = x, y = z}) * weight
+	totalWeight = totalWeight + weight
 
-	if tempNoiseA ~= nil and tempNoiseB ~= nil then
-		noiseTempValue = mathRound(tempNoiseA:get_2d({x = x, y = z}))  --TODO интерполяция
-	end
+	weight = calcWeight(triangle.h2, x, y, z)
+	noiseHeightValue = noiseHeightValue + peak2:getMultinoise().landscapeNoise:get_2d({x = x, y = z}) * weight
+	totalWeight = totalWeight + weight
 
-	if humidityNoiseA ~= nil and humidityNoiseB ~= nil then
-		noiseHumidityValue = mathRound(humidityNoiseA:get_2d({x = x, y = z}))  --TODO интерполяция
-	end
+	weight = calcWeight(triangle.h3, x, y, z)
+	noiseHeightValue = noiseHeightValue + peak3:getMultinoise().landscapeNoise:get_2d({x = x, y = z}) * weight
+	totalWeight = totalWeight + weight
 
-	generateNode(mapGenerator, noiseHeightValue, noiseTempValue, noiseHumidityValue, data, index, x, y, z)
-end
-
----@return number
-local function smootherstep3(valueA, valueB, valueC, x, y)
-	x = x + (BUFFER_ZONE_WIDTH / 2)
-	y = y + (BUFFER_ZONE_WIDTH / 2)
-	-- Clamp x to the range [edge0, edge1] and normalize to [0, 1]
-	---@type number
-	local tx = math.max(0, math.min(1, x / BUFFER_ZONE_WIDTH ))
-	-- Quintic polynomial: 6t^5 - 15t^4 + 10t^3
-	--local new_t = t * t * t * (t * (t * 6 - 15) + 10)
-
-	local valueAB = valueB + (valueA - valueB) * tx--new_t
-
-	local ty = math.max(0, math.min(1, y / BUFFER_ZONE_WIDTH ))
-	--new_t = t * t * t * (t * (t * 6 - 15) + 10)
-
-	local T = 1 + tx + ty
-
-	local valueAC = valueC + (valueA - valueC) * ty--new_t
-	return (valueA * math.min(tx, ty) + valueB * (1-tx) + valueC * (1-ty))/(math.min(tx, ty) + (1-tx) + (1-tx))-- + valueC * (ty/T)) --(valueAC + valueAB)/2--valueA + (valueB - valueA) * tx + (valueC - valueA) * ty
-end
-
----@param mapGenerator  MapGen
----@param cellA         MapGen.Cell
----@param cellB         MapGen.Cell
----@param cellC         MapGen.Cell
----@param distanceAB     number
----@param distanceAC     number
----@param data          number[]
----@param index         number
----@param x             number
----@param y             number
----@param z             number
-local function threeCellsGeneratorHanler(mapGenerator, cellA, cellB, cellC, distanceAB, distanceAC, data, index, x, y, z)
-	---@type ValueNoise?
-	local heightNoiseA   = cellA:getMultinoise().landscapeNoise
-	---@type ValueNoise?
-	local tempNoiseA     = cellA:getMultinoise().tempNoise
-	---@type ValueNoise?
-	local humidityNoiseA = cellA:getMultinoise().humidityNoise
-
-	---@type ValueNoise?
-	local heightNoiseB   = cellB:getMultinoise().landscapeNoise
-	---@type ValueNoise?
-	local tempNoiseB     = cellB:getMultinoise().tempNoise
-	---@type ValueNoise?
-	local humidityNoiseB = cellB:getMultinoise().humidityNoise
-
-	---@type ValueNoise?
-	local heightNoiseC   = cellC:getMultinoise().landscapeNoise
-	---@type ValueNoise?
-	local tempNoiseC     = cellC:getMultinoise().tempNoise
-	---@type ValueNoise?
-	local humidityNoiseC = cellC:getMultinoise().humidityNoise
-
-	-- Default noise's values.
-	local noiseHeightValue   = oceanNoise:get_2d({x = x, y = z})
-	local noiseTempValue     = 0.0
-	local noiseHumidityValue = 0.0
-
-	local cellPos = (cellC.getCellPos() + cellB.getCellPos())/2
-	local distanceBC =  (x - cellPos.x)^2 + (y - cellPos.y)^2 + (z - cellPos.z)^2
-
-	if heightNoiseA ~= nil and heightNoiseB ~= nil and heightNoiseC ~=nil then
-		noiseHeightValue = mathRound(smootherstep3(
-			heightNoiseA:get_2d({x = x, y = z}),
-			heightNoiseB:get_2d({x = x, y = z}),
-			heightNoiseC:get_2d({x = x, y = z}),
-			distanceAB,
-			distanceAC))
-	end
-
-	if tempNoiseA ~= nil and tempNoiseB ~= nil then
-		noiseTempValue = mathRound(tempNoiseA:get_2d({x = x, y = z}))  --TODO интерполяция
-	end
-
-	if humidityNoiseA ~= nil and humidityNoiseB ~= nil then
-		noiseHumidityValue = mathRound(humidityNoiseA:get_2d({x = x, y = z}))  --TODO интерполяция
-	end
-
-	generateNode(mapGenerator, noiseHeightValue, noiseTempValue, noiseHumidityValue, data, index, x, y, z)
-end
-
----@param pos0 vector
----@param pos1 vector
----@return     number
-local function calcDistance(pos0, pos1, posN)
-	-- We find the direction vector of line.
-	local v = pos1 - pos0
-
-	-- We find the coefficients for the parametric notation of the line equation.
-	local a = pos1.x - pos0.x
-	local b = pos1.y - pos0.y
-	local c = pos1.z - pos0.z
-
-	-- We find the parameter `t` based on the perpendicular
-	-- from the point of the generated node to the line.
-	local t = (a * (posN.x - pos0.x) + b * (posN.y - pos0.y) + c * (posN.z - pos0.z)) / (a^2 + b^2 + c^2)
-
-	-- We find the projection point of the generated
-	-- node point through the parametric equation.
-	local projection = pos0 + t*v
-
-	-- We find the distance between the generated node's point and its projection
-	-- (we obtain the length of the perpendicular to line).
-	return math.sqrt((pos0.x - projection.x)^2 + (pos0.y - projection.y)^2 + (pos0.z - projection.z)^2)
+	return mathRound(noiseHeightValue / totalWeight)
 end
 
 ---@param mapGenerator  MapGen
@@ -514,96 +399,64 @@ local function generatorHandler(mapGenerator, data, index, x, y, z)
 		oceanNoise = core.get_value_noise(oceanNoiseParams)
 	end
 
-	--- We get the two nearest cells.
-	---@type MapGen.Cell, MapGen.Cell?, MapGen.Cell?
-	local cellA, cellB, cellC = layer:getCellsByPos(x, y, z)
+	-- Default noise's values.
+	local noiseHeightValue   = 0
+	local noiseTempValue     = 0
+	local noiseHumidityValue = 0
 
-	--- The second cell may not exist, so we will generate only the first one.
-	if cellB == nil then
-		oneCellGeneratorHandler(mapGenerator, cellA, data, index, x, y, z)
-		return
-	end
+	---@param triangle  MapGen.Triangle
+	for _, triangle in ipairs(layer.trianglesList) do
+		local peak1 = triangle.p1
+		local peak2 = triangle.p2
+		local peak3 = triangle.p3
 
-	--[[- We calculate the distance to the cell centers
-	local cellPos = cellA.getCellPos()
-	local distanceA = (x - cellPos.x)^2 + (y - cellPos.y)^2 + (z - cellPos.z)^2
-	cellPos = cellB.getCellPos()
-	local distanceB = (x - cellPos.x)^2 + (y - cellPos.y)^2 + (z - cellPos.z)^2
+		local pos1 = peak1:getPeakPos()
+		local pos2 = peak2:getPeakPos()
+		local pos3 = peak3:getPeakPos()
 
-
-
-	if cellC ~= nil then
-		cellPos = cellC.getCellPos()
-		local distanceC = (x - cellPos.x)^2 + (y - cellPos.y)^2 + (z - cellPos.z)^2
-
-		if  mathAbs(distanceB - distanceA) <= BUFFER_ZONE_WIDTH^2 and
-			mathAbs(distanceC - distanceB) <= BUFFER_ZONE_WIDTH^2 and
-			mathAbs(distanceC - distanceA) <= BUFFER_ZONE_WIDTH^2
+		if pointInTriangle(
+			x, z,
+			pos1.x, pos1.z,
+			pos2.x, pos2.z,
+			pos3.x, pos3.z
+		)
 		then
-			threeCellsGeneratorHanler(mapGenerator, cellA, cellB, cellC, distanceA, distanceB, distanceC, data, index, x, y, z)
-			return
+			noiseHeightValue = calcNoiseHeightValue(triangle, x, y, z)
+			break
 		end
 	end
 
-	if x == -45 then
-		print(x, math.sqrt(distanceB), math.sqrt(distanceA))
-	end
-	--- If the point is in the buffer zone...
-	if mathAbs(math.sqrt(distanceB) - math.sqrt(distanceA)) <= BUFFER_ZONE_WIDTH^2 then
-		--- ... we will smooth out the noise.
-		twoCellsGeneratorHanler(mapGenerator, cellA, cellB, distanceA, distanceB, data, index, x, y, z)
-		return
-	else
-		--- ... otherwise we will use the nearest cell.
-		oneCellGeneratorHandler(mapGenerator, cellA, data, index, x, y, z)
-		return
-	end--]]
+	generateNode(mapGenerator, noiseHeightValue, noiseTempValue, noiseHumidityValue, data, index, x, y, z)
 
-	--[[local pos0 = ( cellB.getCellPos() + cellA.getCellPos() ) / 2
-	local posB = cellB.getCellPos()
-	local a = posB.x - pos0.x
-	local b = posB.y - pos0.y
-	local c = posB.z - pos0.z
+	--[[ We get the two nearest peaks.
+	---@type {peak: MapGen.Peak, weight: number}[]|table, number
+	local peaks, totalWeight = layer:getPeaksByPos(x, y, z, MAX_DISTANCE)
 
-	local t = (a * (x - pos0.x) + b * (y - pos0.y) + c * (z - pos0.z)) / (a^2 + b^2 + c^2)
-
-	local projection = vector.new(
-		pos0.x + a * t,
-		pos0.y + a * t,
-		pos0.z + a * t
-	)--]]
-
-	local posA = cellA.getCellPos()
-	local posB = cellB.getCellPos()
-	local distanceAB = calcDistance( (posB + posA) / 2, posB, vector.new(x,y,z))
-
-	if cellC ~= nil then
-		local posC = cellC.getCellPos()
-		local distanceAC = calcDistance( (posC + posA) / 2, posC, vector.new(x,y,z))
-		local distanceBC = calcDistance( (posC + posB) / 2, posC, vector.new(x,y,z))
-
-		if distanceAC <= BUFFER_ZONE_WIDTH / 2 and  distanceAB <= BUFFER_ZONE_WIDTH / 2 and distanceBC <= BUFFER_ZONE_WIDTH / 2 then
-			threeCellsGeneratorHanler(mapGenerator, cellA, cellB, cellC, distanceAB, distanceAC, data, index, x, y, z)
-			return
-		end
+	---@diagnostic disable-next-line: param-type-not-match
+	if table.is_empty(peaks) then
+		--[[minetest.log('warning',
+			'No `MapGen.Peak` were found for the following coordinates: '..
+			tostring(x)..' '..tostring(y)..' '..tostring(z)
+		) --] ]
+		generateNode(mapGenerator, oceanNoise:get_2d({x = x, y = z}), noiseTempValue, noiseHumidityValue, data, index, x, y, z)
 	end
 
-	--- If the point is in the buffer zone...
-	if distanceAB <= BUFFER_ZONE_WIDTH / 2 then
-		--- ... we will smooth out the noise.
-		twoCellsGeneratorHanler(mapGenerator, cellA, cellB, distanceAB, data, index, x, y, z)
-		return
-	else
-		--- ... otherwise we will use the nearest cell.
-		oneCellGeneratorHandler(mapGenerator, cellA, data, index, x, y, z)
-		return
+	if #peaks == 1 then
+		-- TODO: добавить температуру и влажностьf
+		generateNode(mapGenerator, peaks[1].peak:getMultinoise().landscapeNoise:get_2d({x = x, y = z}), noiseTempValue, noiseHumidityValue, data, index, x, y, z)
 	end
 
-	--- The function must terminate earlier.
-	--- The algorithm is based on eliminating options.
-	--- If the function execution has reached this point,
-	--- it means the algorithm is not taking some situation into account.
-	error('If you see this error, something went wrong in the map generation.')
+	---@param v {peak: MapGen.Peak, weight: number}
+	for _, v in ipairs(peaks) do
+		--TODO: дописать группу ландашфта и проверку на неё
+		noiseHeightValue   = noiseHeightValue + v.peak:getMultinoise().landscapeNoise:get_2d({x = x, y = z}) * v.weight
+		--noiseTempValue     = noiseTempValue + v.peak:getMultinoise().tempNoise:get_2d({x = x, y = z})      * v.weight
+		--noiseHumidityValue = noiseHumidityValue + v.peak:getMultinoise().humidityNoise:get_2d({x = x, y = z})  * v.weight
+	end
+
+	noiseHeightValue   = mathRound(noiseHeightValue   / totalWeight)
+	--noiseTempValue     = mathRound(noiseTempValue     / totalWeight)
+	--noiseHumidityValue = mathRound(noiseHumidityValue / totalWeight) --]]
 end
 
 ---@param minPos      table
@@ -614,7 +467,7 @@ function MapGen:onMapGenerated(minPos, maxPos, blockseed)
 	local voxelManip, eMin, eMax = core.get_mapgen_object("voxelmanip")
 
 	if not self.multinoiseInitialized then
-		self:initCellsMultinoise()
+		self:initPeaksMultinoise()
 	end
 
 	local data = voxelManip:get_data()
@@ -656,6 +509,7 @@ function MapGen:run()
 	end)
 
 	self:initBiomesDiagram()
+	self:initLayersTrianglesList()
 
 	MapGen.isRunning = true
 end

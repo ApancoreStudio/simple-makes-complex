@@ -21,103 +21,12 @@ local mapGenerator = Core.MapGen.Class:new({
 
 mapGenerator:RegisterLayer("world", -1000, 500)
 
-mapGenerator:RegisterCell("world",
+local a = mapGenerator:RegisterPeak("world",
 	vector.new(0,0,0),
 	{
 		landscapeNoise = {
-			offset = 10,
-			scale = 0,
-			spread = {x = 100, y = 100, z = 100},
-			seed = 47,
-			octaves = 8,
-			persistence = 0.4,
-			lacunarity = 2,
-		},
-	},
-	true, 1.0)
-
-mapGenerator:RegisterCell("world",
-	vector.new(-100,0,0),
-	{
-		landscapeNoise = {
-			offset = 10,
-			scale = 0,
-			spread = {x = 100, y = 100, z = 100},
-			seed = 47,
-			octaves = 8,
-			persistence = 0.4,
-			lacunarity = 2,
-		},
-	},
-	true, 1.0)
-
-mapGenerator:RegisterCell("world",
-	vector.new(0,0,-100),
-	{
-		landscapeNoise = {
-			offset = 10,
-			scale = 0,
-			spread = {x = 100, y = 100, z = 100},
-			seed = 47,
-			octaves = 8,
-			persistence = 0.4,
-			lacunarity = 2,
-		},
-	},
-	true, 1.0)
-
-mapGenerator:RegisterCell("world",
-	vector.new(-100,0,-100),
-	{
-		landscapeNoise = {
-			offset = 10,
-			scale = 0,
-			spread = {x = 100, y = 100, z = 100},
-			seed = 47,
-			octaves = 8,
-			persistence = 0.4,
-			lacunarity = 2,
-		},
-	},
-	true, 1.0)
-
-mapGenerator:RegisterCell("world",
-	vector.new(-50,0,50),
-	{
-		landscapeNoise = {
-			offset = 10,
-			scale = 0,
-			spread = {x = 100, y = 100, z = 100},
-			seed = 47,
-			octaves = 8,
-			persistence = 0.4,
-			lacunarity = 2,
-		},
-	},
-	true, 1.0)
-
-mapGenerator:RegisterCell("world",
-	vector.new(50,0,-50),
-	{
-		landscapeNoise = {
-			offset = 10,
-			scale = 0,
-			spread = {x = 100, y = 100, z = 100},
-			seed = 47,
-			octaves = 8,
-			persistence = 0.4,
-			lacunarity = 2,
-		},
-	},
-	true, 1.0)
-
-
-mapGenerator:RegisterCell("world",
-	vector.new(-50,0,-50),
-	{
-		landscapeNoise = {
-			offset = -20,
-			scale = 0,
+			offset = 30,
+			scale = 2,
 			spread = {x = 10, y = 10, z = 10},
 			seed = 47,
 			octaves = 8,
@@ -125,7 +34,83 @@ mapGenerator:RegisterCell("world",
 			lacunarity = 2,
 		},
 	},
-	true, 2.0)
+	true, 1.0)
+
+local b = mapGenerator:RegisterPeak("world",
+	vector.new(-100,0,0),
+	{
+		landscapeNoise = {
+			offset = 30,
+			scale = 2,
+			spread = {x = 10, y = 10, z = 10},
+			seed = 47,
+			octaves = 8,
+			persistence = 0.4,
+			lacunarity = 2,
+		},
+	},
+	true, 1.0)
+
+local c = mapGenerator:RegisterPeak("world",
+	vector.new(0,0,-100),
+	{
+		landscapeNoise = {
+			offset = 30,
+			scale = 2,
+			spread = {x = 10, y = 10, z = 10},
+			seed = 47,
+			octaves = 8,
+			persistence = 0.4,
+			lacunarity = 2,
+		},
+	},
+	true, 1.0)
+
+local d = mapGenerator:RegisterPeak("world",
+	vector.new(-100,0,-100),
+	{
+		landscapeNoise = {
+			offset = 30,
+			scale = 2,
+			spread = {x = 10, y = 100, z = 10},
+			seed = 47,
+			octaves = 8,
+			persistence = 0.4,
+			lacunarity = 2,
+		},
+	},
+	true, 1.0)
+
+local e = mapGenerator:RegisterPeak("world",
+	vector.new(-50,0,-50),
+	{
+		landscapeNoise = {
+			offset = -10,
+			scale = 2,
+			spread = {x = 10, y = 10, z = 10},
+			seed = 47,
+			octaves = 8,
+			persistence = 0.4,
+			lacunarity = 2,
+		},
+	},
+	true, 1.0)
+--[[
+	local e = mapGenerator:RegisterPeak("world",
+	vector.new(-50,0,50),
+	{
+		landscapeNoise = {
+			offset = 40,
+			scale = 0,
+			spread = {x = 100, y = 100, z = 100},
+			seed = 47,
+			octaves = 8,
+			persistence = 0.4,
+			lacunarity = 2,
+		},
+	},
+	true, 1.0)--]]
+
 --[[
 mapGenerator:RegisterRegion("world",
 	vector.new(-50, 0, -50),

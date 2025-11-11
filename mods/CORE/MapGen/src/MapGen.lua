@@ -308,22 +308,30 @@ local function generateNode(mapGenerator, hight, temp, humidity, data, index, x,
 	end
 end
 
+---@param px         number
+---@param py         number
+---@param x1         number
+---@param y1         number
+---@param x2         number
+---@param y2         number
+---@param x3         number
+---@param y3         number
 local function pointInTriangle(px, py, x1, y1, x2, y2, x3, y3)
-	-- Функция для вычисления векторного произведения
+	-- Function for calculating the vector product
 	local function crossProduct(ax, ay, bx, by)
 		return ax * by - ay * bx
 	end
 
-	-- Векторы от вершин к точке и между вершинами
+	-- Vectors from vertices to a point and between vertices
 	local d1 = crossProduct(x2 - x1, y2 - y1, px - x1, py - y1)
 	local d2 = crossProduct(x3 - x2, y3 - y2, px - x2, py - y2)
 	local d3 = crossProduct(x1 - x3, y1 - y3, px - x3, py - y3)
 
-	-- Проверка знаков векторных произведений
+	-- Checking the signs of vector products
 	local has_positive = (d1 > 0) or (d2 > 0) or (d3 > 0)
 	local has_negative = (d1 < 0) or (d2 < 0) or (d3 < 0)
 
-	-- Точка внутри, если все произведения одного знака
+	-- Dot inside if all products have the same sign
 	return not (has_positive and has_negative)
 end
 
@@ -350,33 +358,62 @@ local function calcWeight(height, x, y, z)
 	return 1 - vector.distance(pos2, posP) / height:length()
 end
 
----@param triangle  MapGen.Triangle
+---Calculates the height of the landscape based
+---on a pre-triangulated plane stored in a layer.
+---
+---Returns `nil` if the point is not included in any triangle.
+---@param layer     MapGen.Layer
 ---@param x         number
 ---@param y         number
 ---@param z         number
----@return          number
-local function calcNoiseHeightValue(triangle, x, y, z)
-	local peak1 = triangle.p1
-	local peak2 = triangle.p2
-	local peak3 = triangle.p3
+---@return          number?
+function MapGen:getNoiseHeightValue(layer, x, y, z)
+	---@param triangle  MapGen.Triangle
+	for _, triangle in ipairs(layer.trianglesList) do
+		local peak1 = triangle.p1
+		local peak2 = triangle.p2
+		local peak3 = triangle.p3
 
-	local noiseHeightValue = 0
+		local pos1 = peak1:getPeakPos()
+		local pos2 = peak2:getPeakPos()
+		local pos3 = peak3:getPeakPos()
 
-	local totalWeight = 0.0
+		-- If the point is in the triangle defined by the `MapGen.Peak`...
+		if pointInTriangle(
+			x, z,
+			pos1.x, pos1.z,
+			pos2.x, pos2.z,
+			pos3.x, pos3.z
+		)
+		then
+			local noiseHeightValue = 0.0
 
-	local weight = calcWeight(triangle.h1, x, y, z)
-	noiseHeightValue = noiseHeightValue + peak1:getMultinoise().landscapeNoise:get_2d({x = x, y = z}) * weight
-	totalWeight = totalWeight + weight
+			local totalWeight = 0.0
+			-- ... we calculate the height for this point using smoothing.
+			-- We calculate the height value using the smoothing formula:
+			-- ( peak1 * weight1 + peak2 * weight2 + peak3 * weight3) / totalWeight, when
+			-- totalWeight = weight1 + weight2 + weight3
+			local weight = calcWeight(triangle.h1, x, y, z)
+			noiseHeightValue = noiseHeightValue + peak1:getMultinoise().landscapeNoise:get_2d({x = x, y = z}) * weight
+			totalWeight = totalWeight + weight
 
-	weight = calcWeight(triangle.h2, x, y, z)
-	noiseHeightValue = noiseHeightValue + peak2:getMultinoise().landscapeNoise:get_2d({x = x, y = z}) * weight
-	totalWeight = totalWeight + weight
+			weight = calcWeight(triangle.h2, x, y, z)
+			noiseHeightValue = noiseHeightValue + peak2:getMultinoise().landscapeNoise:get_2d({x = x, y = z}) * weight
+			totalWeight = totalWeight + weight
 
-	weight = calcWeight(triangle.h3, x, y, z)
-	noiseHeightValue = noiseHeightValue + peak3:getMultinoise().landscapeNoise:get_2d({x = x, y = z}) * weight
-	totalWeight = totalWeight + weight
+			weight = calcWeight(triangle.h3, x, y, z)
+			noiseHeightValue = noiseHeightValue + peak3:getMultinoise().landscapeNoise:get_2d({x = x, y = z}) * weight
+			totalWeight = totalWeight + weight
 
-	return mathRound(noiseHeightValue / totalWeight)
+			-- The height must be an integer value
+			-- because the world is made up of whole blocks.
+			return mathRound(noiseHeightValue / totalWeight)
+		end
+	end
+
+	-- If the point does not fall within the triangle, it is impossible to calculate the height.
+	-- For debugging purposes only, may slow down generation:
+	--core.log('warning', string.format('The point %s %s %s does not fall within any triangle, calculating the height of the landscape is impossible.', tostring(x), tostring(y), tostring(z)))
 end
 
 ---@param mapGenerator  MapGen
@@ -399,64 +436,17 @@ local function generatorHandler(mapGenerator, data, index, x, y, z)
 		oceanNoise = core.get_value_noise(oceanNoiseParams)
 	end
 
-	-- Default noise's values.
-	local noiseHeightValue   = 0
-	local noiseTempValue     = 0
-	local noiseHumidityValue = 0
+	-- Calculating landscape height
+	local noiseHeightValue = mapGenerator:getNoiseHeightValue(layer, x, y, z)
 
-	---@param triangle  MapGen.Triangle
-	for _, triangle in ipairs(layer.trianglesList) do
-		local peak1 = triangle.p1
-		local peak2 = triangle.p2
-		local peak3 = triangle.p3
-
-		local pos1 = peak1:getPeakPos()
-		local pos2 = peak2:getPeakPos()
-		local pos3 = peak3:getPeakPos()
-
-		if pointInTriangle(
-			x, z,
-			pos1.x, pos1.z,
-			pos2.x, pos2.z,
-			pos3.x, pos3.z
-		)
-		then
-			noiseHeightValue = calcNoiseHeightValue(triangle, x, y, z)
-			break
-		end
+	if noiseHeightValue == nil then
+		noiseHeightValue = 0.0
 	end
+
+	local noiseTempValue     = 0.0
+	local noiseHumidityValue = 0.0
 
 	generateNode(mapGenerator, noiseHeightValue, noiseTempValue, noiseHumidityValue, data, index, x, y, z)
-
-	--[[ We get the two nearest peaks.
-	---@type {peak: MapGen.Peak, weight: number}[]|table, number
-	local peaks, totalWeight = layer:getPeaksByPos(x, y, z, MAX_DISTANCE)
-
-	---@diagnostic disable-next-line: param-type-not-match
-	if table.is_empty(peaks) then
-		--[[minetest.log('warning',
-			'No `MapGen.Peak` were found for the following coordinates: '..
-			tostring(x)..' '..tostring(y)..' '..tostring(z)
-		) --] ]
-		generateNode(mapGenerator, oceanNoise:get_2d({x = x, y = z}), noiseTempValue, noiseHumidityValue, data, index, x, y, z)
-	end
-
-	if #peaks == 1 then
-		-- TODO: добавить температуру и влажностьf
-		generateNode(mapGenerator, peaks[1].peak:getMultinoise().landscapeNoise:get_2d({x = x, y = z}), noiseTempValue, noiseHumidityValue, data, index, x, y, z)
-	end
-
-	---@param v {peak: MapGen.Peak, weight: number}
-	for _, v in ipairs(peaks) do
-		--TODO: дописать группу ландашфта и проверку на неё
-		noiseHeightValue   = noiseHeightValue + v.peak:getMultinoise().landscapeNoise:get_2d({x = x, y = z}) * v.weight
-		--noiseTempValue     = noiseTempValue + v.peak:getMultinoise().tempNoise:get_2d({x = x, y = z})      * v.weight
-		--noiseHumidityValue = noiseHumidityValue + v.peak:getMultinoise().humidityNoise:get_2d({x = x, y = z})  * v.weight
-	end
-
-	noiseHeightValue   = mathRound(noiseHeightValue   / totalWeight)
-	--noiseTempValue     = mathRound(noiseTempValue     / totalWeight)
-	--noiseHumidityValue = mathRound(noiseHumidityValue / totalWeight) --]]
 end
 
 ---@param minPos      table

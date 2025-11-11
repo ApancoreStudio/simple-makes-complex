@@ -77,7 +77,7 @@ function Peak:__eq( other )
 	return pos1.x == pos2.x and pos1.z == pos2.z
 end
 
-function Peak:__tostring()
+function Peak:toString()
 	return ('Peak (%s) x: %.2f y: %.2f'):format( self.id, self:getPeakPos().x, self:getPeakPos().y )
 end
 

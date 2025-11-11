@@ -10,18 +10,26 @@ function Edge:new( p1, p2 )
 	local instance = setmetatable({
 		p1 = p1,
 		p2 = p2
-	}, {__index = self})
+	},
+	{
+		__index    = self,
+		__tostring = self.toString,
+		__eq       = self.eq
+	})
 
 	return instance
 end
 
----@param other  MapGen.Triangulation.Edge
-function Edge:__eq( other )
-	return self.p1 == other.p1 and self.p2 == other.p2
+---Returns a string describing the object in a readable form.
+---@return string
+function Edge:toString()
+	return (('Edge :\n  %s\n  %s'):format(tostring(self.p1), tostring(self.p2)))
 end
 
-function Edge:__tostring()
-	return (('Edge :\n  %s\n  %s'):format(tostring(self.p1), tostring(self.p2)))
+---@param other  MapGen.Triangulation.Edge
+---@return       boolean
+function Edge:eq( other )
+	return self.p1 == other.p1 and self.p2 == other.p2
 end
 
 function Edge:same(otherEdge)

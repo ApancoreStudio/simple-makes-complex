@@ -1,8 +1,5 @@
-local mathCeil,  mathAbs,  mathRound,  mathMin
-	= math.ceil, math.abs, math.round, math.min
-
-local BUFFER_ZONE_WIDTH = 3000
-local MAX_DISTANCE = 3000
+local mathAbs,  mathRound
+	= math.abs, math.round
 
 -- --- MapGen default moises ---
 ---@type ValueNoise
@@ -124,9 +121,7 @@ end
 function MapGen:initLayersTrianglesList()
 	---@param layer  MapGen.Layer
 	for _, layer in ipairs(self.layersList) do
-		print('A: ', #layer.peaksList)
 		layer.trianglesList = Triangulation.triangulate(layer.peaksList)
-		print('ABOBA:', dump(layer.trianglesList))
 	end
 end
 

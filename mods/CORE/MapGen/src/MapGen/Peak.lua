@@ -12,6 +12,7 @@ local Peak = {
 ---@param multinoiseParams  MapGen.Peak.MultinoiseParams
 ---@return MapGen.Peak.Multinoise
 local function multinoiseParamsToMultinoise(multinoiseParams)
+	---@diagnostic disable-next-line: missing-fields
 	---@type MapGen.Peak.Multinoise
 	local multinoise = {}
 
@@ -36,11 +37,17 @@ function Peak:new(peakPos, multinoiseParams, weightFactor)
 		weightFactor = 1
 	end
 
+	---@diagnostic disable-next-line: missing-fields
 	---@type MapGen.Peak.Multinoise
 	local _multinoise = {} -- note: must be empty until luanti mapgen objects are loaded.
 
 	---@type MapGen.Peak
-	local instance = setmetatable({}, {__index = self})
+	local instance = setmetatable({},
+	{
+		__index    = self,
+		__tostring = self.toString,
+		__eq       = self.eq
+	})
 
 	function instance:getPeakPos()
 		return _peakPos
@@ -69,16 +76,19 @@ function Peak:new(peakPos, multinoiseParams, weightFactor)
 	return instance
 end
 
+---Returns a string describing the object in a readable form.
+---@return string
+function Peak:toString()
+	return ('Peak (%s) x: %.2f y: %.2f'):format( self.id, self:getPeakPos().x, self:getPeakPos().y )
+end
+
 ---@param other  MapGen.Peak
-function Peak:__eq( other )
+---@return       boolean
+function Peak:eq( other )
 	local pos1 = self:getPeakPos()
 	local pos2 = other:getPeakPos()
 
 	return pos1.x == pos2.x and pos1.z == pos2.z
-end
-
-function Peak:toString()
-	return ('Peak (%s) x: %.2f y: %.2f'):format( self.id, self:getPeakPos().x, self:getPeakPos().y )
 end
 
 ---@param p MapGen.Peak

@@ -48,9 +48,9 @@ local Biome = require("MapGen.Biome")
 local Triangulation = require("MapGen.Triangulation")
 
 ---@class MapGen
----@field layersByName           table
----@field layersList             table
----@field biomesList             table
+---@field layersByName           table<string, MapGen.Layer>
+---@field layersList             MapGen.Layer[]
+---@field biomesList             MapGen.Biome[]
 ---@field biomesDiagram          table
 ---@field multinoiseInitialized  boolean  Is the fractal noise of the peaks initialized? This is necessary for a one-time noise initialization.
 ---@field isRunning              boolean  A static field that guarantees that only one instance of the `MapGen` class will work.
@@ -118,10 +118,16 @@ function MapGen:RegisterLayer(name, minY, maxY)
 	end)
 end
 
-function MapGen:initLayersTrianglesList()
+function MapGen:initLayersTrianglesTetrahedronsLists()
 	---@param layer  MapGen.Layer
 	for _, layer in ipairs(self.layersList) do
 		layer.trianglesList = Triangulation.triangulate(layer.peaksList)
+		layer.tetrahedrons  = Triangulation.tetrahedralize(layer.peaksList)
+		print('--debug--')
+		for _, t in ipairs(layer.tetrahedrons) do
+			print(tostring(t))
+		end
+		print('--debug--')
 	end
 end
 
@@ -129,12 +135,11 @@ end
 ---Mark a peak of the world as a cubic peak by two opposite vertices.
 ---
 ---Peaks must be included in layers and may overlap each other.
----@param layerName     string  The name of the layer in which the new peak will be included.
----@param peakPos        vector
----@param multinoise    MapGen.Peak.MultinoiseParams     Noise that will be assigned to the peak and that will influence map generation
----@param peakIs2D    boolean?  If true, the transmitted Y coordinate will be overwritten by the layer boundaries.
----@param weightFactor  number?   The coefficient by which the reduction in the impact of peakal noise on generation will be calculated. If 0, there will be no reduction.
-function MapGen:RegisterPeak(layerName, peakPos, multinoise, peakIs2D, weightFactor)
+---@param layerName   string  The name of the layer in which the new peak will be included.
+---@param peakPos     vector
+---@param multinoise  MapGen.Peak.MultinoiseParams     Noise that will be assigned to the peak and that will influence map generation
+---@param groups      table<string, number>  TODO: описание
+function MapGen:RegisterPeak(layerName, peakPos, multinoise, groups)
 	---@type MapGen.Layer
 	local layer = self.layersByName[layerName]
 
@@ -142,21 +147,11 @@ function MapGen:RegisterPeak(layerName, peakPos, multinoise, peakIs2D, weightFac
 		error("Invalid layer: " .. layerName)
 	end
 
-	-- TODO: вероятно стоит убрать 2D ячейки
-	if peakIs2D then
-		peakPos.y = 0
-	end
-
 	--TODO: добавить проверку, что координата ячейки не совпадают
 	--TODO: Добавить проверку, что координата ячейки не выходит за границы слоя
 
-	-- TODO: вероятно стоит убрать вес
-	if weightFactor == nil then
-		weightFactor = 1
-	end
-
 	---@type MapGen.Peak
-	local peak = Peak:new(peakPos, multinoise, weightFactor)
+	local peak = Peak:new(peakPos, multinoise, groups)
 
 	layer:addPeak(peak)
 
@@ -494,7 +489,7 @@ function MapGen:run()
 	end)
 
 	self:initBiomesDiagram()
-	self:initLayersTrianglesList()
+	self:initLayersTrianglesTetrahedronsLists()
 
 	MapGen.isRunning = true
 end

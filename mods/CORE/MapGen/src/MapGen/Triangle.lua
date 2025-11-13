@@ -20,28 +20,33 @@ local function quatCross(a, b, c)
 	return mathSqrt(p)
 end
 
----Cross product (p1-p2, p2-p3)
----@param p1  MapGen.Peak
----@param p2  MapGen.Peak
----@param p3  MapGen.Peak
----@return    number
-local function crossProduct(p1, p2, p3)
-	local pos1 = p1:getPeakPos()
-	local pos2 = p2:getPeakPos()
-	local pos3 = p3:getPeakPos()
-
-	local x1, x2 = pos2.x - pos1.x, pos3.x - pos2.x
-	local y1, y2 = pos2.z - pos1.z, pos3.z - pos2.z
-	return x1 * y2 - y1 * x2
-end
-
----Checks if angle (p1-p2-p3) is flat
+---Checks if points p1, p2, p3 are collinear (angle p1-p2-p3 is 180 degrees)
 ---@param p1  MapGen.Peak
 ---@param p2  MapGen.Peak
 ---@param p3  MapGen.Peak
 ---@return    boolean
 local function isFlatAngle(p1, p2, p3)
-	return (crossProduct(p1, p2, p3) == 0)
+	local pos1 = p1:getPeakPos()
+	local pos2 = p2:getPeakPos()
+	local pos3 = p3:getPeakPos()
+
+	local vec1 = pos1 - pos2  -- Vector from p2 to p1
+	local vec2 = pos3 - pos2  -- Vector from p2 to p3
+
+	-- Normalize vectors
+	local len1 = vec1:length()
+	local len2 = vec2:length()
+
+	if len1 < 0 or len2 < 0 then
+		return true  -- Degenerate case: points are too close
+	end
+
+	vec1 = vec1 / len1
+	vec2 = vec2 / len2
+
+	-- If dot product is -1, vectors are opposite (180° angle)
+	local dot = vec1:dot(vec2)
+	return math.abs(dot + 1.0) < 0
 end
 
 -- Class registration --
@@ -79,7 +84,8 @@ function Triangle:new( p1, p2, p3 )
 	},
 	{
 		__index    = self,
-		__tostring = self.toString
+		__tostring = self.toString,
+		__eq       = self.eq
 	})
 
 	return instance
@@ -88,8 +94,43 @@ end
 ---Returns a string describing the object in a readable form.
 ---@return string
 function Triangle:toString()
-	return (('Triangle: \n  %s\n  %s\n  %s')
-		:format(tostring(self.p1.getPeakPos()), tostring(self.p2.getPeakPos()), tostring(self.p3.getPeakPos())))
+	return ('Triangle: \n  %s\n  %s\n  %s'):format(
+		tostring(self.p1.getPeakPos()),
+		tostring(self.p2.getPeakPos()),
+		tostring(self.p3.getPeakPos())
+	)
+end
+
+---@param other  MapGen.Triangle
+---@return       boolean
+function Triangle:eq( other )
+	return self.p1 == other.p1 and self.p2 == other.p2 and self.p3 == other.p3
+end
+
+---@param other  MapGen.Triangle
+---@return       boolean
+function Triangle:same(other)
+	return (self.p1 == other.p1 and self.p2 == other.p2 and self.p3 == other.p3)
+		or (self.p1 == other.p2 and self.p2 == other.p3 and self.p3 == other.p1)
+		or (self.p1 == other.p3 and self.p2 == other.p1 and self.p3 == other.p2)
+end
+
+---Returns the coordinates of the center
+---@return vector
+function Triangle:getCenter()
+	local pos1 = self.p1:getPeakPos()
+	local pos2 = self.p2:getPeakPos()
+	local pos3 = self.p3:getPeakPos()
+
+	return (pos1 + pos2 + pos3) / 3
+end
+
+---Returns the area
+---@return number
+function Triangle:getArea()
+	local a, b, c = self:getSidesLength()
+
+	return (quatCross(a, b, c) / 4)
 end
 
 ---Returns the length of the perpendicular
@@ -116,16 +157,32 @@ function Triangle:getHeight(p1, p2, p3)
 	return Edge:new(p1, FakePeak:new(posP))
 end
 
----Checks if the triangle is defined clockwise (sequence p1-p2-p3)
----@return boolean
-function Triangle:isCW()
-	return (crossProduct(self.p1, self.p2, self.p3) < 0)
-end
+---Returns the length of the perpendicular
+---from Peak1 to the line Peak2-Peak3
+---@param p1  MapGen.Peak
+---@param p2  MapGen.Peak
+---@param p3  MapGen.Peak
+---@return    MapGen.Triangulation.Edge
+function Triangle:getHeight2D(p1, p2, p3)
+	local pos1 = p1:getPeakPos()
+	local pos2 = p2:getPeakPos()
+	local pos3 = p3:getPeakPos()
 
----Checks if the triangle is defined counter-clockwise (sequence p1-p2-p3)
----@return boolean
-function Triangle:isCCW()
-	return (crossProduct(self.p1, self.p2, self.p3) > 0)
+	pos1.y = 0
+	pos2.y = 0
+	pos3.y = 0
+
+	local v = pos3 - pos2
+	---@type vector
+	local w = pos1 - pos2
+
+	-- Formula: (w * v) / (v * v)
+	-- When * the dot product.
+	local t = w:dot(v) / v:dot(v)
+
+	local posP = pos2 + v * t
+
+	return Edge:new(p1, FakePeak:new(posP))
 end
 
 ---Returns the length of the edges
@@ -134,19 +191,29 @@ function Triangle:getSidesLength()
 	return self.e1:length(), self.e2:length(), self.e3:length()
 end
 
----Returns the coordinates of the center
----@return vector
-function Triangle:getCenter()
+---Returns the length of the edges
+---
+---Note: This function does not take into account the Y-coordinate,
+---that is, the calculation is performed on the projection of the triangle XZ
+---@return number, number, number
+function Triangle:getSidesLength2D()
 	local pos1 = self.p1:getPeakPos()
 	local pos2 = self.p2:getPeakPos()
 	local pos3 = self.p3:getPeakPos()
 
-	return (pos1 + pos2 + pos3) / 3
+	pos1.y = 0
+	pos2.y = 0
+	pos3.y = 0
+
+	return (pos2 - pos1):length(), (pos3 - pos2):length(), (pos1 - pos3):length()
 end
 
 ---Returns the coordinates of the circumcircle center
----@return number, number
-function Triangle:getCircumCenter()
+---
+---Note: This function does not take into account the Y-coordinate,
+---that is, the calculation is performed on the projection of the triangle XZ
+---@return vector
+function Triangle:getCircumCenter2D()
 	local pos1 = self.p1:getPeakPos()
 	local pos2 = self.p2:getPeakPos()
 	local pos3 = self.p3:getPeakPos()
@@ -161,39 +228,46 @@ function Triangle:getCircumCenter()
 				( pos2.x * pos2.x + pos2.z * pos2.z) * (pos1.x - pos3.x) +
 				( pos3.x * pos3.x + pos3.z * pos3.z) * (pos2.x - pos1.x))
 
-	return (x / D), (z / D)
+	return vector.new(x / D, 0, z / D)
 end
 
 ---Returns the radius of the circumcircle
+---
+---Note: This function does not take into account the Y-coordinate,
+---that is, the calculation is performed on the projection of the triangle XZ
 ---@return number
-function Triangle:getCircumRadius()
-	local a, b, c = self:getSidesLength()
+function Triangle:getCircumRadius2D()
+	local a, b, c = self:getSidesLength2D()
 
 	return ((a * b * c) / quatCross(a, b, c))
 end
 
 ---Returns the coordinates of the circumcircle center and its radius
----@return number, number, number
-function Triangle:getCircumCircle()
-	local x, z = self:getCircumCenter()
-	local r = self:getCircumRadius()
+---
+---Note: This function does not take into account the Y-coordinate,
+---that is, the calculation is performed on the projection of the triangle XZ
+---@return vector, number
+function Triangle:getCircumCircle2D()
+	local c = self:getCircumCenter2D()
+	local r = self:getCircumRadius2D()
 
-	return x, z, r
-end
-
----Returns the area
----@return number
-function Triangle:getArea()
-	local a, b, c = self:getSidesLength()
-
-	return (quatCross(a, b, c) / 4)
+	return c, r
 end
 
 ---Checks if a given point lies into the triangle circumcircle
+---
+---Note: This function does not take into account the Y-coordinate,
+---that is, the calculation is performed on the projection of the triangle XZ
 ---@param p  MapGen.Peak
 ---@return   boolean
-function Triangle:inCircumCircle(p)
-	return p:isInCircle(self:getCircumCircle())
+function Triangle:inCircumCircle2D(p)
+	local pos = p:getPeakPos()
+
+	local c, r = self:getCircumCircle2D()
+
+	local distance = (c - pos):length()
+
+	return distance <= r
 end
 
 return Triangle

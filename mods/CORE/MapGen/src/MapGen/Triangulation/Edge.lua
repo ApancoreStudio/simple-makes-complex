@@ -28,17 +28,20 @@ end
 
 ---@param other  MapGen.Triangulation.Edge
 ---@return       boolean
-function Edge:eq( other )
+function Edge:eq(other)
 	return self.p1 == other.p1 and self.p2 == other.p2
 end
 
-function Edge:same(otherEdge)
-	return ((self.p1 == otherEdge.p1) and (self.p2 == otherEdge.p2))
-		or ((self.p1 == otherEdge.p2) and (self.p2 == otherEdge.p1))
+---@param other  MapGen.Triangulation.Edge
+---@return       boolean
+function Edge:same(other)
+	return (self.p1 == other.p1 and self.p2 == other.p2)
+		or (self.p1 == other.p2 and self.p2 == other.p1)
 end
 
+---@return number
 function Edge:length()
-	return self.p1:dist(self.p2)
+	return (self.p1.getPeakPos() - self.p2.getPeakPos()):length()
 end
 
 ---@return vector

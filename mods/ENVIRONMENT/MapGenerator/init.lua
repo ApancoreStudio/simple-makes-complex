@@ -34,10 +34,10 @@ local a = mapGenerator:RegisterPeak("world",
 			lacunarity = 2,
 		},
 	},
-	true, 1.0)
+	{is3d = 1})
 
 local b = mapGenerator:RegisterPeak("world",
-	vector.new(-100,0,0),
+	vector.new(0,50,0),
 	{
 		landscapeNoise = {
 			offset = 30,
@@ -49,10 +49,10 @@ local b = mapGenerator:RegisterPeak("world",
 			lacunarity = 2,
 		},
 	},
-	true, 1.0)
+	{is3d = 1})
 
 local c = mapGenerator:RegisterPeak("world",
-	vector.new(0,0,-100),
+	vector.new(50,0,0),
 	{
 		landscapeNoise = {
 			offset = 30,
@@ -64,10 +64,9 @@ local c = mapGenerator:RegisterPeak("world",
 			lacunarity = 2,
 		},
 	},
-	true, 1.0)
-
-local d = mapGenerator:RegisterPeak("world",
-	vector.new(-100,0,-100),
+	{is3d = 1, is2d = 1})
+--[[local d = mapGenerator:RegisterPeak("world",
+	vector.new(50,50,0),
 	{
 		landscapeNoise = {
 			offset = 30,
@@ -79,13 +78,13 @@ local d = mapGenerator:RegisterPeak("world",
 			lacunarity = 2,
 		},
 	},
-	true, 1.0)
+	{is3d = 1, is2d = 1})--]]
 
 local e = mapGenerator:RegisterPeak("world",
-	vector.new(-50,0,-50),
+	vector.new(25,25,25),
 	{
 		landscapeNoise = {
-			offset = -10,
+			offset = 10,
 			scale = 2,
 			spread = {x = 10, y = 10, z = 10},
 			seed = 47,
@@ -94,7 +93,22 @@ local e = mapGenerator:RegisterPeak("world",
 			lacunarity = 2,
 		},
 	},
-	true, 1.0)
+	{is3d = 1, is2d = 1})
+
+mapGenerator:RegisterPeak("world",
+	vector.new(25,25,-25),
+	{
+		landscapeNoise = {
+			offset = 20,
+			scale = 2,
+			spread = {x = 10, y = 10, z = 10},
+			seed = 47,
+			octaves = 8,
+			persistence = 0.4,
+			lacunarity = 2,
+		},
+	},
+	{is3d = 1, is2d = 1})
 --[[
 	local e = mapGenerator:RegisterPeak("world",
 	vector.new(-50,0,50),

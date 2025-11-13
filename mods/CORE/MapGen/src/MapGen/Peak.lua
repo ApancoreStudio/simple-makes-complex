@@ -4,7 +4,7 @@
 ---@field getMultinoiseParams  fun():MapGen.Peak.MultinoiseParams
 ---@field getMultinoise        fun():MapGen.Peak.Multinoise
 ---@field initMultinoise       fun()
----@field getWeightFactor      fun():number
+---@field getGroups      fun():table<string, number>
 local Peak = {
 	id = 0,
 }
@@ -25,16 +25,20 @@ end
 
 ---@param  peakPos           vector
 ---@param  multinoiseParams  MapGen.Peak.MultinoiseParams
----@param  weightFactor      number  TODO: возможно этот параметр не пригодится
+---@param  groups?           table<string, number>
 ---@return MapGen.Peak
-function Peak:new(peakPos, multinoiseParams, weightFactor)
+function Peak:new(peakPos, multinoiseParams, groups)
 	---@type  vector
 	local _peakPos = peakPos
 	---@type  MapGen.Peak.MultinoiseParams
 	local _multinoiseParams = multinoiseParams
 
-	if weightFactor < 0 then
-		weightFactor = 1
+	local _groups
+
+	if groups == nil then
+		_groups = {}
+	else
+		_groups = groups
 	end
 
 	---@diagnostic disable-next-line: missing-fields
@@ -50,7 +54,7 @@ function Peak:new(peakPos, multinoiseParams, weightFactor)
 	})
 
 	function instance:getPeakPos()
-		return _peakPos
+		return vector.new(_peakPos.x, _peakPos.y, _peakPos.z)
 	end
 
 	function instance:getMultinoiseParams()
@@ -69,8 +73,8 @@ function Peak:new(peakPos, multinoiseParams, weightFactor)
 		_multinoise = multinoiseParamsToMultinoise(_multinoiseParams)
 	end
 
-	function instance.getWeightFactor()
-		return weightFactor
+	function instance.getGroups()
+		return _groups
 	end
 
 	return instance
@@ -79,7 +83,8 @@ end
 ---Returns a string describing the object in a readable form.
 ---@return string
 function Peak:toString()
-	return ('Peak (%s) x: %.2f y: %.2f'):format( self.id, self:getPeakPos().x, self:getPeakPos().y )
+	local pos = self:getPeakPos()
+	return ('Peak (%s) x: %.2f y: %.2f z: %.2f'):format( self.id, pos.x, pos.y, pos.z)
 end
 
 ---@param other  MapGen.Peak
@@ -89,29 +94,6 @@ function Peak:eq( other )
 	local pos2 = other:getPeakPos()
 
 	return pos1.x == pos2.x and pos1.z == pos2.z
-end
-
----@param p MapGen.Peak
-function Peak:dist2(p)
-	local pos1 = self:getPeakPos()
-	local pos2 = p:getPeakPos()
-
-	local dx, dy = (pos1.x - pos2.x), (pos1.z - pos2.z)
-	return dx * dx + dy * dy
-end
-
----@param p MapGen.Peak
-function Peak:dist(p)
-	return math.sqrt(self:dist2(p))
-end
-
-function Peak:isInCircle(cx, cy, r)
-	local pos = self:getPeakPos()
-
-	local dx = (cx - pos.x)
-	local dy = (cy - pos.z)
-
-	return ((dx * dx + dy * dy) <= (r * r))
 end
 
 return Peak

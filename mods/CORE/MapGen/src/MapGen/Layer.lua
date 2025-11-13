@@ -6,9 +6,11 @@ local mathSqrt = math.sqrt
 ---@field maxY           number
 ---@field peaksList      MapGen.Peak[]
 ---@field trianglesList  MapGen.Triangle[]
+---@field tetrahedrons   MapGen.Tetrahedron[]
 local Layer = {
 	peaksList     = {},
 	trianglesList = {},
+	tetrahedrons = {},
 }
 
 ---@param name  string
@@ -29,7 +31,6 @@ end
 ---@param peak  MapGen.Peak
 function Layer:addPeak(peak)
 	table.insert(self.peaksList, peak)
-	print(dump(self.peaksList))
 	-- TODO: добавить сортировку массива для оптимизации.
 	-- Вероятно будет лучше в отдельной фунции и засунуть её в MapGen.run
 end

@@ -122,12 +122,7 @@ function MapGen:initLayersTrianglesTetrahedronsLists()
 	---@param layer  MapGen.Layer
 	for _, layer in ipairs(self.layersList) do
 		layer.trianglesList = Triangulation.triangulate(layer.peaksList)
-		layer.tetrahedrons  = Triangulation.tetrahedralize(layer.peaksList)
-		print('--debug--')
-		for _, t in ipairs(layer.tetrahedrons) do
-			print(tostring(t))
-		end
-		print('--debug--')
+		layer.tetrahedronsList  = Triangulation.tetrahedralize(layer.peaksList)
 	end
 end
 
@@ -285,6 +280,9 @@ end
 local function generateNode(mapGenerator, hight, temp, humidity, data, index, x, y, z)
 	local ids =  mapGenerator.nodeIDs
 
+	temp     = math.min(0, math.max(1, temp))
+	humidity = math.min(0, math.max(1, humidity))
+
 	local biome = mapGenerator.biomesDiagram[mathRound(temp)][mathRound(humidity)]
 
 	if y > hight and y > 0 then
@@ -298,15 +296,17 @@ local function generateNode(mapGenerator, hight, temp, humidity, data, index, x,
 	end
 end
 
----@param px         number
----@param py         number
----@param x1         number
----@param y1         number
----@param x2         number
----@param y2         number
----@param x3         number
----@param y3         number
+---@param px number
+---@param py number
+---@param x1 number
+---@param y1 number
+---@param x2 number
+---@param y2 number
+---@param x3 number
+---@param y3 number
 local function pointInTriangle(px, py, x1, y1, x2, y2, x3, y3)
+	-- TODO: переписать с учетом `vector`
+
 	-- Function for calculating the vector product
 	local function crossProduct(ax, ay, bx, by)
 		return ax * by - ay * bx
@@ -323,6 +323,31 @@ local function pointInTriangle(px, py, x1, y1, x2, y2, x3, y3)
 
 	-- Dot inside if all products have the same sign
 	return not (has_positive and has_negative)
+end
+
+---@param P vector
+---@param A vector
+---@param B vector
+---@param C vector
+local function pointInTetrahedron(P, A, B, C, D)
+	local function det3(a, b, c)
+		return a.x * (b.y * c.z - b.z * c.y)
+			 - a.y * (b.x * c.z - b.z * c.x)
+			 + a.z * (b.x * c.y - b.y * c.x)
+	end
+
+	local v0 = B - A
+	local v1 = C - A
+	local v2 = D - A
+	local v3 = P - A
+
+	local d = det3(v0, v1, v2)
+
+	local u = det3(v3, v1, v2) / d
+	local v = det3(v0, v3, v2) / d
+	local w = det3(v0, v1, v3) / d
+
+	return (u >= 0 and v >= 0 and w >= 0 and (u + v + w) <= 1)
 end
 
 ---@param height  MapGen.Triangulation.Edge
@@ -357,7 +382,7 @@ end
 ---@param y         number
 ---@param z         number
 ---@return          number?
-function MapGen:getNoiseHeightValue(layer, x, y, z)
+function MapGen:getNoises2dValues(layer, x, y, z)
 	---@param triangle  MapGen.Triangle
 	for _, triangle in ipairs(layer.trianglesList) do
 		local peak1 = triangle.p1
@@ -403,7 +428,77 @@ function MapGen:getNoiseHeightValue(layer, x, y, z)
 
 	-- If the point does not fall within the triangle, it is impossible to calculate the height.
 	-- For debugging purposes only, may slow down generation:
-	--core.log('warning', string.format('The point %s %s %s does not fall within any triangle, calculating the height of the landscape is impossible.', tostring(x), tostring(y), tostring(z)))
+	--core.log('warning', string.format('The point %s %s %s does not fall within any triangle, calculating the noise value is impossible.', tostring(x), tostring(y), tostring(z)))
+end
+
+---
+---
+---Returns `nil` if the point is not included in any tetrahedron.
+---@param layer     MapGen.Layer
+---@param x         number
+---@param y         number
+---@param z         number
+---@return          number?, number?
+function MapGen:getNoises3dValues(layer, x, y, z)
+	---@param triangle  MapGen.Tetrahedron
+	for _, tetrahedron in ipairs(layer.tetrahedronsList) do
+		local peak1 = tetrahedron.p1
+		local peak2 = tetrahedron.p2
+		local peak3 = tetrahedron.p3
+		local peak4 = tetrahedron.p4
+
+		local pos1 = peak1:getPeakPos()
+		local pos2 = peak2:getPeakPos()
+		local pos3 = peak3:getPeakPos()
+		local pos4 = peak4:getPeakPos()
+
+		-- If the point is in the tetrahedron defined by the `MapGen.Peak`...
+		if pointInTetrahedron(
+			vector.new(x, y, z),
+			pos1,
+			pos2,
+			pos3,
+			pos4
+		)
+		then
+			local noiseTempValue     = 0.0
+			local noiseHumidityValue = 0.0
+
+			local totalWeight = 0.0
+
+			-- ... we calculate the height for this point using smoothing.
+			-- We calculate the height value using the smoothing formula:
+			-- ( peak1 * weight1 + peak2 * weight2 + peak3 * weight3) / totalWeight, when
+			-- totalWeight = weight1 + weight2 + weight3
+			local weight = calcWeight(tetrahedron.h1, x, y, z)
+			noiseTempValue     = noiseTempValue     + peak1:getMultinoise().tempNoise:get_2d({x = x, y = z})     * weight
+			noiseHumidityValue = noiseHumidityValue + peak1:getMultinoise().humidityNoise:get_2d({x = x, y = z}) * weight
+			totalWeight = totalWeight + weight
+
+			weight = calcWeight(tetrahedron.h2, x, y, z)
+			noiseTempValue     = noiseTempValue     + peak2:getMultinoise().tempNoise:get_2d({x = x, y = z})     * weight
+			noiseHumidityValue = noiseHumidityValue + peak2:getMultinoise().humidityNoise:get_2d({x = x, y = z}) * weight
+			totalWeight = totalWeight + weight
+
+			weight = calcWeight(tetrahedron.h3, x, y, z)
+			noiseTempValue     = noiseTempValue     + peak3:getMultinoise().tempNoise:get_2d({x = x, y = z})     * weight
+			noiseHumidityValue = noiseHumidityValue + peak3:getMultinoise().humidityNoise:get_2d({x = x, y = z}) * weight
+			totalWeight = totalWeight + weight
+
+			weight = calcWeight(tetrahedron.h4, x, y, z)
+			noiseTempValue     = noiseTempValue     + peak4:getMultinoise().tempNoise:get_2d({x = x, y = z})     * weight
+			noiseHumidityValue = noiseHumidityValue + peak4:getMultinoise().humidityNoise:get_2d({x = x, y = z}) * weight
+			totalWeight = totalWeight + weight
+
+			-- The height must be an integer value
+			-- because the biome diagram is based on integers
+			return mathRound(noiseTempValue / totalWeight), mathRound(noiseHumidityValue / totalWeight)
+		end
+	end
+
+	-- If the point does not fall within the tetrahedron, it is impossible to calculate the height.
+	-- For debugging purposes only, may slow down generation:
+	--core.log('warning', string.format('The point %s %s %s does not fall within any tetrahedron, calculating the noise value is impossible.', tostring(x), tostring(y), tostring(z)))
 end
 
 ---@param mapGenerator  MapGen
@@ -427,14 +522,21 @@ local function generatorHandler(mapGenerator, data, index, x, y, z)
 	end
 
 	-- Calculating landscape height
-	local noiseHeightValue = mapGenerator:getNoiseHeightValue(layer, x, y, z)
+	local noiseHeightValue = mapGenerator:getNoises2dValues(layer, x, y, z)
 
 	if noiseHeightValue == nil then
 		noiseHeightValue = 0.0
 	end
 
-	local noiseTempValue     = 0.0
-	local noiseHumidityValue = 0.0
+	local noiseTempValue, noiseHumidityValue = mapGenerator:getNoises3dValues(layer, x, y, z)
+
+	if noiseTempValue == nil then
+		noiseTempValue = 0.0
+	end
+
+	if noiseHumidityValue == nil then
+		noiseHumidityValue = 0.0
+	end
 
 	generateNode(mapGenerator, noiseHeightValue, noiseTempValue, noiseHumidityValue, data, index, x, y, z)
 end

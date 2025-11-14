@@ -1,16 +1,16 @@
 local mathSqrt = math.sqrt
 
 ---@class MapGen.Layer
----@field name           string
----@field minY           number
----@field maxY           number
----@field peaksList      MapGen.Peak[]
----@field trianglesList  MapGen.Triangle[]
----@field tetrahedrons   MapGen.Tetrahedron[]
+---@field name               string
+---@field minY               number
+---@field maxY               number
+---@field peaksList          MapGen.Peak[]
+---@field trianglesList      MapGen.Triangle[]
+---@field tetrahedronsList   MapGen.Tetrahedron[]
 local Layer = {
 	peaksList     = {},
 	trianglesList = {},
-	tetrahedrons = {},
+	tetrahedronsList = {},
 }
 
 ---@param name  string

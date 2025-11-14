@@ -21,126 +21,119 @@ local mapGenerator = Core.MapGen.Class:new({
 
 mapGenerator:RegisterLayer("world", -1000, 500)
 
-local a = mapGenerator:RegisterPeak("world",
+local land1 = {
+	offset = -10,
+	scale = 2,
+	spread = {x = 10, y = 10, z = 10},
+	seed = 47,
+	octaves = 8,
+	persistence = 0.4,
+	lacunarity = 2,
+}
+
+local land2 = {
+	offset = 20,
+	scale = 2,
+	spread = {x = 10, y = 10, z = 10},
+	seed = 47,
+	octaves = 8,
+	persistence = 0.4,
+	lacunarity = 2,
+}
+
+local climat1 = {
+	offset = 80,
+	scale = 10,
+	spread = {x = 10, y = 10, z = 10},
+	seed = 47,
+	octaves = 8,
+	persistence = 0.6,
+	lacunarity = 2,
+}
+
+local climat2 = {
+	offset = 30,
+	scale = 10,
+	spread = {x = 10, y = 10, z = 10},
+	seed = 47,
+	octaves = 8,
+	persistence = 0.6,
+	lacunarity = 2,
+}
+
+local climat0 = {
+	offset = 50,
+	scale = 0,
+	spread = {x = 10, y = 10, z = 10},
+	seed = 47,
+	octaves = 8,
+	persistence = 0.4,
+	lacunarity = 2,
+}
+
+---LAND
+mapGenerator:RegisterPeak("world",
 	vector.new(0,0,0),
 	{
-		landscapeNoise = {
-			offset = 30,
-			scale = 2,
-			spread = {x = 10, y = 10, z = 10},
-			seed = 47,
-			octaves = 8,
-			persistence = 0.4,
-			lacunarity = 2,
-		},
+		landscapeNoise = land1,
+		tempNoise = climat0,
+		humidityNoise = climat0,
 	},
-	{is3d = 1})
-
-local b = mapGenerator:RegisterPeak("world",
-	vector.new(0,50,0),
-	{
-		landscapeNoise = {
-			offset = 30,
-			scale = 2,
-			spread = {x = 10, y = 10, z = 10},
-			seed = 47,
-			octaves = 8,
-			persistence = 0.4,
-			lacunarity = 2,
-		},
-	},
-	{is3d = 1})
-
-local c = mapGenerator:RegisterPeak("world",
-	vector.new(50,0,0),
-	{
-		landscapeNoise = {
-			offset = 30,
-			scale = 2,
-			spread = {x = 10, y = 10, z = 10},
-			seed = 47,
-			octaves = 8,
-			persistence = 0.4,
-			lacunarity = 2,
-		},
-	},
-	{is3d = 1, is2d = 1})
---[[local d = mapGenerator:RegisterPeak("world",
-	vector.new(50,50,0),
-	{
-		landscapeNoise = {
-			offset = 30,
-			scale = 2,
-			spread = {x = 10, y = 100, z = 10},
-			seed = 47,
-			octaves = 8,
-			persistence = 0.4,
-			lacunarity = 2,
-		},
-	},
-	{is3d = 1, is2d = 1})--]]
-
-local e = mapGenerator:RegisterPeak("world",
-	vector.new(25,25,25),
-	{
-		landscapeNoise = {
-			offset = 10,
-			scale = 2,
-			spread = {x = 10, y = 10, z = 10},
-			seed = 47,
-			octaves = 8,
-			persistence = 0.4,
-			lacunarity = 2,
-		},
-	},
-	{is3d = 1, is2d = 1})
+	{is2d = 1, is3d = 1})
 
 mapGenerator:RegisterPeak("world",
-	vector.new(25,25,-25),
+	vector.new(25,0,25),
 	{
-		landscapeNoise = {
-			offset = 20,
-			scale = 2,
-			spread = {x = 10, y = 10, z = 10},
-			seed = 47,
-			octaves = 8,
-			persistence = 0.4,
-			lacunarity = 2,
-		},
+		landscapeNoise = land2,
+		tempNoise = climat1,
+		humidityNoise = climat1,
 	},
-	{is3d = 1, is2d = 1})
---[[
-	local e = mapGenerator:RegisterPeak("world",
-	vector.new(-50,0,50),
-	{
-		landscapeNoise = {
-			offset = 40,
-			scale = 0,
-			spread = {x = 100, y = 100, z = 100},
-			seed = 47,
-			octaves = 8,
-			persistence = 0.4,
-			lacunarity = 2,
-		},
-	},
-	true, 1.0)--]]
+	{is2d = 1, is3d = 1})
 
---[[
-mapGenerator:RegisterRegion("world",
-	vector.new(-50, 0, -50),
-	vector.new(50, 0, 50),
+mapGenerator:RegisterPeak("world",
+	vector.new(-25,0,-25),
 	{
-		landscapeNoise = {
-			offset = -60,
-			scale = 10,
-			spread = {x = 100, y = 100, z = 100},
-			seed = 41,
-			octaves = 3,
-			persistence = 0.4,
-			lacunarity = 2,
-		}
+		landscapeNoise = land2,
+		tempNoise = climat1,
+		humidityNoise = climat1,
 	},
-	true, 1.5) --]]
+	{is2d = 1, is3d = 1})
+
+mapGenerator:RegisterPeak("world",
+	vector.new(25,0, -25),
+	{
+		landscapeNoise = land2,
+		tempNoise = climat2,
+		humidityNoise = climat2,
+	},
+	{is2d = 1, is3d = 1})
+
+mapGenerator:RegisterPeak("world",
+	vector.new(-25,0,25),
+	{
+		landscapeNoise = land2,
+		tempNoise = climat2,
+		humidityNoise = climat2,
+	},
+	{is2d = 1, is3d = 1})
+
+	mapGenerator:RegisterPeak("world",
+	vector.new(25,50,25),
+	{
+		landscapeNoise = land1,
+		tempNoise = climat1,
+		humidityNoise = climat1,
+	},
+	{is3d = 1})
+
+mapGenerator:RegisterPeak("world",
+	vector.new(-25,50,-25),
+	{
+		landscapeNoise = land1,
+		tempNoise = climat2,
+		humidityNoise = climat2,
+	},
+	{is3d = 1})
 
 mapGenerator:RegisterBiome("biome1", 0, 0, {
 	soil = "soils:clay_soil_baren",

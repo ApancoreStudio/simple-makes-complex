@@ -29,12 +29,14 @@ local Triangulation = {
 ---Vertices that do not have a `is2d` group will not participate in the triangulation.
 ---@param vertices  table<integer, MapGen.Peak>
 function Triangulation.triangulate( vertices )
+	vertices = table.copy_with_metatables(vertices)
+
 	-- Only peaks with a `is2d` group can be triangulated.
-	--[[for i, vertex in ipairs(vertices) do
+	for i, vertex in ipairs(vertices) do
 		if vertex:getGroups().is2d == nil then
 			table.remove(vertices, i)
 		end
-	end--]]
+	end
 
 	local nvertices = #vertices
 
@@ -86,7 +88,6 @@ function Triangulation.triangulate( vertices )
 	---@type MapGen.Triangle[]
 	local triangles = {Triangle:new( vertices[nvertices + 1], vertices[nvertices + 2], vertices[nvertices + 3] )}
 
-	print('uu:', tostring(triangles[1]))
 	for i = 1, nvertices do
 		---@type MapGen.Triangulation.Edge[]
 		local edges = {}
@@ -142,6 +143,8 @@ local require = modInfo.require
 
 ---@type MapGen.Triangle
 local Triangle = require('MapGen.Triangle')
+---@type MapGen.Triangulation.Edge
+local Edge = require('MapGen.Triangulation.Edge')
 ---@type MapGen.Triangulation.FakePeak
 local FakePeak = require('MapGen.Triangulation.FakePeak')
 
@@ -151,6 +154,10 @@ local FakePeak = require('MapGen.Triangulation.FakePeak')
 ---@field p2  MapGen.Peak
 ---@field p3  MapGen.Peak
 ---@field p4  MapGen.Peak
+---@field h1  MapGen.Triangulation.Edge
+---@field h2  MapGen.Triangulation.Edge
+---@field h3  MapGen.Triangulation.Edge
+---@field h4  MapGen.Triangulation.Edge
 ---@field f1  MapGen.Triangle
 ---@field f2  MapGen.Triangle
 ---@field f3  MapGen.Triangle
@@ -168,6 +175,10 @@ function Tetrahedron:new(p1, p2, p3, p4)
 		p2 = p2,
 		p3 = p3,
 		p4 = p4,
+		h1 = self:getHeight(p1, p2, p3, p4),
+		h2 = self:getHeight(p2, p3, p4, p1),
+		h3 = self:getHeight(p3, p4, p1, p2),
+		h4 = self:getHeight(p4, p1, p2, p3),
 		f1 = Triangle:new(p1, p2, p3),
 		f2 = Triangle:new(p1, p2, p4),
 		f3 = Triangle:new(p1, p3, p4),
@@ -189,6 +200,41 @@ function Tetrahedron:toString()
 			tostring(self.p3.getPeakPos()),
 			tostring(self.p4.getPeakPos())
 		)
+end
+
+---@param p1  MapGen.Peak
+---@param p2  MapGen.Peak
+---@param p3  MapGen.Peak
+---@param p4  MapGen.Peak
+function Tetrahedron:getHeight(p1, p2, p3, p4)
+	local pos1 = p1:getPeakPos()
+	local pos2 = p2:getPeakPos()
+	local pos3 = p3:getPeakPos()
+	local pos4 = p4:getPeakPos()
+
+	-- Векторы, лежащие в плоскости
+	local AB = pos3 - pos2
+	local AC = pos4 - pos2
+
+	-- Нормаль к плоскости
+	local normal = AB:cross(AC)
+	local normal_length = normal:length()
+
+	-- Если плоскость вырождена (точки на одной прямой)
+	if normal_length < 1e-10 then
+		return nil  -- или другая обработка ошибки
+	end
+
+	-- Вектор от точки на плоскости к нашей точке
+	local AP = pos1 - pos2
+
+	-- Расстояние от точки до плоскости
+	local distance = AP:dot(normal) / normal_length
+
+	-- Проекция точки на плоскость (вектор!)
+	local projection = pos1 - (normal * (distance / normal_length))
+
+	return Edge:new(p1, FakePeak:new(projection))
 end
 
 ---Returns the center of the circumscribed sphere.
@@ -246,16 +292,14 @@ end
 ---Vertices that do not have a `is3d` group will not participate in the triangulation.
 ---@param vertices  table<integer, MapGen.Peak>
 function Triangulation.tetrahedralize(vertices)
-	--[[vertices = table.copy(vertices)
+	vertices = table.copy_with_metatables(vertices)
 
 	-- Only peaks with a `is3d` group can be triangulated.
 	for i, vertex in ipairs(vertices) do
 		if vertex:getGroups().is3d == nil then
 			table.remove(vertices, i)
 		end
-	end--]]
-
-	print(dump(vertices))
+	end
 
 	local nvertices = #vertices
 
@@ -317,7 +361,6 @@ function Triangulation.tetrahedralize(vertices)
 	local tetrahedrons = {Tetrahedron:new(p1, p2, p3, p4)}
 
 	for i = 1, nvertices do
-		print(vertices[i]:toString())
 		---@type MapGen.Triangle[]
 		local faces = {}
 
@@ -349,7 +392,6 @@ function Triangulation.tetrahedralize(vertices)
 			tetrahedrons[#tetrahedrons + 1] = Tetrahedron:new(faces[j].p1, faces[j].p2, faces[j].p3, vertices[i])
 		end
 
-		print('aboba')
 	end
 
 	-- Remove tetrahedra associated with the vertices of a supertetrahedron.

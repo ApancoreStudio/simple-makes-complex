@@ -1,4 +1,5 @@
-local mathSqrt = math.sqrt
+local mathSqrt,  mathAbs
+	= math.sqrt, math.abs
 
 local modInfo = Mod.getInfo()
 local require = modInfo.require
@@ -46,7 +47,7 @@ local function isFlatAngle(p1, p2, p3)
 
 	-- If dot product is -1, vectors are opposite (180° angle)
 	local dot = vec1:dot(vec2)
-	return math.abs(dot + 1.0) < 0
+	return mathAbs(dot + 1.0) < 0
 end
 
 -- Class registration --

@@ -75,7 +75,7 @@ local climat0 = {
 mapGenerator:RegisterPeak("world",
 	vector.new(0,0,0),
 	{
-		landscapeNoise = land1,
+		landscapeNoise = land2,
 		tempNoise = climat2,
 		humidityNoise = climat2,
 	},
@@ -85,8 +85,8 @@ mapGenerator:RegisterPeak("world",
 	vector.new(25,0,25),
 	{
 		landscapeNoise = land2,
-		tempNoise = climat2,
-		humidityNoise = climat2,
+		tempNoise = climat1,
+		humidityNoise = climat1,
 	},
 	{is2d = 1, is3d = 1})
 
@@ -103,8 +103,8 @@ mapGenerator:RegisterPeak("world",
 	vector.new(25,0, -25),
 	{
 		landscapeNoise = land2,
-		tempNoise = climat2,
-		humidityNoise = climat2,
+		tempNoise = climat1,
+		humidityNoise = climat1,
 	},
 	{is2d = 1, is3d = 1})
 
@@ -112,28 +112,10 @@ mapGenerator:RegisterPeak("world",
 	vector.new(-25,0,25),
 	{
 		landscapeNoise = land2,
-		tempNoise = climat2,
-		humidityNoise = climat2,
-	},
-	{is2d = 1, is3d = 1})
-
-	mapGenerator:RegisterPeak("world",
-	vector.new(25,50,25),
-	{
-		landscapeNoise = land1,
 		tempNoise = climat1,
 		humidityNoise = climat1,
 	},
-	{is3d = 1})
-
-mapGenerator:RegisterPeak("world",
-	vector.new(-25,50,-25),
-	{
-		landscapeNoise = land1,
-		tempNoise = climat2,
-		humidityNoise = climat2,
-	},
-	{is3d = 1})
+	{is2d = 1, is3d = 1})
 
 mapGenerator:RegisterBiome("biome1", 0, 0, {
 	soil = "soils:clay_soil_baren",

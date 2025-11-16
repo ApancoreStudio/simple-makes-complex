@@ -191,34 +191,6 @@ function MapGen:initBiomesDiagram()
 	end
 end
 
----Calculate the weight for noise based on
----the distance of the point from the center of the peak.
----
----If the `weightFactor` is `0`, then the peak's
----weight is not calculated and is always equal to `1`.
----@param minPos        vector
----@param maxPos        vector
----@param x             number
----@param z             number
----@param weightFactor  number
----@return              number
-local function calculateWeight2D(minPos, maxPos, x, z, weightFactor)
-	if weightFactor == 0 then
-		return 1
-	end
-
-	local centerX = (minPos.x + maxPos.x) / 2
-	local centerZ = (minPos.z + maxPos.z) / 2
-
-	local distX = 1 - (mathAbs(x - centerX) / (mathAbs((maxPos.x - minPos.x)) / 2))^weightFactor
-	local distZ = 1 - (mathAbs(z - centerZ) / (mathAbs((maxPos.z - minPos.z)) / 2))^weightFactor
-
-	---@type number
-	local weight = distX * distZ -- mathMin(distX, distZ)
-
-	return weight
-end
-
 local function generateSoil(biome, data, index, x, y, z)
 	data[index] = core.get_content_id(biome.groundNodes.turf)  -- TODO: убрать тут get_content_id(), переместить его куда-то "выше"
 end
@@ -267,8 +239,8 @@ end
 local function generateNode(mapGenerator, hight, temp, humidity, data, index, x, y, z)
 	local ids =  mapGenerator.nodeIDs
 
-	temp     = mathMin(0, mathMax(100, temp))
-	humidity = mathMin(0, mathMax(100, humidity))
+	temp     = mathMin(100, mathMax(0, temp))
+	humidity = mathMin(100, mathMax(0, humidity))
 
 	local biome = mapGenerator.biomesDiagram[mathRound(temp)][mathRound(humidity)]
 

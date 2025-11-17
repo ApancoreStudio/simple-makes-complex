@@ -29,11 +29,11 @@ local pastNoise2DCalc = {
 	y        = nil,
 	noiseValues = {
 		---@type number?
-		Height   = nil,
+		height   = nil,
 		---@type number?
-		Humidity = nil,
+		humidity = nil,
 		---@type number?
-		Temp     = nil,
+		temp     = nil,
 	}
 }
 
@@ -305,26 +305,21 @@ local function pointInTriangle(px, pz, triangle)
 	local pos2 = triangle.p2.getPeakPos()
 	local pos3 = triangle.p3.getPeakPos()
 
-	-- Function for calculating the vector product
-	local function crossProduct(ax, ay, bx, by)
-		return ax * by - ay * bx
-	end
+	local v0 = pos3 - pos1
+	local v1 = pos2 - pos1
+	local v2 = posP - pos1
 
-	-- Vectors from vertices to a point and between vertices
-	local d1 = crossProduct(x2 - x1, y2 - y1, px - x1, py - y1)
-	local d2 = crossProduct(x3 - x2, y3 - y2, px - x2, py - y2)
-	local d3 = crossProduct(x1 - x3, y1 - y3, px - x3, py - y3)
+	local dot00 = vector.dot(v0, v0)
+	local dot01 = vector.dot(v0, v1)
+	local dot02 = vector.dot(v0, v2)
+	local dot11 = vector.dot(v1, v1)
+	local dot12 = vector.dot(v1, v2)
 
-	local d1 = vector.cross(pos2 - pos1, posP - pos1)
-	local d2 = vector.cross(pos3 - pos2, posP - pos2)
-	local d3 = vector.cross(pos1 - pos3, posP - pos3)
+	local invDenom = 1 / (dot00 * dot11 - dot01 * dot01)
+	local u = (dot11 * dot02 - dot01 * dot12) * invDenom
+	local v = (dot00 * dot12 - dot01 * dot02) * invDenom
 
-	-- Checking the signs of vector products
-	local has_positive = (d1 > 0) or (d2 > 0) or (d3 > 0)
-	local has_negative = (d1 < 0) or (d2 < 0) or (d3 < 0)
-
-	-- Dot inside if all products have the same sign
-	return not (has_positive and has_negative)
+	return (u >= 0) and (v >= 0) and (u + v <= 1)
 end
 
 ---@param triangle  MapGen.Triangle
@@ -376,12 +371,22 @@ end
 ---@param z      number
 ---@return       number?, number?, number?
 function MapGen:getNoises2dValues(layer, x, y, z)
-	if x == pastNoise2DCalc.x and z == pastNoise2DCalc.z then
-		return pastNoise2DCalc.noiseValues.Height, pastNoise2DCalc.noiseValues.Temp, pastNoise2DCalc.noiseValues.Humidity
+	if (pastNoise2DCalc.x ~= nil and pastNoise2DCalc.z ~= nil) and (x == pastNoise2DCalc.x and z == pastNoise2DCalc.z) then
+		return pastNoise2DCalc.noiseValues.height, pastNoise2DCalc.noiseValues.temp, pastNoise2DCalc.noiseValues.humidity
 	end
 
 	if pastNoise2DCalc.triangle ~= nil and pointInTriangle(x, z, pastNoise2DCalc.triangle) then
-		return calcNoises2dValues(pastNoise2DCalc.triangle, x, y, z)
+		local noiseHeightValue, noiseTempValue, noiseHumidityValue = calcNoises2dValues(pastNoise2DCalc.triangle, x, y, z)
+
+		pastNoise2DCalc.x = x
+		pastNoise2DCalc.z = z
+		pastNoise2DCalc.noiseValues = {
+			height   = noiseHeightValue,
+			temp     = noiseTempValue,
+			humidity = noiseHumidityValue,
+		}
+
+		return noiseHeightValue, noiseTempValue, noiseHumidityValue
 	end
 
 	---@param triangle  MapGen.Triangle
@@ -396,7 +401,18 @@ function MapGen:getNoises2dValues(layer, x, y, z)
 
 		-- If the point is in the triangle defined by the `MapGen.Peak`...
 		if pointInTriangle(x, z,triangle) then
-			return calcNoises2dValues(triangle, x, y, z)
+			local noiseHeightValue, noiseTempValue, noiseHumidityValue = calcNoises2dValues(triangle, x, y, z)
+
+			pastNoise2DCalc.triangle = triangle
+			pastNoise2DCalc.x = x
+			pastNoise2DCalc.z = z
+			pastNoise2DCalc.noiseValues = {
+				height   = noiseHeightValue,
+				temp     = noiseTempValue,
+				humidity = noiseHumidityValue,
+			}
+
+			return noiseHeightValue, noiseTempValue, noiseHumidityValue
 		end
 	end
 
@@ -540,17 +556,16 @@ function MapGen:onMapGenerated(minPos, maxPos, blockseed)
 	-- local param2_data = voxelManip:get_param2_data()
 	local area = VoxelArea:new({MinEdge = eMin, MaxEdge = eMax})
 
+	local index
 	-- Initial generation: landscape
 	for z = minPos.z, maxPos.z do
-	for y = minPos.y, maxPos.y do
-		local index = area:index(minPos.x, y, z)
-
 		for x = minPos.x, maxPos.x do
-			generatorHandler(self, data, index, x, y, z)
+			for y = minPos.y, maxPos.y do
+				index = area:index(x, y, z)
 
-			index = index + 1
+				generatorHandler(self, data, index, x, y, z)
+			end
 		end
-	end
 	end
 
 	-- We make changes back to LVM and recalculate light & liquids

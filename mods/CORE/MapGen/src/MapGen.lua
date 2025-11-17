@@ -138,8 +138,8 @@ end
 ---@param layerName   string  The name of the layer in which the new peak will be included.
 ---@param peakPos     vector
 ---@param multinoise  MapGen.Peak.MultinoiseParams     Noise that will be assigned to the peak and that will influence map generation
----@param groups      table<string, number>  TODO: описание
-function MapGen:RegisterPeak(layerName, peakPos, multinoise, groups)
+---@param groups      table<string, number>?  TODO: описание
+function MapGen:registerPeak(layerName, peakPos, multinoise, groups)
 	---@type MapGen.Layer
 	local layer = self.layersByName[layerName]
 
@@ -156,6 +156,35 @@ function MapGen:RegisterPeak(layerName, peakPos, multinoise, groups)
 	layer:addPeak(peak)
 
 	return peak --TODO: временно?
+end
+
+---TODO: описание
+---@param layerName   string  The name of the layer in which the new peak will be included.
+---@param peakPos     vector
+---@param multinoise  MapGen.Peak.MultinoiseParams     Noise that will be assigned to the peak and that will influence map generation
+---@param groups      table<string, number>?  TODO: описание
+function MapGen:register2DPeak(layerName, peakPos, multinoise, groups)
+	local _peakPos = table.copy_with_metatables(peakPos)
+	_peakPos.y = 0
+
+	if groups == nil then
+		groups = {is2d = 1}
+	else
+		groups.is2d = 1
+	end
+
+	self:registerPeak(layerName, _peakPos, multinoise, groups)
+end
+
+---TODO: описание
+---@param layerName   string  The name of the layer in which the new peak will be included.
+---@param multinoise  MapGen.Peak.MultinoiseParams     Noise that will be assigned to the peak and that will influence map generation
+---@param peakPoses   vector[]
+---@param groups      table<string, number>?  TODO: описание
+function MapGen:register2DPeaks(layerName, multinoise, peakPoses, groups)
+	for _, peakPos in ipairs(peakPoses) do
+		self:register2DPeak(layerName, peakPos, multinoise, groups)
+	end
 end
 
 ---Initialize peak noise. This should be called after the map object is loaded.
@@ -245,7 +274,42 @@ local function generateRock(ids, data, index, x, y, z)
 	end
 end
 
+---DEV noises
+---@type NoiseParams
+local caveNoiseParams1 = {
+	offset = 0,
+	scale = 1,
+	spread = {x = 25, y = 25, z = 25},
+	seed = 5934,
+	octaves = 3,
+	persistence = 0.5,
+	lacunarity = 2.0
+}
+
+---@type NoiseParams
+local caveNoiseParams2 = {
+	offset = 0,
+	scale = 1,
+	spread = {x = 50, y = 10, z = 50},  -- Y меньше для горизонтального вытягивания
+	seed = -1034,
+	octaves = 2,
+	persistence = 0.6,
+	lacunarity = 2.0
+}
+
+---@type ValueNoise, ValueNoise
+local caveNoise1, caveNoise2
+local function isCave(layer, x, y, z)
+	if caveNoise1 == nil or caveNoise2 == nil then
+		caveNoise1 = core.get_value_noise(caveNoiseParams1)
+		caveNoise2 = core.get_value_noise(caveNoiseParams2)
+	end
+
+	return caveNoise1:get_3d({x = x, y = y, z = z}) * caveNoise2:get_3d({x = x, y = y, z = z}) * 0.3 > 0.05
+end
+
 ---@param mapGenerator  MapGen
+---@param layer         MapGen.Layer
 ---@param hight         number
 ---@param temp          number
 ---@param humidity      number
@@ -254,22 +318,31 @@ end
 ---@param x             number
 ---@param y             number
 ---@param z             number
-local function generateNode(mapGenerator, hight, temp, humidity, data, index, x, y, z)
+local function generateNode(mapGenerator, layer, hight, temp, humidity, data, index, x, y, z)
 	local ids =  mapGenerator.nodeIDs
 
-	temp     = mathMin(100, mathMax(0, temp))
-	humidity = mathMin(100, mathMax(0, humidity))
+	local m = math.random(-10, 10)
+
+	temp     = mathMin(100, mathMax(0, temp     + m))
+	humidity = mathMin(100, mathMax(0, humidity + m))
 
 	local biome = mapGenerator.biomesDiagram[mathRound(temp)][mathRound(humidity)]
 
 	if y > hight and y > 0 then
 		data[index] = ids.air
-	elseif y == hight and y > 0 then
-		generateSoil(biome, data, index, x, y, z)
-	elseif y < hight then
-		generateRock(ids, data, index, x, y, z)
-	else
+	elseif y > hight and y <= 0 then
 		data[index] = ids.water
+	elseif y <= hight then
+		if isCave(layer, x, y, z) then
+			data[index] = ids.air
+		elseif y == hight then
+			generateSoil(biome, data, index, x, y, z)
+		else
+			generateRock(ids, data, index, x, y, z)
+		end
+	else
+		data[index] = ids.air
+		-- TODO: добавить error
 	end
 end
 
@@ -538,7 +611,7 @@ local function generatorHandler(mapGenerator, data, index, x, y, z)
 	end
 
 	---@diagnostic disable-next-line: param-type-not-match
-	generateNode(mapGenerator, noiseHeightValue, noiseTempValue, noiseHumidityValue, data, index, x, y, z)
+	generateNode(mapGenerator, layer,  noiseHeightValue, noiseTempValue, noiseHumidityValue, data, index, x, y, z)
 end
 
 ---@param minPos      table
@@ -570,9 +643,10 @@ function MapGen:onMapGenerated(minPos, maxPos, blockseed)
 
 	-- We make changes back to LVM and recalculate light & liquids
 	voxelManip:set_data(data)
-	-- voxelManip:set_param2_data(param2_data)
-	voxelManip:update_liquids()
+	--voxelManip:set_param2_data()
+	voxelManip:set_lighting({ day = 0, night = 0})
 	voxelManip:calc_lighting()
+	voxelManip:update_liquids()
 
 	voxelManip:write_to_map()
 end

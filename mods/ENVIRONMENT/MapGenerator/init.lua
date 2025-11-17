@@ -22,21 +22,21 @@ local mapGenerator = Core.MapGen.Class:new({
 mapGenerator:RegisterLayer("world", -1000, 500)
 
 local land1 = {
-	offset = -10,
-	scale = 2,
+	offset = -20,
+	scale = 5,
 	spread = {x = 10, y = 10, z = 10},
 	seed = 47,
-	octaves = 8,
+	octaves = 3,
 	persistence = 0.4,
 	lacunarity = 2,
 }
 
 local land2 = {
 	offset = 20,
-	scale = 2,
+	scale = 5,
 	spread = {x = 10, y = 10, z = 10},
 	seed = 47,
-	octaves = 8,
+	octaves = 3,
 	persistence = 0.4,
 	lacunarity = 2,
 }
@@ -71,51 +71,39 @@ local climat0 = {
 	lacunarity = 2,
 }
 
----LAND
-mapGenerator:RegisterPeak("world",
-	vector.new(0,0,0),
-	{
-		landscapeNoise = land2,
-		tempNoise = climat2,
-		humidityNoise = climat2,
-	},
-	{is2d = 1, is3d = 1})
+local v = vector.new
 
-mapGenerator:RegisterPeak("world",
-	vector.new(25,0,25),
-	{
-		landscapeNoise = land2,
-		tempNoise = climat1,
-		humidityNoise = climat1,
-	},
-	{is2d = 1, is3d = 1})
+mapGenerator:register2DPeaks("world",
+{
+	landscapeNoise = land1,
+	tempNoise      = climat2,
+	humidityNoise  = climat2,
+},{
+	v(500, 0, 500),
+	v(-500, 0, -500),
+	v(-500, 0, 500),
+	v(500, 0, -500),
+})
 
-mapGenerator:RegisterPeak("world",
-	vector.new(-25,0,-25),
-	{
-		landscapeNoise = land2,
-		tempNoise = climat2,
-		humidityNoise = climat2,
-	},
-	{is2d = 1, is3d = 1})
+mapGenerator:register2DPeaks("world",
+{
+	landscapeNoise = land2,
+	tempNoise      = climat1,
+	humidityNoise  = climat1,
+},{
+	v(-300, 0, 300),
+	v(200, 0, -400),
+})
 
-mapGenerator:RegisterPeak("world",
-	vector.new(25,0, -25),
-	{
-		landscapeNoise = land2,
-		tempNoise = climat1,
-		humidityNoise = climat1,
-	},
-	{is2d = 1, is3d = 1})
-
-mapGenerator:RegisterPeak("world",
-	vector.new(-25,0,25),
-	{
-		landscapeNoise = land2,
-		tempNoise = climat1,
-		humidityNoise = climat1,
-	},
-	{is2d = 1, is3d = 1})
+mapGenerator:register2DPeaks("world",
+{
+	landscapeNoise = land2,
+	tempNoise      = climat2,
+	humidityNoise  = climat2,
+},{
+	v(200, 0, 100),
+	v(-300, 0, -200),
+})
 
 mapGenerator:RegisterBiome("biome1", 0, 0, {
 	soil = "soils:clay_soil_baren",

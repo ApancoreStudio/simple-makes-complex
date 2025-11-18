@@ -5,10 +5,14 @@ local mathSqrt = math.sqrt
 ---@field minY               number
 ---@field maxY               number
 ---@field peaksList          MapGen.Peak[]
+---@field cavernsByName      table<string, MapGen.Layer.Cavern>
+---@field cavernsList        MapGen.Layer.Cavern[]
 ---@field trianglesList      MapGen.Triangle[]
 ---@field tetrahedronsList   MapGen.Tetrahedron[]
 local Layer = {
 	peaksList     = {},
+	cavernsByName = {},
+	cavernsList   = {},
 	trianglesList = {},
 	tetrahedronsList = {},
 }

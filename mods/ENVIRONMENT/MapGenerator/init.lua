@@ -105,12 +105,22 @@ mapGenerator:register2DPeaks("world",
 	v(-300, 0, -200),
 })
 
-mapGenerator:RegisterBiome("biome1", 0, 0, {
+mapGenerator:registerCavern('world', 'cavern1', -100, -10, 20, {
+	offset = 0,
+	scale = 1,
+	spread = {x = 25, y = 25, z = 25},
+	seed = 5934,
+	octaves = 3,
+	persistence = 0.5,
+	lacunarity = 2.0
+})
+
+mapGenerator:registerBiome("biome1", 0, 0, {
 	soil = "soils:clay_soil_baren",
 	turf = "soils:clay_soil_baren",
 }, 1)
 
-mapGenerator:RegisterBiome("biome2", 100, 100, {
+mapGenerator:registerBiome("biome2", 100, 100, {
 	soil = "soils:rocky_soil_baren",
 	turf = "soils:rocky_soil_baren",
 }, 1)

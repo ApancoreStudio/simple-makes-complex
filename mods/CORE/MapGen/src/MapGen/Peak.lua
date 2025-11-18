@@ -9,7 +9,7 @@ local Peak = {
 	id = 0,
 }
 
----@param multinoiseParams  MapGen.Peak.MultinoiseParams
+---@param  multinoiseParams  MapGen.Peak.MultinoiseParams
 ---@return MapGen.Peak.Multinoise
 local function multinoiseParamsToMultinoise(multinoiseParams)
 	---@diagnostic disable-next-line: missing-fields
@@ -23,10 +23,10 @@ local function multinoiseParamsToMultinoise(multinoiseParams)
 	return multinoise
 end
 
----@param  peakPos           vector
----@param  multinoiseParams  MapGen.Peak.MultinoiseParams
----@param  groups?           table<string, number>
----@return MapGen.Peak
+---@param peakPos           vector
+---@param multinoiseParams  MapGen.Peak.MultinoiseParams
+---@param groups?           table<string, number>
+---@return                  MapGen.Peak
 function Peak:new(peakPos, multinoiseParams, groups)
 	---@type  vector
 	local _peakPos = peakPos
@@ -73,7 +73,7 @@ function Peak:new(peakPos, multinoiseParams, groups)
 		_multinoise = multinoiseParamsToMultinoise(_multinoiseParams)
 	end
 
-	function instance.getGroups()
+	function instance:getGroups()
 		return _groups
 	end
 

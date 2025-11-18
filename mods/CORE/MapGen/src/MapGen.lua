@@ -41,31 +41,36 @@ local modInfo = Mod.getInfo()
 local require = modInfo.require
 
 ---@type MapGen.Layer
-local Layer = require("MapGen.Layer")
+local Layer = require('MapGen.Layer')
 
 ---@type MapGen.Peak
-local Peak = require("MapGen.Peak")
+local Peak = require('MapGen.Peak')
 
 ---@type MapGen.Biome
-local Biome = require("MapGen.Biome")
+local Biome = require('MapGen.Biome')
 
 ---@type MapGen.Triangulation
-local Triangulation = require("MapGen.Triangulation")
+local Triangulation = require('MapGen.Triangulation')
+
+---@type MapGen.Layer.Cavern
+local Cavern = require('MapGen.Layer.Cavern')
 
 ---@class MapGen
----@field layersByName           table<string, MapGen.Layer>
----@field layersList             MapGen.Layer[]
----@field biomesList             MapGen.Biome[]
----@field biomesDiagram          table
----@field multinoiseInitialized  boolean  Is the fractal noise of the peaks initialized? This is necessary for a one-time noise initialization.
----@field isRunning              boolean  A static field that guarantees that only one instance of the `MapGen` class will work.
----@field nodeIDs                table<string, number>
+---@field layersByName                table<string, MapGen.Layer>
+---@field layersList                  MapGen.Layer[]
+---@field biomesList                  MapGen.Biome[]
+---@field biomesDiagram               table
+---@field peaksMultinoiseInitialized  boolean  Is the fractal noise of the peaks initialized? This is necessary for a one-time noise initialization.
+---@field cavernsNoiseInitialized     boolean  TODO: описание
+---@field isRunning                   boolean  A static field that guarantees that only one instance of the `MapGen` class will work.
+---@field nodeIDs                     table<string, number>
 local MapGen = {
 	layersByName          = {},
 	layersList            = {},
 	biomesList            = {},
 	biomesDiagram         = {},
-	multinoiseInitialized = false,
+	peaksMultinoiseInitialized = false,
+	cavernsNoiseInitialized = false,
 	isRunning             = false,
 }
 
@@ -99,6 +104,10 @@ function MapGen:getLayerByHeight(yPos)
 	end
 end
 
+
+
+-- --- REGISTRATION METHODS ---
+
 ---Mark the world area between two heights as a `MapGen.Layer`.
 ---
 ---Note: layers must not overlap.
@@ -123,14 +132,6 @@ function MapGen:RegisterLayer(name, minY, maxY)
 	end)
 end
 
-function MapGen:initLayersTrianglesTetrahedronsLists()
-	---@param layer  MapGen.Layer
-	for _, layer in ipairs(self.layersList) do
-		layer.trianglesList = Triangulation.triangulate(layer.peaksList)
-		layer.tetrahedronsList  = Triangulation.tetrahedralize(layer.peaksList)
-	end
-end
-
 -- TODO: переписать описание функции
 ---Mark a peak of the world as a cubic peak by two opposite vertices.
 ---
@@ -144,7 +145,7 @@ function MapGen:registerPeak(layerName, peakPos, multinoise, groups)
 	local layer = self.layersByName[layerName]
 
 	if not layer then
-		error("Invalid layer: " .. layerName)
+		error('Invalid layer: ' .. layerName)
 	end
 
 	--TODO: добавить проверку, что координата ячейки не совпадают
@@ -187,7 +188,50 @@ function MapGen:register2DPeaks(layerName, multinoise, peakPoses, groups)
 	end
 end
 
----Initialize peak noise. This should be called after the map object is loaded.
+---@param name           string
+---@param tempPoint      number
+---@param humidityPoint  number
+---@param groundNodes    MapGen.Biome.GroundNodes
+---@param soilHeight     number
+function MapGen:registerBiome(name, tempPoint, humidityPoint, groundNodes, soilHeight)
+	local biome = Biome:new(name, tempPoint, humidityPoint, groundNodes, soilHeight)
+
+	--TODO: добавить MapGen.biomesByName и проверку на существование биома с таким же именем, аналогично `MapGen:registerCavern`
+	--TODO: перенести Biomes в слой
+	table.insert(self.biomesList, biome)
+end
+
+---@param layerName       string
+---@param cavernName      string
+---@param minY            number
+---@param maxY            number
+---@param smoothDistance  number
+---@param noiseParams     NoiseParams
+---@param groups?         table<string, number>
+function MapGen:registerCavern(layerName, cavernName, minY, maxY, smoothDistance, noiseParams, groups)
+	local layer = self.layersByName[layerName]
+	assert(layer.cavernsByName[cavernName] == nil, ('A cavern named `%s` already exists in the `%s` layer.'):format(cavernName, layerName))
+
+	local cavern = Cavern:new(cavernName, minY, maxY, smoothDistance, noiseParams, groups)
+
+	layer.cavernsByName[cavernName] = cavern
+	table.insert(layer.cavernsList, cavern)
+end
+
+
+
+-- --- INITIALIZATION METHODS ---
+
+---Initializing layer triangulation.
+function MapGen:initLayersTriangultaion()
+	---@param layer  MapGen.Layer
+	for _, layer in ipairs(self.layersList) do
+		layer.trianglesList = Triangulation.triangulate(layer.peaksList)
+		-- layer.tetrahedronsList  = Triangulation.tetrahedralize(layer.peaksList)
+	end
+end
+
+---Initialize peak's noises. This should be called after the map object is loaded.
 function MapGen:initPeaksMultinoise()
 	---@param layer  MapGen.Layer
 	for _, layer in ipairs(self.layersList) do
@@ -199,20 +243,24 @@ function MapGen:initPeaksMultinoise()
 
 	end
 
-	self.multinoiseInitialized = true
+	self.peaksMultinoiseInitialized = true
 end
 
----@param name           string
----@param tempPoint      number
----@param humidityPoint  number
----@param groundNodes    MapGen.Biome.GroundNodes
----@param soilHeight     number
-function MapGen:RegisterBiome(name, tempPoint, humidityPoint, groundNodes, soilHeight)
-	local biome = Biome:new(name, tempPoint, humidityPoint, groundNodes, soilHeight)
+function MapGen:initCavernsNoise()
+	---@param layer  MapGen.Layer
+	for _, layer in ipairs(self.layersList) do
 
-	table.insert(self.biomesList, biome)
+		---@param peak MapGen.Peak
+		for _, cavern in ipairs(layer.cavernsList) do
+			cavern:initNoise()
+		end
+
+	end
+
+	self.cavernsNoiseInitialized = true
 end
 
+---Initialization of the biome diagram using the Voronoi method.
 function MapGen:initBiomesDiagram()
 	local diagram = self.biomesDiagram
 
@@ -237,6 +285,10 @@ function MapGen:initBiomesDiagram()
 		end
 	end
 end
+
+
+
+-- --- GENERATION METHODS ---
 
 local function generateSoil(biome, data, index, x, y, z)
 	data[index] = core.get_content_id(biome.groundNodes.turf)  -- TODO: убрать тут get_content_id(), переместить его куда-то "выше"
@@ -299,13 +351,20 @@ local caveNoiseParams2 = {
 
 ---@type ValueNoise, ValueNoise
 local caveNoise1, caveNoise2
-local function isCave(layer, x, y, z)
-	if caveNoise1 == nil or caveNoise2 == nil then
-		caveNoise1 = core.get_value_noise(caveNoiseParams1)
-		caveNoise2 = core.get_value_noise(caveNoiseParams2)
+
+---@param layer  MapGen.Layer
+---@param x      number
+---@param y      number
+---@param z      number
+---@return       boolean
+local function isCavern(layer, x, y, z)
+	for _, cavern in ipairs(layer.cavernsList) do
+		if cavern:isCavern(x, y, z, 0.2) then
+			return true
+		end
 	end
 
-	return caveNoise1:get_3d({x = x, y = y, z = z}) * caveNoise2:get_3d({x = x, y = y, z = z}) * 0.3 > 0.05
+	return false
 end
 
 ---@param mapGenerator  MapGen
@@ -333,7 +392,7 @@ local function generateNode(mapGenerator, layer, hight, temp, humidity, data, in
 	elseif y > hight and y <= 0 then
 		data[index] = ids.water
 	elseif y <= hight then
-		if isCave(layer, x, y, z) then
+		if isCavern(layer, x, y, z) then
 			data[index] = ids.air
 		elseif y == hight then
 			generateSoil(biome, data, index, x, y, z)
@@ -619,10 +678,14 @@ end
 ---@param blockseed   number
 function MapGen:onMapGenerated(minPos, maxPos, blockseed)
 	-- We obtain a generation area for further manipulations
-	local voxelManip, eMin, eMax = core.get_mapgen_object("voxelmanip")
+	local voxelManip, eMin, eMax = core.get_mapgen_object('voxelmanip')
 
-	if not self.multinoiseInitialized then
+	if not self.peaksMultinoiseInitialized then
 		self:initPeaksMultinoise()
+	end
+
+	if not self.cavernsNoiseInitialized then
+		self:initCavernsNoise()
 	end
 
 	local data = voxelManip:get_data()
@@ -644,12 +707,16 @@ function MapGen:onMapGenerated(minPos, maxPos, blockseed)
 	-- We make changes back to LVM and recalculate light & liquids
 	voxelManip:set_data(data)
 	--voxelManip:set_param2_data()
-	voxelManip:set_lighting({ day = 0, night = 0})
+	voxelManip:set_lighting({ day = 14, night = 0})
 	voxelManip:calc_lighting()
 	voxelManip:update_liquids()
 
 	voxelManip:write_to_map()
 end
+
+
+
+-- --- OTHER ---
 
 ---Run world generation through this mapgen object
 ---
@@ -664,7 +731,7 @@ function MapGen:run()
 	end)
 
 	self:initBiomesDiagram()
-	self:initLayersTrianglesTetrahedronsLists()
+	self:initLayersTriangultaion()
 
 	MapGen.isRunning = true
 end

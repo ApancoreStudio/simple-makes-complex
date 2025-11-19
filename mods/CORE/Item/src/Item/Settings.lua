@@ -1,8 +1,6 @@
 ---@class Item.Settings
 local Settings = {}
 
--- TODO: Разобраться с дубликатами аннотаций полей. Приоритетно брать аннотации из util/ide-helper
-
 ---Technical name of the item. Must be unique and have the format `mod_name:item_name`
 ---@type string
 Settings.name = ""

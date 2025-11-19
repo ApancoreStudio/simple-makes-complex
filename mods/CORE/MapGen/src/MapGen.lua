@@ -326,32 +326,6 @@ local function generateRock(ids, data, index, x, y, z)
 	end
 end
 
----DEV noises
----@type NoiseParams
-local caveNoiseParams1 = {
-	offset = 0,
-	scale = 1,
-	spread = {x = 25, y = 25, z = 25},
-	seed = 5934,
-	octaves = 3,
-	persistence = 0.5,
-	lacunarity = 2.0
-}
-
----@type NoiseParams
-local caveNoiseParams2 = {
-	offset = 0,
-	scale = 1,
-	spread = {x = 50, y = 10, z = 50},  -- Y меньше для горизонтального вытягивания
-	seed = -1034,
-	octaves = 2,
-	persistence = 0.6,
-	lacunarity = 2.0
-}
-
----@type ValueNoise, ValueNoise
-local caveNoise1, caveNoise2
-
 ---@param layer  MapGen.Layer
 ---@param x      number
 ---@param y      number
@@ -523,15 +497,6 @@ function MapGen:getNoises2dValues(layer, x, y, z)
 
 	---@param triangle  MapGen.Triangle
 	for _, triangle in ipairs(layer.trianglesList) do
-		local peak1 = triangle.p1
-		local peak2 = triangle.p2
-		local peak3 = triangle.p3
-
-		local pos1 = peak1:getPeakPos()
-		local pos2 = peak2:getPeakPos()
-		local pos3 = peak3:getPeakPos()
-
-		-- If the point is in the triangle defined by the `MapGen.Peak`...
 		if pointInTriangle(x, z,triangle) then
 			local noiseHeightValue, noiseTempValue, noiseHumidityValue = calcNoises2dValues(triangle, x, y, z)
 

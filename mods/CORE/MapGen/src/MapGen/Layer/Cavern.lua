@@ -70,10 +70,6 @@ end
 ---@param smoothDistance  number
 ---@return                number
 local function calcCavernWeight(y, smoothDistance, minY, maxY)
-	if y > maxY or y < minY then
-		return 0
-	end
-
 	local maxDist = maxY - y
 	local minDist = y - minY
 
@@ -86,12 +82,18 @@ end
 ---@param threshold  number?
 ---@return           boolean
 function Cavern:isCavern(x, y, z, threshold)
+	local minY, maxY = self.minY, self.maxY
+
+	if y > maxY or y < minY then
+		return false
+	end
+
 	if threshold == nil then
 		threshold = 0
 	end
 
 	local noise = self:getNoise()
-	local weight = calcCavernWeight(y, self.smoothDistance, self.minY, self.maxY)
+	local weight = calcCavernWeight(y, self.smoothDistance, minY, maxY)
 
 	if y == -15 then
 		print('is', weight)

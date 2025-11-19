@@ -91,7 +91,7 @@ Callbacks.after_dig_node = nil
 ---
 ---default: nil
 ---* `pos`: node position
----* player: ObjectRef of digger TODO: в API было написано [player], это типо необязательный параметр? Я не понял
+---* player: ObjectRef of digger
 ---@type fun(pos:Position, player:Player|ObjectRef|nil)?
 Callbacks.can_dig = nil
 

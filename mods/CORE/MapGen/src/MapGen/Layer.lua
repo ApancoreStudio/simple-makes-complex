@@ -35,8 +35,6 @@ end
 ---@param peak  MapGen.Peak
 function Layer:addPeak(peak)
 	table.insert(self.peaksList, peak)
-	-- TODO: добавить сортировку массива для оптимизации.
-	-- Вероятно будет лучше в отдельной фунции и засунуть её в MapGen.run
 end
 
 ---Returns a list of tables of the form `{peak, weight}`.

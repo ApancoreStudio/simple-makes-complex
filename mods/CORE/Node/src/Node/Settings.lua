@@ -1,8 +1,6 @@
 ---@type Item.Settings
 local ItemSettings = Core.Item.require('Item.Settings')
 
--- TODO: Разобраться с дубликатами аннотаций полей. Приоритетно брать аннотации из util/ide-helper
-
 ---@class Node.Settings : Item.Settings
 local Settings = Mod:getClassExtended(ItemSettings, {})
 

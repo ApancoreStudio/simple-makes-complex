@@ -115,12 +115,12 @@ mapGenerator:registerCavern('world', 'cavern1', -100, -10, 20, {
 	lacunarity = 2.0
 })
 
-mapGenerator:registerBiome("biome1", 0, 0, {
+mapGenerator:registerBiome('world', "biome1", 0, 0, {
 	soil = "soils:clay_soil_baren",
 	turf = "soils:clay_soil_baren",
 }, 1)
 
-mapGenerator:registerBiome("biome2", 100, 100, {
+mapGenerator:registerBiome('world', "biome2", 100, 100, {
 	soil = "soils:rocky_soil_baren",
 	turf = "soils:rocky_soil_baren",
 }, 1)

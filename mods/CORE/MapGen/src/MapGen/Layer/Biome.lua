@@ -1,4 +1,4 @@
----@class MapGen.Biome
+---@class MapGen.Layer.Biome
 ---@field name           string
 ---@field tempPoint      number
 ---@field humidityPoint  number
@@ -11,9 +11,9 @@ local Biome = {}
 ---@param humidityPoint  number
 ---@param groundNodes    MapGen.Biome.GroundNodes
 ---@param soilHeight     number
----@return               MapGen.Biome
+---@return               MapGen.Layer.Biome
 function Biome:new(name, tempPoint, humidityPoint, groundNodes, soilHeight)
-	---@type MapGen.Biome
+	---@type MapGen.Layer.Biome
 	local instance = setmetatable({
 		name          = name,
 		tempPoint     = tempPoint,

@@ -5,12 +5,18 @@ local mathSqrt = math.sqrt
 ---@field minY               number
 ---@field maxY               number
 ---@field peaksList          MapGen.Peak[]
+---@field biomesByName       table<string, MapGen.Layer.Biome>
+---@field biomesList         MapGen.Layer.Biome[]
+---@field biomesDiagram      table
 ---@field cavernsByName      table<string, MapGen.Layer.Cavern>
 ---@field cavernsList        MapGen.Layer.Cavern[]
 ---@field trianglesList      MapGen.Triangle[]
 ---@field tetrahedronsList   MapGen.Tetrahedron[]
 local Layer = {
 	peaksList     = {},
+	biomesByName    = {},
+	biomesList    = {},
+	biomesDiagram = {},
 	cavernsByName = {},
 	cavernsList   = {},
 	trianglesList = {},
@@ -71,6 +77,32 @@ function Layer:getPeaksByPos(xPos, yPos, zPos, radius)
 	end
 
 	return peaks, totalWeight
+end
+
+---Initialization of the biome diagram using the Voronoi method.
+function Layer:initBiomesDiagram()
+	local diagram = self.biomesDiagram
+
+	for temp = 0, 100 do
+		diagram[temp] = {}
+
+		for humidity = 0, 100 do
+			local minDistance = math.huge
+			local closestBiome = nil
+
+			---@param biome MapGen.Layer.Biome
+			for _, biome in ipairs(self.biomesList) do
+				local distance = (temp - biome.tempPoint)^2 + (humidity - biome.humidityPoint)^2
+
+				if distance < minDistance then
+					minDistance = distance
+					closestBiome = biome
+				end
+			end
+
+			diagram[temp][humidity] = closestBiome
+		end
+	end
 end
 
 return Layer

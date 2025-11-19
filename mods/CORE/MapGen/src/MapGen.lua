@@ -46,8 +46,8 @@ local Layer = require('MapGen.Layer')
 ---@type MapGen.Peak
 local Peak = require('MapGen.Peak')
 
----@type MapGen.Biome
-local Biome = require('MapGen.Biome')
+---@type MapGen.Layer.Biome
+local Biome = require('MapGen.Layer.Biome')
 
 ---@type MapGen.Triangulation
 local Triangulation = require('MapGen.Triangulation')
@@ -58,8 +58,6 @@ local Cavern = require('MapGen.Layer.Cavern')
 ---@class MapGen
 ---@field layersByName                table<string, MapGen.Layer>
 ---@field layersList                  MapGen.Layer[]
----@field biomesList                  MapGen.Biome[]
----@field biomesDiagram               table
 ---@field peaksMultinoiseInitialized  boolean  Is the fractal noise of the peaks initialized? This is necessary for a one-time noise initialization.
 ---@field cavernsNoiseInitialized     boolean  TODO: описание
 ---@field isRunning                   boolean  A static field that guarantees that only one instance of the `MapGen` class will work.
@@ -67,8 +65,6 @@ local Cavern = require('MapGen.Layer.Cavern')
 local MapGen = {
 	layersByName          = {},
 	layersList            = {},
-	biomesList            = {},
-	biomesDiagram         = {},
 	peaksMultinoiseInitialized = false,
 	cavernsNoiseInitialized = false,
 	isRunning             = false,
@@ -188,19 +184,24 @@ function MapGen:register2DPeaks(layerName, multinoise, peakPoses, groups)
 	end
 end
 
----@param name           string
----@param tempPoint      number
----@param humidityPoint  number
----@param groundNodes    MapGen.Biome.GroundNodes
+---TODO: описание
+---@param layerName       string
+---@param biomeName       string
+---@param tempPoint       number
+---@param humidityPoint   number
+---@param groundNodes     MapGen.Biome.GroundNodes
 ---@param soilHeight     number
-function MapGen:registerBiome(name, tempPoint, humidityPoint, groundNodes, soilHeight)
-	local biome = Biome:new(name, tempPoint, humidityPoint, groundNodes, soilHeight)
+function MapGen:registerBiome(layerName, biomeName, tempPoint, humidityPoint, groundNodes, soilHeight)
+	local layer = self.layersByName[layerName]
+	assert(layer.biomesByName[biomeName] == nil, ('A biome named `%s` already exists in the `%s` layer.'):format(biomeName, layerName))
 
-	--TODO: добавить MapGen.biomesByName и проверку на существование биома с таким же именем, аналогично `MapGen:registerCavern`
-	--TODO: перенести Biomes в слой
-	table.insert(self.biomesList, biome)
+	local biome = Biome:new(biomeName, tempPoint, humidityPoint, groundNodes, soilHeight)
+
+	layer.biomesByName[biomeName] = biome
+	table.insert(layer.biomesList, biome)
 end
 
+---TODO: описание
 ---@param layerName       string
 ---@param cavernName      string
 ---@param minY            number
@@ -246,6 +247,7 @@ function MapGen:initPeaksMultinoise()
 	self.peaksMultinoiseInitialized = true
 end
 
+---TODO: описаение
 function MapGen:initCavernsNoise()
 	---@param layer  MapGen.Layer
 	for _, layer in ipairs(self.layersList) do
@@ -262,27 +264,9 @@ end
 
 ---Initialization of the biome diagram using the Voronoi method.
 function MapGen:initBiomesDiagram()
-	local diagram = self.biomesDiagram
-
-	for temp = 0, 100 do
-		diagram[temp] = {}
-
-		for humidity = 0, 100 do
-			local minDistance = math.huge
-			local closestBiome = nil
-
-			---@param biome MapGen.Biome
-			for _, biome in ipairs(self.biomesList) do
-				local distance = (temp - biome.tempPoint)^2 + (humidity - biome.humidityPoint)^2
-
-				if distance < minDistance then
-					minDistance = distance
-					closestBiome = biome
-				end
-			end
-
-			diagram[temp][humidity] = closestBiome
-		end
+	---@param layer  MapGen.Layer
+	for _, layer in ipairs(self.layersList) do
+		layer:initBiomesDiagram()
 	end
 end
 
@@ -359,7 +343,7 @@ local function generateNode(mapGenerator, layer, hight, temp, humidity, data, in
 	temp     = mathMin(100, mathMax(0, temp     + m))
 	humidity = mathMin(100, mathMax(0, humidity + m))
 
-	local biome = mapGenerator.biomesDiagram[mathRound(temp)][mathRound(humidity)]
+	local biome = layer.biomesDiagram[mathRound(temp)][mathRound(humidity)]
 
 	if y > hight and y > 0 then
 		data[index] = ids.air

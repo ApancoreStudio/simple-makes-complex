@@ -62,8 +62,8 @@ end
 ---@return            TileSheet
 function TileSheet:new(image, tileWidth, tileHeight)
 	local modPath = core.get_modpath(core.get_current_modname())
-	-- The canvas image must be in `<mod_name>/textures`, otherwise it will not be retrieved.
-	local width, height = getSizePng(modPath .. '/textures/' .. image)
+	-- The canvas image must be in `<mod_name>/textures/sheets/`, otherwise it will not be retrieved.
+	local width, height = getSizePng(modPath .. '/textures/sheets/' .. image)
 
 	if width % tileWidth ~= 0 or height % tileHeight ~= 0 then
 		error('Tilesheet does not have an integer number of tiles with resolution ' .. tostring(tileWidth) ..' * '.. tostring(tileHeight))

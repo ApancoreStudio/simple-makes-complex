@@ -111,10 +111,11 @@ end
 ---@param minY  number
 ---@param maxY  number
 function MapGen:RegisterLayer(name, minY, maxY)
-	---Checking if layers overlap
-	if self:getLayerByHeight(minY) ~= nil and self:getLayerByHeight(maxY) ~= nil then
-		error('Registered layers must not overlap!')
-	end
+	-- Layers with the same name cannot exist.
+	assert(self.layersByName[name] == nil, ('A layer named `%s` is already registered.'):format(name))
+
+	-- Layers cannot overlap.
+	assert(self:getLayerByHeight(minY) == nil and self:getLayerByHeight(maxY) == nil, 'Registered layers must not overlap!')
 
 	---@type MapGen.Layer
 	local layer = Layer:new(name, minY, maxY)
@@ -139,6 +140,8 @@ end
 function MapGen:registerPeak(layerName, peakPos, multinoise, groups)
 	---@type MapGen.Layer
 	local layer = self.layersByName[layerName]
+
+	assert(layer ~= nil, ('There is no layer named `%s` registered.'):format(layerName))
 
 	if not layer then
 		error('Invalid layer: ' .. layerName)
@@ -193,6 +196,7 @@ end
 ---@param soilHeight     number
 function MapGen:registerBiome(layerName, biomeName, tempPoint, humidityPoint, groundNodes, soilHeight)
 	local layer = self.layersByName[layerName]
+	assert(layer ~= nil, ('There is no layer named `%s` registered.'):format(layerName))
 	assert(layer.biomesByName[biomeName] == nil, ('A biome named `%s` already exists in the `%s` layer.'):format(biomeName, layerName))
 
 	local biome = Biome:new(biomeName, tempPoint, humidityPoint, groundNodes, soilHeight)
@@ -211,6 +215,7 @@ end
 ---@param groups?         table<string, number>
 function MapGen:registerCavern(layerName, cavernName, minY, maxY, smoothDistance, noiseParams, groups)
 	local layer = self.layersByName[layerName]
+	assert(layer ~= nil, ('There is no layer named `%s` registered.'):format(layerName))
 	assert(layer.cavernsByName[cavernName] == nil, ('A cavern named `%s` already exists in the `%s` layer.'):format(cavernName, layerName))
 
 	local cavern = Cavern:new(cavernName, minY, maxY, smoothDistance, noiseParams, groups)

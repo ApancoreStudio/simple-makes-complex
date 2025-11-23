@@ -1,12 +1,32 @@
 -- MAPGEN ENVIROMENT ONLY
+-- https://api.luanti.org/core-namespace-reference/#mapgen-environment
 
+-- This environment is isolated from the main environment,
+-- so global tables need to be preloaded manually.
+
+-- --- Global APIs load --
+-- Ensure
+dofile(core.get_modpath('smc__api__ensure')..'/init.lua')
+
+-- Math
+dofile(core.get_modpath('smc__api__math')..'/init.lua')
+
+-- Require
+dofile(core.get_modpath('smc__api__require')..'/init.lua')
+
+-- Mod
+dofile(core.get_modpath('smc__api__mod')..'/init.lua')
+
+-- String
+dofile(core.get_modpath('smc__api__string')..'/init.lua')
+
+-- Table
+dofile(core.get_modpath('smc__api__table')..'/init.lua')
+
+
+
+-- --- MapGen definiton ---
 local id = core.get_content_id
-
-Require = dofile(core.get_modpath('smc__api__require')..'/init.lua')
-
----@type Mod
-Mod = dofile(core.get_modpath('smc__api__mod')..'/init.lua')
-print(core.get_modpath('smc__api__mod')..'/init.lua')
 
 local mapGenRequire = Mod.getInfo('smc__core__map_gen').require
 

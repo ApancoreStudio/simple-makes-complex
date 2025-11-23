@@ -62,3 +62,5 @@ function Mod:getModClassExtended(ChildClass)
 
 	return childClass
 end
+
+return Mod

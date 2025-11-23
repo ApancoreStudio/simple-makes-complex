@@ -66,9 +66,9 @@ function Peak:new(peakPos, multinoiseParams, groups)
 	end
 
 	function instance:initMultinoise()
-		if not table.is_empty(_multinoise) then
-			minetest.log('warning', 'Multinoise has already been initialized. Re-initialization is not recommended.')
-		end
+		--if not table.is_empty(_multinoise) then
+		--	minetest.log('warning', 'Multinoise has already been initialized. Re-initialization is not recommended.')
+		--end
 
 		_multinoise = multinoiseParamsToMultinoise(_multinoiseParams)
 	end

@@ -1,6 +1,6 @@
 local mathAbs = math.abs
 
-local modInfo = Mod.getInfo()
+local modInfo = Mod.getInfo('smc__core__map_gen')
 local require = modInfo.require
 
 ---@type MapGen.Triangle

@@ -34,3 +34,5 @@ function Require.getModRequire(modName, modPath)
 
 	return require
 end
+
+return Require

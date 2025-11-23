@@ -37,7 +37,7 @@ local pastNoise2DCalc = {
 	}
 }
 
-local modInfo = Mod.getInfo()
+local modInfo = Mod.getInfo('smc__core__map_gen')
 local require = modInfo.require
 
 ---@type MapGen.Layer
@@ -70,7 +70,7 @@ local MapGen = {
 	isRunning             = false,
 }
 
----@param nodeIDs  table<string, string>
+---@param nodeIDs  table<string, number>
 ---@return MapGen
 function MapGen:new(nodeIDs)
 	---@type MapGen
@@ -623,12 +623,15 @@ local function generatorHandler(mapGenerator, data, index, x, y, z)
 	generateNode(mapGenerator, layer,  noiseHeightValue, noiseTempValue, noiseHumidityValue, data, index, x, y, z)
 end
 
+---@param voxelManip  VoxelManip
 ---@param minPos      table
 ---@param maxPos      table
 ---@param blockseed   number
-function MapGen:onMapGenerated(minPos, maxPos, blockseed)
+function MapGen:onMapGenerated(voxelManip, minPos, maxPos, blockseed)
 	-- We obtain a generation area for further manipulations
-	local voxelManip, eMin, eMax = core.get_mapgen_object('voxelmanip')
+	--local voxelManip, eMin, eMax = core.get_mapgen_object('voxelmanip')
+
+	local eMin, eMax = voxelManip:get_emerged_area()
 
 	if not self.peaksMultinoiseInitialized then
 		self:initPeaksMultinoise()
@@ -665,7 +668,7 @@ function MapGen:onMapGenerated(minPos, maxPos, blockseed)
 	voxelManip:calc_lighting()
 	voxelManip:update_liquids()
 
-	voxelManip:write_to_map()
+	--voxelManip:write_to_map() -- Async edit
 end
 
 

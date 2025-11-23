@@ -63,9 +63,9 @@ function Cavern:new(name, def)
 	end
 
 	function instance:initNoise()
-		if not table.is_empty(_noise) then
-			minetest.log('warning', 'Cavern noise has already been initialized. Re-initialization is not recommended.')
-		end
+		--if not table.is_empty(_noise) then
+		--	minetest.log('warning', 'Cavern noise has already been initialized. Re-initialization is not recommended.')
+		--end
 
 		_noise = core.get_value_noise(_noiseParams)
 	end

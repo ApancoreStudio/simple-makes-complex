@@ -38,7 +38,7 @@ function Cavern:new(name, def)
 	local _noise = {} -- note: must be nil until luanti mapgen objects are loaded.
 
 	if def.threshold == nil then
-		def.threshold = 0.0
+		def.threshold = 0.1
 	end
 
 	local _groups
@@ -63,9 +63,9 @@ function Cavern:new(name, def)
 	end
 
 	function instance:initNoise()
-		--if not table.is_empty(_noise) then
-		--	minetest.log('warning', 'Cavern noise has already been initialized. Re-initialization is not recommended.')
-		--end
+		if not table.is_empty(_noise) then
+			minetest.log('warning', 'Cavern noise has already been initialized. Re-initialization is not recommended.')
+		end
 
 		_noise = core.get_value_noise(_noiseParams)
 	end

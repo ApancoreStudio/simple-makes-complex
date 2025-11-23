@@ -188,18 +188,15 @@ function MapGen:register2DPeaks(layerName, multinoise, peakPoses, groups)
 end
 
 ---TODO: описание
----@param layerName       string
----@param biomeName       string
----@param tempPoint       number
----@param humidityPoint   number
----@param groundNodes     MapGen.Biome.GroundNodes
----@param soilHeight     number
-function MapGen:registerBiome(layerName, biomeName, tempPoint, humidityPoint, groundNodes, soilHeight)
+---@param layerName  string
+---@param biomeName  string
+---@param def        MapGen.Layer.BiomeDef
+function MapGen:registerBiome(layerName, biomeName, def)
 	local layer = self.layersByName[layerName]
 	assert(layer ~= nil, ('There is no layer named `%s` registered.'):format(layerName))
 	assert(layer.biomesByName[biomeName] == nil, ('A biome named `%s` already exists in the `%s` layer.'):format(biomeName, layerName))
 
-	local biome = Biome:new(biomeName, tempPoint, humidityPoint, groundNodes, soilHeight)
+	local biome = Biome:new(biomeName, def)
 
 	layer.biomesByName[biomeName] = biome
 	table.insert(layer.biomesList, biome)

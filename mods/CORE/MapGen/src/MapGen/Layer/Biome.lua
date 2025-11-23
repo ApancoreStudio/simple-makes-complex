@@ -6,20 +6,23 @@
 ---@field soilHeight     number
 local Biome = {}
 
----@param name           string
----@param tempPoint      number
----@param humidityPoint  number
----@param groundNodes    MapGen.Biome.GroundNodes
----@param soilHeight     number
----@return               MapGen.Layer.Biome
-function Biome:new(name, tempPoint, humidityPoint, groundNodes, soilHeight)
+---@class MapGen.Layer.BiomeDef
+---@field tempPoint      number
+---@field humidityPoint  number
+---@field groundNodes    MapGen.Biome.GroundNodes
+---@field soilHeight     number
+
+---@param name  string
+---@param def   MapGen.Layer.BiomeDef
+---@return      MapGen.Layer.Biome
+function Biome:new(name, def)
 	---@type MapGen.Layer.Biome
 	local instance = setmetatable({
 		name          = name,
-		tempPoint     = tempPoint,
-		humidityPoint = humidityPoint,
-		groundNodes   = groundNodes,
-		soilHeight    = soilHeight,
+		tempPoint     = def.tempPoint,
+		humidityPoint = def.humidityPoint,
+		groundNodes   = def.groundNodes,
+		soilHeight    = def.soilHeight,
 	}, {__index = self})
 
 	return instance

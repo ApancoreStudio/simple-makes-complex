@@ -159,14 +159,24 @@ mapGenerator:registerCavern('world', 'cavern1', {
 	},
 })
 
-mapGenerator:registerBiome('world', "biome1", 0, 0, {
-	soil = "soils:clay_soil_baren",
-	turf = "soils:clay_soil_baren",
-}, 1)
+mapGenerator:registerBiome('world', "biome1", {
+	tempPoint = 0,
+	humidityPoint = 0,
+	groundNodes = {
+		soil = "soils:clay_soil_baren",
+		turf = "soils:clay_soil_baren",
+	},
+	soilHeight = 1
+})
 
-mapGenerator:registerBiome('world', "biome2", 100, 100, {
-	soil = "soils:rocky_soil_baren",
-	turf = "soils:rocky_soil_baren",
-}, 1)
+mapGenerator:registerBiome('world', "biome2", {
+	tempPoint = 100,
+	humidityPoint = 100,
+	groundNodes = {
+		soil = "soils:rocky_soil_baren",
+		turf = "soils:rocky_soil_baren",
+	},
+	soilHeight = 1
+})
 
 mapGenerator:run()

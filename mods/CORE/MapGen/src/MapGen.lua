@@ -208,17 +208,13 @@ end
 ---TODO: описание
 ---@param layerName       string
 ---@param cavernName      string
----@param minY            number
----@param maxY            number
----@param smoothDistance  number
----@param noiseParams     NoiseParams
----@param groups?         table<string, number>
-function MapGen:registerCavern(layerName, cavernName, minY, maxY, smoothDistance, noiseParams, groups)
+---@param def             MapGen.Layer.CavernDef
+function MapGen:registerCavern(layerName, cavernName, def)
 	local layer = self.layersByName[layerName]
 	assert(layer ~= nil, ('There is no layer named `%s` registered.'):format(layerName))
 	assert(layer.cavernsByName[cavernName] == nil, ('A cavern named `%s` already exists in the `%s` layer.'):format(cavernName, layerName))
 
-	local cavern = Cavern:new(cavernName, minY, maxY, smoothDistance, noiseParams, groups)
+	local cavern = Cavern:new(cavernName, def)
 
 	layer.cavernsByName[cavernName] = cavern
 	table.insert(layer.cavernsList, cavern)
@@ -322,7 +318,7 @@ end
 ---@return       boolean
 local function isCavern(layer, x, y, z)
 	for _, cavern in ipairs(layer.cavernsList) do
-		if cavern:isCavern(x, y, z, 0.2) then
+		if cavern:isCavern(x, y, z) then
 			return true
 		end
 	end
@@ -646,6 +642,8 @@ function MapGen:onMapGenerated(minPos, maxPos, blockseed)
 	-- local param2_data = voxelManip:get_param2_data()
 	local area = VoxelArea:new({MinEdge = eMin, MaxEdge = eMax})
 
+	data[area:index(0,50,0)] = core.get_content_id('rocks:malachite')
+
 	local index
 	-- Initial generation: landscape
 	for z = minPos.z, maxPos.z do
@@ -653,7 +651,9 @@ function MapGen:onMapGenerated(minPos, maxPos, blockseed)
 			for y = minPos.y, maxPos.y do
 				index = area:index(x, y, z)
 
-				generatorHandler(self, data, index, x, y, z)
+				if data[index] == core.CONTENT_AIR then
+					generatorHandler(self, data, index, x, y, z)
+				end
 			end
 		end
 	end

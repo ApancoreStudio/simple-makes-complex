@@ -126,3 +126,22 @@ mapGenerator:registerBiome('world', "biome2", 100, 100, {
 }, 1)
 
 mapGenerator:run()
+
+minetest.register_ore({
+	ore_type        = "blob",
+	ore             = "soils:clay_soil_baren",
+	wherein         = {"rocks:iyellite", "rocks:falmyte"},
+	clust_scarcity  = 16 * 16 * 16,
+	clust_size      = 5,
+	y_max           = 0,
+	y_min           = -3100,
+	noise_threshold = 0.0,
+	noise_params    = {
+		offset = 1,
+		scale = 0.5,
+		spread = {x = 5, y = 5, z = 5},
+		seed = 2316,
+		octaves = 1,
+		persist = 0.0
+	},
+})

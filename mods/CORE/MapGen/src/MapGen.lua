@@ -1,25 +1,6 @@
 local mathAbs,  mathRound,  mathMin,  mathMax
 	= math.abs, math.round, math.min, math.max
 
--- --- MapGen default noises ---
-
----@type ValueNoise
-local rocksNoise
-
----@type NoiseParams
-local rocksNoiseParams ={
-	offset = 4,
-	scale = 2,
-	spread = {x = 30, y = 30, z = 30},
-	seed = 47,
-	octaves = 3,
-	persistence = 0.5,
-	lacunarity = 4,
-}
-
--- --- End default noises ---
-
-
 local pastNoise2DCalc = {
 	---@type MapGen.Triangle?
 	triangle = nil,
@@ -272,42 +253,6 @@ end
 
 -- --- GENERATION METHODS ---
 
-local function generateSoil(biome, data, index, x, y, z)
-	data[index] = core.get_content_id(biome.groundNodes.turf)  -- TODO: убрать тут get_content_id(), переместить его куда-то "выше"
-end
-
----@param ids           table<string, number>
----@param data          number[]
----@param index         number
----@param x             number
----@param y             number
----@param z             number
-local function generateRock(ids, data, index, x, y, z)
-
-	if rocksNoise == nil then
-		rocksNoise = core.get_value_noise(rocksNoiseParams)
-	end
-
-	local noiseRocksValue = mathRound(rocksNoise:get_3d({x = x, y = y, z = z}))
-	if     noiseRocksValue == 1 then
-		data[index] = ids.malachite
-	elseif noiseRocksValue == 2 then
-		data[index] = ids.hapcoryte
-	elseif noiseRocksValue == 3 then
-		data[index] = ids.iyellite
-	elseif noiseRocksValue == 4 then
-		data[index] = ids.sylite
-	elseif noiseRocksValue == 5 then
-		data[index] = ids.tauitite
-	elseif noiseRocksValue == 6 then
-		data[index] = ids.falmyte
-	elseif noiseRocksValue == 7 then
-		data[index] = ids.burcite
-	elseif noiseRocksValue == 8 then
-		data[index] = ids.felhor
-	end
-end
-
 ---@param layer  MapGen.Layer
 ---@param x      number
 ---@param y      number
@@ -342,6 +287,7 @@ local function generateNode(mapGenerator, layer, height, temp, humidity, data, i
 	humidity = mathMin(100, mathMax(0, humidity + m))
 	--height   = mathMin(layer.maxY, mathMax(layer.minY, y + m))
 
+	---@type MapGen.Layer.Biome
 	local biome = layer.biomesDiagram[y][mathRound(temp)][mathRound(humidity)]
 
 	if y > height and y > 0 then
@@ -351,10 +297,12 @@ local function generateNode(mapGenerator, layer, height, temp, humidity, data, i
 	elseif y <= height then
 		if isCavern(layer, x, y, z) then
 			data[index] = ids.air
-		elseif y == height then
-			generateSoil(biome, data, index, x, y, z)
+		elseif y == height and y >= 0 then
+			biome.generateSoil(mapGenerator, biome, data, index, x, y, z)
+		elseif y == height and y < 0 then
+			biome.generateBottom(mapGenerator, biome, data, index, x, y, z)
 		else
-			generateRock(ids, data, index, x, y, z)
+			biome.generateRock(mapGenerator, biome, data, index, x, y, z)
 		end
 	else
 		data[index] = ids.air

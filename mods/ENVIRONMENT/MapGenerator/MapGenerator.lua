@@ -36,6 +36,8 @@ dofile(core.get_modpath('smc__api__table')..'/init.lua')
 -- --- MapGen definiton ---
 local id = core.get_content_id
 
+local mathRound = math.round
+
 local mapGenRequire = Mod.getInfo('smc__core__map_gen').require
 
 ---@type MapGen
@@ -162,6 +164,53 @@ mapGenerator:registerCavern('world', 'cavern1', {
 	},
 })
 
+-- --- Biomes ---
+
+---@type ValueNoise
+local rocksNoise
+
+---@type NoiseParams
+local rocksNoiseParams ={
+	offset = 4,
+	scale = 2,
+	spread = {x = 30, y = 30, z = 30},
+	seed = 47,
+	octaves = 3,
+	persistence = 0.5,
+	lacunarity = 4,
+}
+
+local function generateRock(mapGenerator, biome, data, index, x, y, z)
+	local ids =  mapGenerator.nodeIDs --TODO перенести камни в Biome
+
+	if rocksNoise == nil then
+		rocksNoise = core.get_value_noise(rocksNoiseParams)
+	end
+
+	local noiseRocksValue = mathRound(rocksNoise:get_3d({x = x, y = y, z = z}))
+	if     noiseRocksValue == 1 then
+		data[index] = ids.malachite
+	elseif noiseRocksValue == 2 then
+		data[index] = ids.hapcoryte
+	elseif noiseRocksValue == 3 then
+		data[index] = ids.iyellite
+	elseif noiseRocksValue == 4 then
+		data[index] = ids.sylite
+	elseif noiseRocksValue == 5 then
+		data[index] = ids.tauitite
+	elseif noiseRocksValue == 6 then
+		data[index] = ids.falmyte
+	elseif noiseRocksValue == 7 then
+		data[index] = ids.burcite
+	elseif noiseRocksValue == 8 then
+		data[index] = ids.felhor
+	end
+end
+
+local function generateSoil(mapGenerator, biome, data, index, x, y, z)
+	data[index] = core.get_content_id(biome.groundNodes.turf)  -- TODO: убрать тут get_content_id(), переместить его куда-то "выше"
+end
+
 mapGenerator:registerBiome('world', "biome1", {
 	tempPoint = 0,
 	humidityPoint = 0,
@@ -171,7 +220,9 @@ mapGenerator:registerBiome('world', "biome1", {
 		soil = "soils:clay_soil_baren",
 		turf = "soils:clay_soil_baren",
 	},
-	soilHeight = 1
+	soilHeight = 1,
+	generateRock = generateRock,
+	generateSoil = generateSoil,
 })
 
 mapGenerator:registerBiome('world', "biome2", {
@@ -183,7 +234,9 @@ mapGenerator:registerBiome('world', "biome2", {
 		soil = "soils:rocky_soil_baren",
 		turf = "soils:rocky_soil_baren",
 	},
-	soilHeight = 1
+	soilHeight = 1,
+	generateRock = generateRock,
+	generateSoil = generateSoil,
 })
 
 mapGenerator:run()

@@ -8,6 +8,9 @@
 -- Ensure
 dofile(core.get_modpath('smc__api__ensure')..'/init.lua')
 
+-- Logger
+dofile(core.get_modpath('smc__api__logger')..'/init.lua')
+
 -- Math
 dofile(core.get_modpath('smc__api__math')..'/init.lua')
 
@@ -162,6 +165,8 @@ mapGenerator:registerCavern('world', 'cavern1', {
 mapGenerator:registerBiome('world', "biome1", {
 	tempPoint = 0,
 	humidityPoint = 0,
+	minY = -10000,
+	maxY = 1000,
 	groundNodes = {
 		soil = "soils:clay_soil_baren",
 		turf = "soils:clay_soil_baren",
@@ -172,6 +177,8 @@ mapGenerator:registerBiome('world', "biome1", {
 mapGenerator:registerBiome('world', "biome2", {
 	tempPoint = 100,
 	humidityPoint = 100,
+	minY = -1000,
+	maxY = 1000,
 	groundNodes = {
 		soil = "soils:rocky_soil_baren",
 		turf = "soils:rocky_soil_baren",

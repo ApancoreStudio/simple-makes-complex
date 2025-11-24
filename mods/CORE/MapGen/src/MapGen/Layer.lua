@@ -14,7 +14,7 @@ local mathSqrt = math.sqrt
 ---@field tetrahedronsList   MapGen.Tetrahedron[]
 local Layer = {
 	peaksList     = {},
-	biomesByName    = {},
+	biomesByName  = {},
 	biomesList    = {},
 	biomesDiagram = {},
 	cavernsByName = {},
@@ -79,30 +79,80 @@ function Layer:getPeaksByPos(xPos, yPos, zPos, radius)
 	return peaks, totalWeight
 end
 
+---@param height      number
+---@param biomesList  MapGen.Layer.Biome[]
+---@return            string[], MapGen.Layer.Biome[]
+local function getBiomesNamesByHeight(height, biomesList)
+	local biomesNames = {}
+	local biomes = {}
+
+	for _, biome in ipairs(biomesList) do
+		if height >= biome.minY and height <= biome.maxY then
+			table.insert(biomesNames, biome.name)
+			table.insert(biomes, biome)
+		end
+	end
+
+	table.sort(biomesNames)
+
+	return biomesNames, biomes
+end
+
 ---Initialization of the biome diagram using the Voronoi method.
 function Layer:initBiomesDiagram()
 	local diagram = self.biomesDiagram
+	local pastBiomesNames
+	local pastDiagramSlice
 
-	for temp = 0, 100 do
-		diagram[temp] = {}
+	-- A counter for logging unique slices in the biome diagram.
+	local uniqueDiagramSlices = 0
 
-		for humidity = 0, 100 do
-			local minDistance = math.huge
-			local closestBiome = nil
+	for height = self.minY, self.maxY do
+		diagram[height] = {}
 
-			---@param biome MapGen.Layer.Biome
-			for _, biome in ipairs(self.biomesList) do
-				local distance = (temp - biome.tempPoint)^2 + (humidity - biome.humidityPoint)^2
+		local newBiomesNames, biomes = getBiomesNamesByHeight(height, self.biomesList)
 
-				if distance < minDistance then
-					minDistance = distance
-					closestBiome = biome
+		if pastBiomesNames ~= nil and dump(pastBiomesNames) == dump(newBiomesNames) then
+			diagram[height] = pastDiagramSlice
+
+			goto continue
+		end
+
+		pastBiomesNames = newBiomesNames
+		for temp = 0, 100 do
+			diagram[height][temp] = {}
+
+			for humidity = 0, 100 do
+				local minDistance = math.huge
+				local closestBiome = nil
+
+				---@param biome MapGen.Layer.Biome
+				for _, biome in ipairs(biomes) do
+					local distance = (temp - biome.tempPoint)^2 + (humidity - biome.humidityPoint)^2
+
+					if distance < minDistance then
+						minDistance = distance
+						closestBiome = biome
+					end
+				end
+
+				-- If there is no nearby biome for this height...
+				if closestBiome == nil then
+					-- ... then the first registered biome in the layer will be the default one.
+					diagram[height][temp][humidity] = self.biomesList[1]
+				else
+					diagram[height][temp][humidity] = closestBiome
 				end
 			end
-
-			diagram[temp][humidity] = closestBiome
 		end
+
+		pastDiagramSlice = diagram[height]
+		uniqueDiagramSlices = uniqueDiagramSlices + 1
+
+		::continue::
 	end
+
+	Logger.infoLog('MapGen.Layer.initBiomesDiagram(): Initialized to %s unique slices for the layer `%s` biome diagram.', uniqueDiagramSlices, self.name)
 end
 
 return Layer

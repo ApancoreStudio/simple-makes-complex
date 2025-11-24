@@ -325,7 +325,7 @@ end
 
 ---@param mapGenerator  MapGen
 ---@param layer         MapGen.Layer
----@param hight         number
+---@param height         number
 ---@param temp          number
 ---@param humidity      number
 ---@param data          number[]
@@ -333,24 +333,25 @@ end
 ---@param x             number
 ---@param y             number
 ---@param z             number
-local function generateNode(mapGenerator, layer, hight, temp, humidity, data, index, x, y, z)
+local function generateNode(mapGenerator, layer, height, temp, humidity, data, index, x, y, z)
 	local ids =  mapGenerator.nodeIDs
 
-	local m = math.random(-10, 10)
+	local m = math.random(-5, 5)
 
 	temp     = mathMin(100, mathMax(0, temp     + m))
 	humidity = mathMin(100, mathMax(0, humidity + m))
+	--height   = mathMin(layer.maxY, mathMax(layer.minY, y + m))
 
-	local biome = layer.biomesDiagram[mathRound(temp)][mathRound(humidity)]
+	local biome = layer.biomesDiagram[y][mathRound(temp)][mathRound(humidity)]
 
-	if y > hight and y > 0 then
+	if y > height and y > 0 then
 		data[index] = ids.air
-	elseif y > hight and y <= 0 then
+	elseif y > height and y <= 0 then
 		data[index] = ids.water
-	elseif y <= hight then
+	elseif y <= height then
 		if isCavern(layer, x, y, z) then
 			data[index] = ids.air
-		elseif y == hight then
+		elseif y == height then
 			generateSoil(biome, data, index, x, y, z)
 		else
 			generateRock(ids, data, index, x, y, z)

@@ -2,6 +2,8 @@
 ---@field name           string
 ---@field tempPoint      number
 ---@field humidityPoint  number
+---@field minY           number
+---@field maxY           number
 ---@field groundNodes    MapGen.Biome.GroundNodes
 ---@field soilHeight     number
 local Biome = {}
@@ -9,6 +11,8 @@ local Biome = {}
 ---@class MapGen.Layer.BiomeDef
 ---@field tempPoint      number
 ---@field humidityPoint  number
+---@field minY           number
+---@field maxY           number
 ---@field groundNodes    MapGen.Biome.GroundNodes
 ---@field soilHeight     number
 
@@ -21,6 +25,8 @@ function Biome:new(name, def)
 		name          = name,
 		tempPoint     = def.tempPoint,
 		humidityPoint = def.humidityPoint,
+		minY          = def.minY,
+		maxY          = def.maxY,
 		groundNodes   = def.groundNodes,
 		soilHeight    = def.soilHeight,
 	}, {__index = self})

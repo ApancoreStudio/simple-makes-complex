@@ -60,7 +60,8 @@ local mapGenerator = MapGen:new({
 
 	-- Liquids
 	water = id("liquids:water_source"),
-})
+}, 10
+)
 
 mapGenerator:RegisterLayer("world", -1000, 500)
 

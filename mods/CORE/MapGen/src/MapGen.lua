@@ -43,6 +43,7 @@ local Cavern = require('MapGen.Layer.Cavern')
 ---@field cavernsNoiseInitialized     boolean  TODO: описание
 ---@field isRunning                   boolean  A static field that guarantees that only one instance of the `MapGen` class will work.
 ---@field nodeIDs                     table<string, number>
+---@field waterLevel                  number
 local MapGen = {
 	layersByName          = {},
 	layersList            = {},
@@ -51,12 +52,13 @@ local MapGen = {
 	isRunning             = false,
 }
 
----@param nodeIDs  table<string, number>
+---@param nodeIDs       table<string, number>
 ---@return MapGen
-function MapGen:new(nodeIDs)
+function MapGen:new(nodeIDs, waterLevel)
 	---@type MapGen
 	local instance = setmetatable({
-		nodeIDs = nodeIDs,
+		nodeIDs      = nodeIDs,
+		waterLevel   = waterLevel or 0,
 	}, {__index = self})
 
 	return instance
@@ -226,7 +228,7 @@ function MapGen:initPeaksMultinoise()
 	self.peaksMultinoiseInitialized = true
 end
 
----TODO: описаение
+---TODO: описание
 function MapGen:initCavernsNoise()
 	---@param layer  MapGen.Layer
 	for _, layer in ipairs(self.layersList) do
@@ -280,26 +282,27 @@ end
 ---@param z             number
 local function generateNode(mapGenerator, layer, height, temp, humidity, data, index, x, y, z)
 	local ids =  mapGenerator.nodeIDs
+	local waterLevel = mapGenerator.waterLevel
 
 	local m = math.random(-5, 5)
 
 	temp     = mathMin(100, mathMax(0, temp     + m))
 	humidity = mathMin(100, mathMax(0, humidity + m))
-	--height   = mathMin(layer.maxY, mathMax(layer.minY, y + m))
+	--_height   = mathMin(layer.maxY, mathMax(layer.minY, y + m))
 
 	---@type MapGen.Layer.Biome
 	local biome = layer.biomesDiagram[y][mathRound(temp)][mathRound(humidity)]
 
-	if y > height and y > 0 then
+	if y > height and y > waterLevel then
 		data[index] = ids.air
-	elseif y > height and y <= 0 then
+	elseif y > height and y <= waterLevel then
 		data[index] = ids.water
 	elseif y <= height then
 		if isCavern(layer, x, y, z) then
 			data[index] = ids.air
-		elseif y == height and y >= 0 then
+		elseif y == height and y >= waterLevel then
 			biome.generateSoil(mapGenerator, biome, data, index, x, y, z)
-		elseif y == height and y < 0 then
+		elseif y == height and y < waterLevel then
 			biome.generateBottom(mapGenerator, biome, data, index, x, y, z)
 		else
 			biome.generateRock(mapGenerator, biome, data, index, x, y, z)
@@ -613,6 +616,9 @@ function MapGen:onMapGenerated(voxelManip, minPos, maxPos, blockseed)
 	voxelManip:set_lighting({ day = 14, night = 0})
 	voxelManip:calc_lighting()
 	voxelManip:update_liquids()
+
+	core.generate_ores(voxelManip, minPos, maxPos)
+	core.generate_decorations(voxelManip, minPos, maxPos)
 
 	--voxelManip:write_to_map() -- Async edit
 end

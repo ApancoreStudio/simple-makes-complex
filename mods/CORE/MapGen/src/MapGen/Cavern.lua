@@ -1,7 +1,7 @@
 local mathMin,  mathMax,  mathAbs
 	= math.min, math.max, math.abs
 
----@class MapGen.Layer.Cavern
+---@class MapGen.Cavern
 ---@field name            string
 ---@field minY            number
 ---@field maxY            number
@@ -12,10 +12,10 @@ local mathMin,  mathMax,  mathAbs
 ---@field getGroups       fun():table<string, number>
 local Cavern = {}
 
----Definition table for the `MapGen.Layer.Cavern`.
+---Definition table for the `MapGen.Cavern`.
 ---
 ---**Only for EmmyLua.**
----@class MapGen.Layer.CavernDef
+---@class MapGen.CavernDef
 ---@field minY            number
 ---@field maxY            number
 ---@field noiseParams     NoiseParams
@@ -24,8 +24,8 @@ local Cavern = {}
 ---@field groups          table<string, number>?
 
 ---@param name  string
----@param def   MapGen.Layer.CavernDef
----@return      MapGen.Layer.Cavern
+---@param def   MapGen.CavernDef
+---@return      MapGen.Cavern
 function Cavern:new(name, def)
 	assert(def.maxY > def.minY, 'maxY there should be more minY')
 	assert(def.smoothDistance < mathAbs(def.maxY - def.minY)/2, 'The smoothing distance cannot be greater than half the distance between minY and maxY')
@@ -49,7 +49,7 @@ function Cavern:new(name, def)
 		_groups = def.groups
 	end
 
-	---@type MapGen.Layer.Cavern
+	---@type MapGen.Cavern
 	local instance = setmetatable({
 		name           = name,
 		minY           = def.minY,
@@ -89,6 +89,7 @@ local function calcCavernWeight(y, smoothDistance, minY, maxY)
 	return mathMax(0, mathMin(maxDist / smoothDistance, minDist / smoothDistance, 1))
 end
 
+---Returns `true` if there is a cavern at the specified coordinates.
 ---@param x          number
 ---@param y          number
 ---@param z          number

@@ -27,14 +27,14 @@ local Layer = require('MapGen.Layer')
 ---@type MapGen.Peak
 local Peak = require('MapGen.Peak')
 
----@type MapGen.Layer.Biome
-local Biome = require('MapGen.Layer.Biome')
+---@type MapGen.Biome
+local Biome = require('MapGen.Biome')
 
 ---@type MapGen.Triangulation
 local Triangulation = require('MapGen.Triangulation')
 
----@type MapGen.Layer.Cavern
-local Cavern = require('MapGen.Layer.Cavern')
+---@type MapGen.Cavern
+local Cavern = require('MapGen.Cavern')
 
 ---@class MapGen
 ---@field layersByName                table<string, MapGen.Layer>
@@ -52,7 +52,8 @@ local MapGen = {
 	isRunning             = false,
 }
 
----@param nodeIDs       table<string, number>
+---@param nodeIDs     table<string, number>
+---@param waterLevel  number
 ---@return MapGen
 function MapGen:new(nodeIDs, waterLevel)
 	---@type MapGen
@@ -90,9 +91,9 @@ end
 ---Mark the world area between two heights as a `MapGen.Layer`.
 ---
 ---Note: layers must not overlap.
----@param name  string
----@param minY  number
----@param maxY  number
+---@param name  string  The name that will be assigned to the layer. The name must be unique for each layer.
+---@param minY  number  Minimum layer generation height.
+---@param maxY  number  Maximum layer generation height.
 function MapGen:RegisterLayer(name, minY, maxY)
 	-- Layers with the same name cannot exist.
 	assert(self.layersByName[name] == nil, ('A layer named `%s` is already registered.'):format(name))
@@ -112,14 +113,13 @@ function MapGen:RegisterLayer(name, minY, maxY)
 	end)
 end
 
--- TODO: переписать описание функции
----Mark a peak of the world as a cubic peak by two opposite vertices.
+---Mark a world point as `MapGen.Peak` and assign it a specific noise that will affect the generation.
 ---
----Peaks must be included in layers and may overlap each other.
----@param layerName   string  The name of the layer in which the new peak will be included.
----@param peakPos     vector
----@param multinoise  MapGen.Peak.MultinoiseParams     Noise that will be assigned to the peak and that will influence map generation
----@param groups      table<string, number>?  TODO: описание
+---Note: The peaks shouldn't overlap. This won't cause any errors, but it might ruin the generation.
+---@param layerName   string                        The name of the layer in which the new peak will be included.
+---@param peakPos     vector                        The coordinate where the peak will be placed.
+---@param multinoise  MapGen.Peak.MultinoiseParams  Noise that will be assigned to the peak and that will influence map generation
+---@param groups      table<string, number>?        Peak groups that may affect processing.
 function MapGen:registerPeak(layerName, peakPos, multinoise, groups)
 	---@type MapGen.Layer
 	local layer = self.layersByName[layerName]
@@ -130,22 +130,22 @@ function MapGen:registerPeak(layerName, peakPos, multinoise, groups)
 		error('Invalid layer: ' .. layerName)
 	end
 
-	--TODO: добавить проверку, что координата ячейки не совпадают
-	--TODO: Добавить проверку, что координата ячейки не выходит за границы слоя
+	--TODO: добавить проверку, что координата пиков не совпадают
 
 	---@type MapGen.Peak
 	local peak = Peak:new(peakPos, multinoise, groups)
 
 	layer:addPeak(peak)
-
-	return peak --TODO: временно?
 end
 
----TODO: описание
----@param layerName   string  The name of the layer in which the new peak will be included.
----@param peakPos     vector
----@param multinoise  MapGen.Peak.MultinoiseParams     Noise that will be assigned to the peak and that will influence map generation
----@param groups      table<string, number>?  TODO: описание
+---Mark a world point as `MapGen.Peak` and assign it a specific noise that will affect the generation.
+---The Y coordinate will be forced to zero, and the `is2d` group will be added to the groups field.
+---
+---Note: The peaks shouldn't overlap. This won't cause any errors, but it might ruin the generation.
+---@param layerName   string                        The name of the layer in which the new peak will be included.
+---@param peakPos     vector                        The coordinate where the peak will be placed.
+---@param multinoise  MapGen.Peak.MultinoiseParams  Noise that will be assigned to the peak and that will influence map generation.
+---@param groups      table<string, number>?        Peak groups that may affect processing.
 function MapGen:register2DPeak(layerName, peakPos, multinoise, groups)
 	local _peakPos = table.copy_with_metatables(peakPos)
 	_peakPos.y = 0
@@ -159,21 +159,24 @@ function MapGen:register2DPeak(layerName, peakPos, multinoise, groups)
 	self:registerPeak(layerName, _peakPos, multinoise, groups)
 end
 
----TODO: описание
----@param layerName   string  The name of the layer in which the new peak will be included.
----@param multinoise  MapGen.Peak.MultinoiseParams     Noise that will be assigned to the peak and that will influence map generation
----@param peakPoses   vector[]
----@param groups      table<string, number>?  TODO: описание
+---Mark the world points as `MapGen.Peak` and assign them all a specific noise that will affect generation.
+---The Y coordinate will be forced to zero, and the `is2d` group will be added to the groups field.
+---
+---Note: The peaks shouldn't overlap. This won't cause any errors, but it might ruin the generation.
+---@param layerName   string                        The name of the layer in which the new peaks will be included.
+---@param multinoise  MapGen.Peak.MultinoiseParams  The noise that will be assigned to each peak and will affect the map generation.
+---@param peakPoses   vector[]                      Set the coordinates where the peaks will be placed.
+---@param groups      table<string, number>?        Peak groups that may affect processing.
 function MapGen:register2DPeaks(layerName, multinoise, peakPoses, groups)
 	for _, peakPos in ipairs(peakPoses) do
 		self:register2DPeak(layerName, peakPos, multinoise, groups)
 	end
 end
 
----TODO: описание
----@param layerName  string
----@param biomeName  string
----@param def        MapGen.Layer.BiomeDef
+---Mark a point on the biomes diagram and constrain the world area by height to mark it as `MapGen.Biome`.
+---@param layerName  string           The name of the layer in which the new biome will be included.
+---@param biomeName  string           The name to be assigned to the biome. The name must be unique for each biome.
+---@param def        MapGen.BiomeDef  Biome description table, see details `MapGen.BiomeDef`
 function MapGen:registerBiome(layerName, biomeName, def)
 	local layer = self.layersByName[layerName]
 	assert(layer ~= nil, ('There is no layer named `%s` registered.'):format(layerName))
@@ -181,14 +184,13 @@ function MapGen:registerBiome(layerName, biomeName, def)
 
 	local biome = Biome:new(biomeName, def)
 
-	layer.biomesByName[biomeName] = biome
-	table.insert(layer.biomesList, biome)
+	layer:addBiome(biomeName, biome)
 end
 
----TODO: описание
----@param layerName       string
----@param cavernName      string
----@param def             MapGen.Layer.CavernDef
+---Mark the world area between two heights as a `MapGen.Cavern` and assign the noise that the cave will be generated from.
+---@param layerName       string            The name of the layer in which the new cavern will be included.
+---@param cavernName      string            The name to be assigned to the cavern. The name must be unique for each cavern.
+---@param def             MapGen.CavernDef  Cavern description table, see details `MapGen.CavernDef`
 function MapGen:registerCavern(layerName, cavernName, def)
 	local layer = self.layersByName[layerName]
 	assert(layer ~= nil, ('There is no layer named `%s` registered.'):format(layerName))
@@ -196,15 +198,14 @@ function MapGen:registerCavern(layerName, cavernName, def)
 
 	local cavern = Cavern:new(cavernName, def)
 
-	layer.cavernsByName[cavernName] = cavern
-	table.insert(layer.cavernsList, cavern)
+	layer:addCavern(cavernName, cavern)
 end
 
 
 
 -- --- INITIALIZATION METHODS ---
 
----Initializing layer triangulation.
+---Divide all layers into triangles whose vertices are the `Mapgen.Peak` belonging to these layers.
 function MapGen:initLayersTriangultaion()
 	---@param layer  MapGen.Layer
 	for _, layer in ipairs(self.layersList) do
@@ -212,6 +213,15 @@ function MapGen:initLayersTriangultaion()
 		-- layer.tetrahedronsList  = Triangulation.tetrahedralize(layer.peaksList)
 	end
 end
+
+---Initialization of the biome diagram using the Voronoi method.
+function MapGen:initBiomesDiagram()
+	---@param layer  MapGen.Layer
+	for _, layer in ipairs(self.layersList) do
+		layer:initBiomesDiagram()
+	end
+end
+
 
 ---Initialize peak's noises. This should be called after the map object is loaded.
 function MapGen:initPeaksMultinoise()
@@ -228,7 +238,7 @@ function MapGen:initPeaksMultinoise()
 	self.peaksMultinoiseInitialized = true
 end
 
----TODO: описание
+---Initialize caverns's noises. This should be called after the map object is loaded.
 function MapGen:initCavernsNoise()
 	---@param layer  MapGen.Layer
 	for _, layer in ipairs(self.layersList) do
@@ -243,18 +253,11 @@ function MapGen:initCavernsNoise()
 	self.cavernsNoiseInitialized = true
 end
 
----Initialization of the biome diagram using the Voronoi method.
-function MapGen:initBiomesDiagram()
-	---@param layer  MapGen.Layer
-	for _, layer in ipairs(self.layersList) do
-		layer:initBiomesDiagram()
-	end
-end
-
 
 
 -- --- GENERATION METHODS ---
 
+---Returns `true` if there is a cavern at the specified coordinates.
 ---@param layer  MapGen.Layer
 ---@param x      number
 ---@param y      number
@@ -270,9 +273,11 @@ local function isCavern(layer, x, y, z)
 	return false
 end
 
+---The core logic of world generation. Determines which node type (water, rock, soil, air)
+---and which biome will be generated at the specified coordinates.
 ---@param mapGenerator  MapGen
 ---@param layer         MapGen.Layer
----@param height         number
+---@param height        number
 ---@param temp          number
 ---@param humidity      number
 ---@param data          number[]
@@ -290,7 +295,7 @@ local function generateNode(mapGenerator, layer, height, temp, humidity, data, i
 	humidity = mathMin(100, mathMax(0, humidity + m))
 	--_height   = mathMin(layer.maxY, mathMax(layer.minY, y + m))
 
-	---@type MapGen.Layer.Biome
+	---@type MapGen.Biome
 	local biome = layer.biomesDiagram[y][mathRound(temp)][mathRound(humidity)]
 
 	if y > height and y > waterLevel then
@@ -309,10 +314,15 @@ local function generateNode(mapGenerator, layer, height, temp, humidity, data, i
 		end
 	else
 		data[index] = ids.air
-		-- TODO: добавить error
+
+		Logger.warningLog('If you see this error, it means that the map generator does'..
+			'not handle all cases of generation on coordinates: %s, %s, %s.', x, y, z)
 	end
 end
 
+---Calculates a weight for a coordinate using the projection onto
+---the triangle's height and specifying the distance to the peak
+---for which the weight is calculated.
 ---@param height  MapGen.Triangulation.Edge
 ---@param x       number
 ---@param y       number
@@ -336,6 +346,8 @@ local function calcWeight(height, x, y, z)
 	return 1 - vector.distance(pos2, posP) / height:length()
 end
 
+---Returns `true` if the point is within the triangle's region.
+---The barycentric coordinate method is used.
 ---@param px        number
 ---@param pz        number
 ---@param triangle  MapGen.Triangle
@@ -362,6 +374,7 @@ local function pointInTriangle(px, pz, triangle)
 	return (u >= 0) and (v >= 0) and (u + v <= 1)
 end
 
+---Returns the weighted values of 2d noises.
 ---@param triangle  MapGen.Triangle
 ---@param x         number
 ---@param y         number
@@ -542,6 +555,7 @@ function MapGen:getNoises3dValues(layer, x, y, z)
 end
 --]]
 
+---Generator handler for specific coordinates.
 ---@param mapGenerator  MapGen
 ---@param data          number[]
 ---@param index         number
@@ -572,6 +586,7 @@ local function generatorHandler(mapGenerator, data, index, x, y, z)
 	generateNode(mapGenerator, layer,  noiseHeightValue, noiseTempValue, noiseHumidityValue, data, index, x, y, z)
 end
 
+---Chunk generation handler.
 ---@param voxelManip  VoxelManip
 ---@param minPos      table
 ---@param maxPos      table

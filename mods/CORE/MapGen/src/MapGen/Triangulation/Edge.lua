@@ -7,6 +7,7 @@ local Edge = {}
 ---@param p2  MapGen.Peak
 ---@return    MapGen.Triangulation.Edge
 function Edge:new( p1, p2 )
+	---@type MapGen.Triangulation.Edge
 	local instance = setmetatable({
 		p1 = p1,
 		p2 = p2
@@ -26,12 +27,14 @@ function Edge:toString()
 	return (('Edge :\n  %s\n  %s'):format(tostring(self.p1), tostring(self.p2)))
 end
 
+---Returns true if the edges are equivalent.
 ---@param other  MapGen.Triangulation.Edge
 ---@return       boolean
 function Edge:eq(other)
 	return self.p1 == other.p1 and self.p2 == other.p2
 end
 
+---Returns true if the edges are similar.
 ---@param other  MapGen.Triangulation.Edge
 ---@return       boolean
 function Edge:same(other)
@@ -39,11 +42,13 @@ function Edge:same(other)
 		or (self.p1 == other.p2 and self.p2 == other.p1)
 end
 
+---Returns the length of an edge.
 ---@return number
 function Edge:length()
 	return (self.p1.getPeakPos() - self.p2.getPeakPos()):length()
 end
 
+---Returns the vector of the point located in the middle of the edge.
 ---@return vector
 function Edge:getMidPoint()
 	local pos1 = self.p1:getPeakPos()

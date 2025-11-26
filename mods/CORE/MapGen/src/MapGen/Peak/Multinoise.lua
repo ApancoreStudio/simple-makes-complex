@@ -1,5 +1,6 @@
 ---For EmmyLua only
 
+---**For EmmyLua only**
 ---@class MapGen.Peak.Multinoise
 ---@field landscapeNoise  ValueNoise
 ---@field tempNoise       ValueNoise

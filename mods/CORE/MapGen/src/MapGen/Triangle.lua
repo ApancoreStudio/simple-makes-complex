@@ -9,7 +9,7 @@ local Edge = require('MapGen.Triangulation.Edge')
 ---@type MapGen.Triangulation.FakePeak
 local FakePeak = require('MapGen.Triangulation.FakePeak')
 
--- Helpers functions --
+-- --- Helpers functions ---
 
 ---Triangle semi-perimeter by Heron's formula
 ---@param a  number
@@ -50,7 +50,9 @@ local function isFlatAngle(p1, p2, p3)
 	return mathAbs(dot + 1.0) < 0
 end
 
--- Class registration --
+
+
+-- --- Class registration ---
 
 ---@class MapGen.Triangle
 ---@field p1  MapGen.Peak
@@ -102,12 +104,14 @@ function Triangle:toString()
 	)
 end
 
+---Returns true if the triangles are equivalent.
 ---@param other  MapGen.Triangle
 ---@return       boolean
 function Triangle:eq( other )
 	return self.p1 == other.p1 and self.p2 == other.p2 and self.p3 == other.p3
 end
 
+---Returns true if the triangles are similar.
 ---@param other  MapGen.Triangle
 ---@return       boolean
 function Triangle:same(other)
@@ -116,7 +120,7 @@ function Triangle:same(other)
 		or (self.p1 == other.p3 and self.p2 == other.p1 and self.p3 == other.p2)
 end
 
----Returns the coordinates of the center
+---Returns the coordinates of the triangle's center.
 ---@return vector
 function Triangle:getCenter()
 	local pos1 = self.p1:getPeakPos()
@@ -126,7 +130,7 @@ function Triangle:getCenter()
 	return (pos1 + pos2 + pos3) / 3
 end
 
----Returns the area
+---Returns the area of ​​a triangle.
 ---@return number
 function Triangle:getArea()
 	local a, b, c = self:getSidesLength()
@@ -134,8 +138,7 @@ function Triangle:getArea()
 	return (quatCross(a, b, c) / 4)
 end
 
----Returns the length of the perpendicular
----from Peak1 to the line Peak2-Peak3
+---Returns the perpendicular from the vertex Peak1 to the line Peak2-Peak3.
 ---@param p1  MapGen.Peak
 ---@param p2  MapGen.Peak
 ---@param p3  MapGen.Peak
@@ -158,8 +161,10 @@ function Triangle:getHeight(p1, p2, p3)
 	return Edge:new(p1, FakePeak:new(posP))
 end
 
----Returns the length of the perpendicular
----from Peak1 to the line Peak2-Peak3
+---Returns the perpendicular from the vertex Peak1 to the line Peak2-Peak3.
+---
+---Note: This function does not take into account the Y-coordinate,
+---that is, the calculation is performed on the projection of the triangle XZ.
 ---@param p1  MapGen.Peak
 ---@param p2  MapGen.Peak
 ---@param p3  MapGen.Peak
@@ -192,10 +197,10 @@ function Triangle:getSidesLength()
 	return self.e1:length(), self.e2:length(), self.e3:length()
 end
 
----Returns the length of the edges
+---Returns the length of the edges.
 ---
 ---Note: This function does not take into account the Y-coordinate,
----that is, the calculation is performed on the projection of the triangle XZ
+---that is, the calculation is performed on the projection of the triangle XZ.
 ---@return number, number, number
 function Triangle:getSidesLength2D()
 	local pos1 = self.p1:getPeakPos()
@@ -209,10 +214,10 @@ function Triangle:getSidesLength2D()
 	return (pos2 - pos1):length(), (pos3 - pos2):length(), (pos1 - pos3):length()
 end
 
----Returns the coordinates of the circumcircle center
+---Returns the coordinates of the circumcircle center.
 ---
 ---Note: This function does not take into account the Y-coordinate,
----that is, the calculation is performed on the projection of the triangle XZ
+---that is, the calculation is performed on the projection of the triangle XZ.
 ---@return vector
 function Triangle:getCircumCenter2D()
 	local pos1 = self.p1:getPeakPos()
@@ -232,10 +237,10 @@ function Triangle:getCircumCenter2D()
 	return vector.new(x / D, 0, z / D)
 end
 
----Returns the radius of the circumcircle
+---Returns the radius of the circumcircle.
 ---
 ---Note: This function does not take into account the Y-coordinate,
----that is, the calculation is performed on the projection of the triangle XZ
+---that is, the calculation is performed on the projection of the triangle XZ.
 ---@return number
 function Triangle:getCircumRadius2D()
 	local a, b, c = self:getSidesLength2D()
@@ -243,10 +248,10 @@ function Triangle:getCircumRadius2D()
 	return ((a * b * c) / quatCross(a, b, c))
 end
 
----Returns the coordinates of the circumcircle center and its radius
+---Returns the coordinates of the circumcircle center and its radius.
 ---
 ---Note: This function does not take into account the Y-coordinate,
----that is, the calculation is performed on the projection of the triangle XZ
+---that is, the calculation is performed on the projection of the triangle XZ.
 ---@return vector, number
 function Triangle:getCircumCircle2D()
 	local c = self:getCircumCenter2D()
@@ -255,10 +260,10 @@ function Triangle:getCircumCircle2D()
 	return c, r
 end
 
----Checks if a given point lies into the triangle circumcircle
+---Checks if a given point lies into the triangle circumcircle.
 ---
 ---Note: This function does not take into account the Y-coordinate,
----that is, the calculation is performed on the projection of the triangle XZ
+---that is, the calculation is performed on the projection of the triangle XZ.
 ---@param p  MapGen.Peak
 ---@return   boolean
 function Triangle:inCircumCircle2D(p)

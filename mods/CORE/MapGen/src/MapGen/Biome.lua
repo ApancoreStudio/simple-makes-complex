@@ -1,4 +1,4 @@
----@class MapGen.Layer.Biome
+---@class MapGen.Biome
 ---@field name            string
 ---@field tempPoint       number
 ---@field humidityPoint   number
@@ -6,27 +6,30 @@
 ---@field maxY            number
 ---@field groundNodes     MapGen.Biome.GroundNodes
 ---@field soilHeight      number
----@field generateRock    fun(mapGenerator:MapGen, biome:MapGen.Layer.Biome, data:number[], index:number, x:number, y:number, z:number)
----@field generateSoil    fun(mapGenerator:MapGen, biome:MapGen.Layer.Biome, data:number[], index:number, x:number, y:number, z:number)
----@field generateBottom  fun(mapGenerator:MapGen, biome:MapGen.Layer.Biome, data:number[], index:number, x:number, y:number, z:number)
+---@field generateRock    fun(mapGenerator:MapGen, biome:MapGen.Biome, data:number[], index:number, x:number, y:number, z:number)
+---@field generateSoil    fun(mapGenerator:MapGen, biome:MapGen.Biome, data:number[], index:number, x:number, y:number, z:number)
+---@field generateBottom  fun(mapGenerator:MapGen, biome:MapGen.Biome, data:number[], index:number, x:number, y:number, z:number)
 local Biome = {}
 
----@class MapGen.Layer.BiomeDef
+---Definition table for the `MapGen.Biome`.
+---
+---**Only for EmmyLua.**
+---@class MapGen.BiomeDef
 ---@field tempPoint       number
 ---@field humidityPoint   number
 ---@field minY            number
 ---@field maxY            number
 ---@field groundNodes     MapGen.Biome.GroundNodes
 ---@field soilHeight      number
----@field generateRock    fun(mapGenerator:MapGen, biome:MapGen.Layer.Biome, data:number[], index:number, x:number, y:number, z:number)?
----@field generateSoil    fun(mapGenerator:MapGen, biome:MapGen.Layer.Biome, data:number[], index:number, x:number, y:number, z:number)?
----@field generateBottom  fun(mapGenerator:MapGen, biome:MapGen.Layer.Biome, data:number[], index:number, x:number, y:number, z:number)?
+---@field generateRock    fun(mapGenerator:MapGen, biome:MapGen.Biome, data:number[], index:number, x:number, y:number, z:number)?
+---@field generateSoil    fun(mapGenerator:MapGen, biome:MapGen.Biome, data:number[], index:number, x:number, y:number, z:number)?
+---@field generateBottom  fun(mapGenerator:MapGen, biome:MapGen.Biome, data:number[], index:number, x:number, y:number, z:number)?
 
 
 -- Default generate functions
 
 ---@param mapGenerator  MapGen
----@param biome         MapGen.Layer.Biome
+---@param biome         MapGen.Biome
 ---@param data          number[]
 ---@param index         number
 ---@param x             number
@@ -37,7 +40,7 @@ local defaultGenerateRock = function(mapGenerator, biome, data, index, x, y, z)
 end
 
 ---@param mapGenerator  MapGen
----@param biome         MapGen.Layer.Biome
+---@param biome         MapGen.Biome
 ---@param data          number[]
 ---@param index         number
 ---@param x             number
@@ -48,7 +51,7 @@ local defaultGenerateSoil = function(mapGenerator, biome, data, index, x, y, z)
 end
 
 ---@param mapGenerator  MapGen
----@param biome         MapGen.Layer.Biome
+---@param biome         MapGen.Biome
 ---@param data          number[]
 ---@param index         number
 ---@param x             number
@@ -60,25 +63,25 @@ end
 
 
 ---@param name  string
----@param def   MapGen.Layer.BiomeDef
----@return      MapGen.Layer.Biome
+---@param def   MapGen.BiomeDef
+---@return      MapGen.Biome
 function Biome:new(name, def)
 	if def.generateRock == nil then
-		Logger.warningLog('MapGen.Layer.Biome: The `%s` biome does not have a specified `generateRock()` function. The default function is used.', name)
+		Logger.warningLog('MapGen.Biome: The `%s` biome does not have a specified `generateRock()` function. The default function is used.', name)
 		def.generateRock = defaultGenerateRock
 	end
 
 	if def.generateSoil == nil then
-		Logger.warningLog('MapGen.Layer.Biome: The `%s` biome does not have a specified `generateSoil()` function. The default function is used.', name)
+		Logger.warningLog('MapGen.Biome: The `%s` biome does not have a specified `generateSoil()` function. The default function is used.', name)
 		def.generateSoil = defaultGenerateSoil
 	end
 
 	if def.generateBottom == nil then
-		Logger.warningLog('MapGen.Layer.Biome: The `%s` biome does not have a specified `generateBottom()` function. The default function is used.', name)
+		Logger.warningLog('MapGen.Biome: The `%s` biome does not have a specified `generateBottom()` function. The default function is used.', name)
 		def.generateBottom = defaultGenerateBottom
 	end
 
-	---@type MapGen.Layer.Biome
+	---@type MapGen.Biome
 	local instance = setmetatable({
 		name           = name,
 		tempPoint      = def.tempPoint,

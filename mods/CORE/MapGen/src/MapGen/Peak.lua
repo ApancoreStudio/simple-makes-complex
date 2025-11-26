@@ -4,10 +4,12 @@
 ---@field getMultinoiseParams  fun():MapGen.Peak.MultinoiseParams
 ---@field getMultinoise        fun():MapGen.Peak.Multinoise
 ---@field initMultinoise       fun()
----@field getGroups      fun():table<string, number>
+---@field getGroups            fun():table<string, number>
 local Peak = {
 	id = 0,
 }
+
+-- --- Helpers functions ---
 
 ---@param  multinoiseParams  MapGen.Peak.MultinoiseParams
 ---@return MapGen.Peak.Multinoise
@@ -22,6 +24,10 @@ local function multinoiseParamsToMultinoise(multinoiseParams)
 
 	return multinoise
 end
+
+
+
+-- --- Class registration ---
 
 ---@param peakPos           vector
 ---@param multinoiseParams  MapGen.Peak.MultinoiseParams
@@ -62,12 +68,20 @@ function Peak:new(peakPos, multinoiseParams, groups)
 	end
 
 	function instance:getMultinoise()
+		if not table.is_empty(_multinoise) then
+			error('Attempt to get `MapGen.Triangulation.FakePeak` noise (empty noise).')
+		end
+
 		return _multinoise
 	end
 
 	function instance:initMultinoise()
 		if not table.is_empty(_multinoise) then
-			minetest.log('warning', 'Multinoise has already been initialized. Re-initialization is not recommended.')
+			Logger.warningLog('Multinoise has already been initialized. Re-initialization is not recommended.')
+		end
+
+		if not table.is_empty(_multinoiseParams) then
+			error('Attempt to initialize `MapGen.Triangulation.FakePeak` noise (noise parameter empty).')
 		end
 
 		_multinoise = multinoiseParamsToMultinoise(_multinoiseParams)
@@ -87,9 +101,10 @@ function Peak:toString()
 	return ('Peak (%s) x: %.2f y: %.2f z: %.2f'):format( self.id, pos.x, pos.y, pos.z)
 end
 
+---Returns true if the peaks are equivalent.
 ---@param other  MapGen.Peak
 ---@return       boolean
-function Peak:eq( other )
+function Peak:eq(other)
 	local pos1 = self:getPeakPos()
 	local pos2 = other:getPeakPos()
 

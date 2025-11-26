@@ -1,25 +1,23 @@
-local mathSqrt = math.sqrt
-
 ---@class MapGen.Layer
 ---@field name               string
 ---@field minY               number
 ---@field maxY               number
 ---@field peaksList          MapGen.Peak[]
----@field biomesByName       table<string, MapGen.Layer.Biome>
----@field biomesList         MapGen.Layer.Biome[]
+---@field biomesByName       table<string, MapGen.Biome>
+---@field biomesList         MapGen.Biome[]
 ---@field biomesDiagram      table
----@field cavernsByName      table<string, MapGen.Layer.Cavern>
----@field cavernsList        MapGen.Layer.Cavern[]
+---@field cavernsByName      table<string, MapGen.Cavern>
+---@field cavernsList        MapGen.Cavern[]
 ---@field trianglesList      MapGen.Triangle[]
 ---@field tetrahedronsList   MapGen.Tetrahedron[]
 local Layer = {
-	peaksList     = {},
-	biomesByName  = {},
-	biomesList    = {},
-	biomesDiagram = {},
-	cavernsByName = {},
-	cavernsList   = {},
-	trianglesList = {},
+	peaksList        = {},
+	biomesByName     = {},
+	biomesList       = {},
+	biomesDiagram    = {},
+	cavernsByName    = {},
+	cavernsList      = {},
+	trianglesList    = {},
 	tetrahedronsList = {},
 }
 
@@ -38,14 +36,31 @@ function Layer:new(name, minY, maxY)
 	return instance
 end
 
+---Adds a peak to the `Layer.peaksList`
 ---@param peak  MapGen.Peak
 function Layer:addPeak(peak)
 	table.insert(self.peaksList, peak)
 end
 
+---Adds a biome to the `Layer.biomesByName` & `Layer.biomesList`
+---@param biomeName  string
+---@param biome      MapGen.Biome
+function Layer:addBiome(biomeName, biome)
+	self.biomesByName[biomeName] = biome
+	table.insert(self.biomesList, self)
+end
+
+---Adds a cavern to the `Layer.cavernsByName` & `Layer.cavernsList`
+---@param cavernName  string
+---@param cavern      MapGen.Cavern
+function Layer:addCavern(cavernName, cavern)
+	self.cavernsByName[cavernName] = cavern
+	table.insert(self.cavernsList, cavern)
+end
+
 ---@param height      number
----@param biomesList  MapGen.Layer.Biome[]
----@return            string[], MapGen.Layer.Biome[]
+---@param biomesList  MapGen.Biome[]
+---@return            string[], MapGen.Biome[]
 local function getBiomesNamesByHeight(height, biomesList)
 	local biomesNames = {}
 	local biomes = {}
@@ -90,7 +105,7 @@ function Layer:initBiomesDiagram()
 				local minDistance = math.huge
 				local closestBiome = nil
 
-				---@param biome MapGen.Layer.Biome
+				---@param biome MapGen.Biome
 				for _, biome in ipairs(biomes) do
 					local distance = (temp - biome.tempPoint)^2 + (humidity - biome.humidityPoint)^2
 

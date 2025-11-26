@@ -653,9 +653,6 @@ function MapGen:run()
 	end
 
 	core.register_on_generated(function(...)
-		-- TODO: удалить отключение проверки после исправления issue:
-		-- https://github.com/Voxrame/luanti-ide-helper/issues/6
-		---@diagnostic disable-next-line: param-type-not-match
 		self:onMapGenerated(...)
 	end)
 

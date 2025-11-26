@@ -47,7 +47,7 @@ end
 ---@param biome      MapGen.Biome
 function Layer:addBiome(biomeName, biome)
 	self.biomesByName[biomeName] = biome
-	table.insert(self.biomesList, self)
+	table.insert(self.biomesList, biome)
 end
 
 ---Adds a cavern to the `Layer.cavernsByName` & `Layer.cavernsList`

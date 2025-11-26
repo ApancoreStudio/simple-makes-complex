@@ -68,7 +68,7 @@ function Peak:new(peakPos, multinoiseParams, groups)
 	end
 
 	function instance:getMultinoise()
-		if not table.is_empty(_multinoise) then
+		if table.is_empty(_multinoise) then
 			error('Attempt to get `MapGen.Triangulation.FakePeak` noise (empty noise).')
 		end
 
@@ -80,7 +80,7 @@ function Peak:new(peakPos, multinoiseParams, groups)
 			Logger.warningLog('Multinoise has already been initialized. Re-initialization is not recommended.')
 		end
 
-		if not table.is_empty(_multinoiseParams) then
+		if table.is_empty(_multinoiseParams) then
 			error('Attempt to initialize `MapGen.Triangulation.FakePeak` noise (noise parameter empty).')
 		end
 

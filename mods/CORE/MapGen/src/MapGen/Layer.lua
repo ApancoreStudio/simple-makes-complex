@@ -2,6 +2,12 @@
 ---@field name               string
 ---@field minY               number
 ---@field maxY               number
+---@field minTemp            number
+---@field maxTemp            number
+---@field minHumidity        number
+---@field maxHumidity        number
+---@field calcTemp           fun(self:MapGen.Layer, value:number, height:number):number
+---@field calcHumidity       fun(self:MapGen.Layer, value:number, height:number):number
 ---@field peaksList          MapGen.Peak[]
 ---@field biomesByName       table<string, MapGen.Biome>
 ---@field biomesList         MapGen.Biome[]
@@ -21,16 +27,52 @@ local Layer = {
 	tetrahedronsList = {},
 }
 
+---Definition table for the `MapGen.Layer`.
+---
+---**Only for EmmyLua.**
+---@class MapGen.LayerDef
+---@field minY               number
+---@field maxY               number
+---@field minTemp            number
+---@field maxTemp            number
+---@field minHumidity        number
+---@field maxHumidity        number
+---@field calcTemp           (fun(self:MapGen.Layer, value:number, height:number):number)?
+---@field calcHumidity       (fun(self:MapGen.Layer, value:number, height:number):number)?
+
+---@param self    MapGen.Layer
+---@param value   number
+---@param height  number
+---@return        number
+local function defaultCalcFunc(self, value, height)
+	return value
+end
+
 ---@param name  string
----@param minY  number
----@param maxY  number
+---@param def   MapGen.LayerDef
 ---@return      MapGen.Layer
-function Layer:new(name, minY, maxY)
+function Layer:new(name, def)
+	if def.calcTemp == nil then
+		Logger.infoLog('MapGen.Layer: The `%s` layer does not have a specified `calcTemp()` function. The default function is used.', name)
+		def.calcTemp = defaultCalcFunc
+	end
+
+	if def.calcHumidity == nil then
+		Logger.infoLog('MapGen.Layer: The `%s` layer does not have a specified `calcHumidity()` function. The default function is used.', name)
+		def.calcHumidity = defaultCalcFunc
+	end
+
 	---@type MapGen.Layer
 	local instance = setmetatable({
-		name = name,
-		minY = minY,
-		maxY = maxY,
+		name         = name,
+		minY         = def.minY,
+		maxY         = def.maxY,
+		minTemp      = def.minTemp,
+		maxTemp      = def.maxTemp,
+		minHumidity  = def.minHumidity,
+		maxHumidity  = def.maxHumidity,
+		calcTemp     = def.calcTemp,
+		calcHumidity = def.calcHumidity,
 	}, {__index = self})
 
 	return instance
@@ -98,10 +140,10 @@ function Layer:initBiomesDiagram()
 		end
 
 		pastBiomesNames = newBiomesNames
-		for temp = 0, 100 do
+		for temp = self.minTemp, self.maxTemp do
 			diagram[height][temp] = {}
 
-			for humidity = 0, 100 do
+			for humidity = self.minHumidity, self.maxHumidity do
 				local minDistance = math.huge
 				local closestBiome = nil
 

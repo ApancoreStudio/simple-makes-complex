@@ -63,7 +63,24 @@ local mapGenerator = MapGen:new({
 }, 10
 )
 
-mapGenerator:RegisterLayer("world", -1000, 500)
+local function calcTemp(layer, value, height)
+	return value
+end
+
+local function calcHumidity(layer, value, height)
+	return value
+end
+
+mapGenerator:RegisterLayer("world", {
+	minY         = -50,
+	maxY         = 50,
+	minTemp      = 0,
+	maxTemp      = 100,
+	minHumidity  = 0,
+	maxHumidity  = 100,
+	calcTemp     = calcTemp,
+	calcHumidity = calcHumidity,
+})
 
 local land1 = {
 	offset = -20,
@@ -182,7 +199,7 @@ local rocksNoiseParams ={
 }
 
 local function generateRock(mapGenerator, biome, data, index, x, y, z)
-	local ids =  mapGenerator.nodeIDs --TODO перенести камни в Biome
+	local ids =  mapGenerator.nodeIDs
 
 	if rocksNoise == nil then
 		rocksNoise = core.get_value_noise(rocksNoiseParams)
@@ -209,7 +226,7 @@ local function generateRock(mapGenerator, biome, data, index, x, y, z)
 end
 
 local function generateSoil(mapGenerator, biome, data, index, x, y, z)
-	data[index] = core.get_content_id(biome.groundNodes.turf)  -- TODO: убрать тут get_content_id(), переместить его куда-то "выше"
+	data[index] = biome.groundNodesId.turf
 end
 
 mapGenerator:registerBiome('world', "biome1", {
@@ -218,12 +235,14 @@ mapGenerator:registerBiome('world', "biome1", {
 	minY = -10000,
 	maxY = 1000,
 	groundNodes = {
-		soil = "soils:clay_soil_baren",
-		turf = "soils:clay_soil_baren",
+		soil   = "soils:clay_soil_baren",
+		turf   = "soils:clay_soil_baren",
+		rock   = "rocks:sylite",
+		bottom = "soils:rocky_soil_baren",
 	},
 	soilHeight = 1,
-	generateRock = generateRock,
-	generateSoil = generateSoil,
+	--generateRock = generateRock,
+	--generateSoil = generateSoil,
 })
 
 mapGenerator:registerBiome('world', "biome2", {
@@ -232,12 +251,14 @@ mapGenerator:registerBiome('world', "biome2", {
 	minY = -1000,
 	maxY = 1000,
 	groundNodes = {
-		soil = "soils:rocky_soil_baren",
-		turf = "soils:rocky_soil_baren",
+		soil   = "soils:rocky_soil_baren",
+		turf   = "soils:rocky_soil_baren",
+		rock   = "rocks:felhor",
+		bottom = "soils:clay_soil_baren",
 	},
 	soilHeight = 1,
-	generateRock = generateRock,
-	generateSoil = generateSoil,
+	--generateRock = generateRock,
+	--generateSoil = generateSoil,
 })
 
 mapGenerator:run()

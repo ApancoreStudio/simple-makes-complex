@@ -1,8 +1,6 @@
 ---@class Item.Callbacks
 local Callbacks = {}
 
--- TODO: Разобраться с дубликатами аннотаций полей. Приоритетно брать аннотации из util/ide-helper
-
 ---Called when the 'place' key was pressed with the item in hand
 ---and pointing at a node.
 ---Shall place item and return the leftover itemstack

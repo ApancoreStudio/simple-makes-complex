@@ -1,3 +1,5 @@
+local id = core.get_content_id
+
 ---@class MapGen.Biome
 ---@field name            string
 ---@field tempPoint       number
@@ -5,8 +7,10 @@
 ---@field minY            number
 ---@field maxY            number
 ---@field groundNodes     MapGen.Biome.GroundNodes
+---@field groundNodesIds  MapGen.Biome.GroundNodesIds
 ---@field soilHeight      number
 ---@field generateRock    fun(mapGenerator:MapGen, biome:MapGen.Biome, data:number[], index:number, x:number, y:number, z:number)
+---@field generateTurf    fun(mapGenerator:MapGen, biome:MapGen.Biome, data:number[], index:number, x:number, y:number, z:number)
 ---@field generateSoil    fun(mapGenerator:MapGen, biome:MapGen.Biome, data:number[], index:number, x:number, y:number, z:number)
 ---@field generateBottom  fun(mapGenerator:MapGen, biome:MapGen.Biome, data:number[], index:number, x:number, y:number, z:number)
 local Biome = {}
@@ -22,6 +26,7 @@ local Biome = {}
 ---@field groundNodes     MapGen.Biome.GroundNodes
 ---@field soilHeight      number
 ---@field generateRock    fun(mapGenerator:MapGen, biome:MapGen.Biome, data:number[], index:number, x:number, y:number, z:number)?
+---@field generateTurf    fun(mapGenerator:MapGen, biome:MapGen.Biome, data:number[], index:number, x:number, y:number, z:number)?
 ---@field generateSoil    fun(mapGenerator:MapGen, biome:MapGen.Biome, data:number[], index:number, x:number, y:number, z:number)?
 ---@field generateBottom  fun(mapGenerator:MapGen, biome:MapGen.Biome, data:number[], index:number, x:number, y:number, z:number)?
 
@@ -36,7 +41,18 @@ local Biome = {}
 ---@param y             number
 ---@param z             number
 local defaultGenerateRock = function(mapGenerator, biome, data, index, x, y, z)
-	--TODO: минимальную логику генерации прописать
+	data[index] = biome.groundNodesIds.rock
+end
+
+---@param mapGenerator  MapGen
+---@param biome         MapGen.Biome
+---@param data          number[]
+---@param index         number
+---@param x             number
+---@param y             number
+---@param z             number
+local defaultGenerateTurf = function(mapGenerator, biome, data, index, x, y, z)
+	data[index] = biome.groundNodesIds.turf
 end
 
 ---@param mapGenerator  MapGen
@@ -47,7 +63,7 @@ end
 ---@param y             number
 ---@param z             number
 local defaultGenerateSoil = function(mapGenerator, biome, data, index, x, y, z)
-	--TODO: минимальную логику генерации прописать
+	data[index] = biome.groundNodesIds.soil
 end
 
 ---@param mapGenerator  MapGen
@@ -58,7 +74,7 @@ end
 ---@param y             number
 ---@param z             number
 local defaultGenerateBottom = function(mapGenerator, biome, data, index, x, y, z)
-	--TODO: минимальную логику генерации прописать
+	data[index] = biome.groundNodesIds.bottom
 end
 
 
@@ -67,18 +83,29 @@ end
 ---@return      MapGen.Biome
 function Biome:new(name, def)
 	if def.generateRock == nil then
-		Logger.warningLog('MapGen.Biome: The `%s` biome does not have a specified `generateRock()` function. The default function is used.', name)
+		Logger.infoLog('MapGen.Biome: The `%s` biome does not have a specified `generateRock()` function. The default function is used.', name)
 		def.generateRock = defaultGenerateRock
 	end
 
+	if def.generateTurf == nil then
+		Logger.infoLog('MapGen.Biome: The `%s` biome does not have a specified `generateTurf()` function. The default function is used.', name)
+		def.generateTurf = defaultGenerateTurf
+	end
+
 	if def.generateSoil == nil then
-		Logger.warningLog('MapGen.Biome: The `%s` biome does not have a specified `generateSoil()` function. The default function is used.', name)
+		Logger.infoLog('MapGen.Biome: The `%s` biome does not have a specified `generateSoil()` function. The default function is used.', name)
 		def.generateSoil = defaultGenerateSoil
 	end
 
 	if def.generateBottom == nil then
-		Logger.warningLog('MapGen.Biome: The `%s` biome does not have a specified `generateBottom()` function. The default function is used.', name)
+		Logger.infoLog('MapGen.Biome: The `%s` biome does not have a specified `generateBottom()` function. The default function is used.', name)
 		def.generateBottom = defaultGenerateBottom
+	end
+
+	local groundNodesIds = {}
+	-- Converting node names to IDs
+	for k, v in pairs(def.groundNodes) do
+		groundNodesIds[k] = id(v)
 	end
 
 	---@type MapGen.Biome
@@ -89,10 +116,12 @@ function Biome:new(name, def)
 		minY           = def.minY,
 		maxY           = def.maxY,
 		groundNodes    = def.groundNodes,
+		groundNodesIds = groundNodesIds,
 		soilHeight     = def.soilHeight,
-		generateRock   = def.generateRock or defaultGenerateRock,
-		generateSoil   = def.generateSoil or defaultGenerateSoil,
-		generateBottom = def.generateBottom or defaultGenerateBottom,
+		generateRock   = def.generateRock,
+		generateSoil   = def.generateSoil,
+		generateTurf   = def.generateTurf,
+		generateBottom = def.generateBottom,
 	}, {__index = self})
 
 	return instance

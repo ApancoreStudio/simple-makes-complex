@@ -40,7 +40,7 @@ local Cavern = require('MapGen.Cavern')
 ---@field layersByName                table<string, MapGen.Layer>
 ---@field layersList                  MapGen.Layer[]
 ---@field peaksMultinoiseInitialized  boolean  Is the fractal noise of the peaks initialized? This is necessary for a one-time noise initialization.
----@field cavernsNoiseInitialized     boolean  TODO: описание
+---@field cavernsNoiseInitialized     boolean  Is the fractal noise of the caverns initialized? This is necessary for a one-time noise initialization.
 ---@field isRunning                   boolean  A static field that guarantees that only one instance of the `MapGen` class will work.
 ---@field nodeIDs                     table<string, number>
 ---@field waterLevel                  number
@@ -91,18 +91,17 @@ end
 ---Mark the world area between two heights as a `MapGen.Layer`.
 ---
 ---Note: layers must not overlap.
----@param name  string  The name that will be assigned to the layer. The name must be unique for each layer.
----@param minY  number  Minimum layer generation height.
----@param maxY  number  Maximum layer generation height.
-function MapGen:RegisterLayer(name, minY, maxY)
+---@param name  string           The name that will be assigned to the layer. The name must be unique for each layer.
+---@param def   MapGen.LayerDef  Layer description table, see details `MapGen.LayerDef`
+function MapGen:RegisterLayer(name, def)
 	-- Layers with the same name cannot exist.
 	assert(self.layersByName[name] == nil, ('A layer named `%s` is already registered.'):format(name))
 
 	-- Layers cannot overlap.
-	assert(self:getLayerByHeight(minY) == nil and self:getLayerByHeight(maxY) == nil, 'Registered layers must not overlap!')
+	assert(self:getLayerByHeight(def.minY) == nil and self:getLayerByHeight(def.maxY) == nil, 'Registered layers must not overlap!')
 
 	---@type MapGen.Layer
-	local layer = Layer:new(name, minY, maxY)
+	local layer = Layer:new(name, def)
 
 	self.layersByName[name] = layer
 	table.insert(self.layersList, layer)
@@ -286,9 +285,12 @@ end
 ---@param y             number
 ---@param z             number
 local function generateNode(mapGenerator, layer, height, temp, humidity, data, index, x, y, z)
+	height, temp, humidity = mathRound(height), mathRound(temp), mathRound(humidity)
+
 	local ids =  mapGenerator.nodeIDs
 	local waterLevel = mapGenerator.waterLevel
 
+	-- TODO: оформить это по-нормальному
 	local m = math.random(-5, 5)
 
 	temp     = mathMin(100, mathMax(0, temp     + m))
@@ -296,7 +298,7 @@ local function generateNode(mapGenerator, layer, height, temp, humidity, data, i
 	--_height   = mathMin(layer.maxY, mathMax(layer.minY, y + m))
 
 	---@type MapGen.Biome
-	local biome = layer.biomesDiagram[y][mathRound(temp)][mathRound(humidity)]
+	local biome = layer.biomesDiagram[y][temp][humidity]
 
 	if y > height and y > waterLevel then
 		data[index] = ids.air
@@ -412,7 +414,7 @@ local function calcNoises2dValues(triangle, x, y, z)
 	noiseHumidityValue = noiseHumidityValue + peak3:getMultinoise().humidityNoise:get_2d({x = x, y = z})  * weight
 	totalWeight = totalWeight + weight
 
-	return mathRound(noiseHeightValue / totalWeight), mathRound(noiseTempValue / totalWeight), mathRound(noiseHumidityValue / totalWeight)
+	return noiseHeightValue / totalWeight, noiseTempValue / totalWeight, noiseHumidityValue / totalWeight
 end
 
 ---Calculates a smoothed 2D noise value based on a preliminary space partitioning.
@@ -431,6 +433,8 @@ function MapGen:getNoises2dValues(layer, x, y, z)
 	if pastNoise2DCalc.triangle ~= nil and pointInTriangle(x, z, pastNoise2DCalc.triangle) then
 		local noiseHeightValue, noiseTempValue, noiseHumidityValue = calcNoises2dValues(pastNoise2DCalc.triangle, x, y, z)
 
+		noiseTempValue, noiseHumidityValue = layer:calcTemp(noiseTempValue, y), layer:calcHumidity(noiseHumidityValue, y)
+
 		pastNoise2DCalc.x = x
 		pastNoise2DCalc.z = z
 		pastNoise2DCalc.noiseValues = {
@@ -446,6 +450,8 @@ function MapGen:getNoises2dValues(layer, x, y, z)
 	for _, triangle in ipairs(layer.trianglesList) do
 		if pointInTriangle(x, z,triangle) then
 			local noiseHeightValue, noiseTempValue, noiseHumidityValue = calcNoises2dValues(triangle, x, y, z)
+
+			noiseTempValue, noiseHumidityValue = layer:calcTemp(noiseTempValue, y), layer:calcHumidity(noiseHumidityValue, y)
 
 			pastNoise2DCalc.triangle = triangle
 			pastNoise2DCalc.x = x
@@ -574,7 +580,7 @@ local function generatorHandler(mapGenerator, data, index, x, y, z)
 	-- Calculating landscape height
 	local noiseHeightValue, noiseTempValue, noiseHumidityValue = mapGenerator:getNoises2dValues(layer, x, y, z)
 
-	-- If the height of the landscape is zero,
+	-- If the height of the landscape is `nil`,
 	-- then the point does not fall within any of the triangles.
 	if noiseHeightValue == nil then
 		noiseHeightValue   = 0.0

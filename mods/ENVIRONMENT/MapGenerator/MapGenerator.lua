@@ -44,24 +44,27 @@ local mapGenRequire = Mod.getInfo('smc__core__map_gen').require
 local MapGen = mapGenRequire('MapGen')
 
 ---@type MapGen
-local mapGenerator = MapGen:new({
-	-- Special nodes
-	air = id("air"),
+	local mapGenerator = MapGen:new({
+	nodes = {
+		-- Special nodes
+		air = "air",
 
-	-- Rocks
-	sylite    = id("rocks:sylite"),
-	tauitite  = id("rocks:tauitite"),
-	iyellite  = id("rocks:iyellite"),
-	falmyte   = id("rocks:falmyte"),
-	hapcoryte = id("rocks:hapcoryte"),
-	burcite   = id("rocks:burcite"),
-	felhor    = id("rocks:felhor"),
-	malachite = id("rocks:malachite"),
+		-- Rocks
+		sylite    = "rocks:sylite",
+		tauitite  = "rocks:tauitite",
+		iyellite  = "rocks:iyellite",
+		falmyte   = "rocks:falmyte",
+		hapcoryte = "rocks:hapcoryte",
+		burcite   = "rocks:burcite",
+		felhor    = "rocks:felhor",
+		malachite = "rocks:malachite",
 
-	-- Liquids
-	water = id("liquids:water_source"),
-}, 10
-)
+		-- Liquids
+		water = "liquids:water_source",
+	},
+	waterLevel = 10,
+	biomesBorderScattering = 5,
+})
 
 local function calcTemp(layer, value, height)
 	return value
@@ -240,7 +243,7 @@ mapGenerator:registerBiome('world', "biome1", {
 		rock   = "rocks:sylite",
 		bottom = "soils:rocky_soil_baren",
 	},
-	soilHeight = 1,
+	soilHeight = 5,
 	--generateRock = generateRock,
 	--generateSoil = generateSoil,
 })
@@ -256,7 +259,7 @@ mapGenerator:registerBiome('world', "biome2", {
 		rock   = "rocks:felhor",
 		bottom = "soils:clay_soil_baren",
 	},
-	soilHeight = 1,
+	soilHeight = 3,
 	--generateRock = generateRock,
 	--generateSoil = generateSoil,
 })

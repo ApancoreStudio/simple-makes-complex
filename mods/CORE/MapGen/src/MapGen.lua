@@ -1,5 +1,5 @@
-local mathAbs,  mathRound,  mathMin,  mathMax
-	= math.abs, math.round, math.min, math.max
+local mathAbs,  mathRound,  mathMin,  mathMax,  id
+	= math.abs, math.round, math.min, math.max, core.get_content_id
 
 local pastNoise2DCalc = {
 	---@type MapGen.Triangle?
@@ -44,6 +44,7 @@ local Cavern = require('MapGen.Cavern')
 ---@field isRunning                   boolean  A static field that guarantees that only one instance of the `MapGen` class will work.
 ---@field nodeIDs                     table<string, number>
 ---@field waterLevel                  number
+---@field biomesBorderScattering      number
 local MapGen = {
 	layersByName          = {},
 	layersList            = {},
@@ -52,14 +53,26 @@ local MapGen = {
 	isRunning             = false,
 }
 
----@param nodeIDs     table<string, number>
----@param waterLevel  number
+---@class MapGenDef
+---@field nodes                   table<string, string>
+---@field waterLevel              number?
+---@field biomesBorderScattering  number?
+
+---@param def  MapGenDef
 ---@return MapGen
-function MapGen:new(nodeIDs, waterLevel)
+function MapGen:new(def)
+	local nodesIDs = {}
+	-- Converting node names to IDs
+	for k, v in pairs(def.nodes) do
+		nodesIDs[k] = id(v)
+	end
+
 	---@type MapGen
 	local instance = setmetatable({
-		nodeIDs      = nodeIDs,
-		waterLevel   = waterLevel or 0,
+		nodes                  = def.nodes,
+		nodeIDs                = nodesIDs,
+		waterLevel             = def.waterLevel or 0,
+		biomesBorderScattering = def.biomesBorderScattering or 0
 	}, {__index = self})
 
 	return instance
@@ -285,34 +298,70 @@ end
 ---@param y             number
 ---@param z             number
 local function generateNode(mapGenerator, layer, height, temp, humidity, data, index, x, y, z)
-	height, temp, humidity = mathRound(height), mathRound(temp), mathRound(humidity)
-
 	local ids =  mapGenerator.nodeIDs
 	local waterLevel = mapGenerator.waterLevel
 
-	-- TODO: оформить это по-нормальному
-	local m = math.random(-5, 5)
+	local scattering = mapGenerator.biomesBorderScattering
 
-	temp     = mathMin(100, mathMax(0, temp     + m))
-	humidity = mathMin(100, mathMax(0, humidity + m))
-	--_height   = mathMin(layer.maxY, mathMax(layer.minY, y + m))
+	if scattering ~= 0 then
+		---@diagnostic disable-next-line: param-type-not-match
+		scattering = math.random(scattering * -1, scattering)
+		temp     = temp + scattering
+		humidity = humidity + scattering
+		--scatteringY = y + scattering
+	end
+
+	temp     = mathMin(layer.maxTemp,     mathMax(layer.minTemp,     temp))
+	humidity = mathMin(layer.maxHumidity, mathMax(layer.minHumidity, humidity))
+	--scatteringY = mathMin(layer.maxY, mathMax(layer.minY, scatteringY + scattering))
+
+	height, temp, humidity = mathRound(height), mathRound(temp), mathRound(humidity)
 
 	---@type MapGen.Biome
 	local biome = layer.biomesDiagram[y][temp][humidity]
 
+	-- If the block is above surface height and above water level...
 	if y > height and y > waterLevel then
-		data[index] = ids.air
+		-- ... then airspace is generated.
+		biome.generateAir(mapGenerator, biome, data, index, x, y, z)
+
+	-- If the block is above the surface height BUT below the water level...
 	elseif y > height and y <= waterLevel then
-		data[index] = ids.water
+		-- ... then underwater space is generated.
+		biome.generateWater(mapGenerator, biome, data, index, x, y, z)
+
+	-- If the block is below the surface height...
 	elseif y <= height then
+		-- ... and a cavern is generated in the block...
 		if isCavern(layer, x, y, z) then
-			data[index] = ids.air
-		elseif y == height and y >= waterLevel then
-			biome.generateSoil(mapGenerator, biome, data, index, x, y, z)
-		elseif y == height and y < waterLevel then
-			biome.generateBottom(mapGenerator, biome, data, index, x, y, z)
-		else
-			biome.generateRock(mapGenerator, biome, data, index, x, y, z)
+			-- ... then airspace is generated.
+			biome.generateCavernAir(mapGenerator, biome, data, index, x, y, z)
+
+		-- ... or if the surface height is above the water level...
+		elseif height > waterLevel then
+			--- ... and the height of the block is equal to the height of the surface...
+			if y == height then
+				-- ... then turf is generated.
+				biome.generateTurf(mapGenerator, biome, data, index, x, y, z)
+			-- ... or if the height of the block falls within the thickness of the soil layer...
+			elseif y > height - biome.soilHeight then
+				-- ... then soil is generated.
+				biome.generateSoil(mapGenerator, biome, data, index, x, y, z)
+			else
+				-- ... else e a stone is generated.
+				biome.generateRock(mapGenerator, biome, data, index, x, y, z)
+			end
+
+		-- ... or if the surface height is below the water level...
+		elseif height <= waterLevel then
+			-- ... and if the height of the block falls within the thickness of the soil layer...
+			if y > height - biome.soilHeight then
+				-- ... then the river/ocean bottom is generated.
+				biome.generateBottom(mapGenerator, biome, data, index, x, y, z)
+			else
+				-- ... else a stone is generated.
+				biome.generateRock(mapGenerator, biome, data, index, x, y, z)
+			end
 		end
 	else
 		data[index] = ids.air

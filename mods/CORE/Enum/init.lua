@@ -1,5 +1,5 @@
-local Enum = Mod:new()
+local modInfo = Mod.getInfo('smc__core__enum')
+local require = modInfo.require
 
-Enum.Class = Enum.require('Enum')
+return require('Enum')
 
-Api.addModToGlobalSpace(Enum, 'Core.Enum')

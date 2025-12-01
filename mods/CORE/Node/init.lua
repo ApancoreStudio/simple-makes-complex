@@ -1,5 +1,4 @@
-local Node = Mod:new()
+local modInfo = Mod.getInfo('smc__core__node')
+local require = modInfo.require
 
-Node.Class = Node.require('Node')
-
-Api.addModToGlobalSpace(Node, 'Core.Node')
+return require('Node')

@@ -1,5 +1,4 @@
-local TileSheet = Mod:new()
+local modInfo = Mod.getInfo('smc__core__tilesheet')
+local require = modInfo.require
 
-TileSheet.Class = TileSheet.require('TileSheet')
-
-Api.addModToGlobalSpace(TileSheet, 'Core.TileSheet')
+return require('TileSheet')

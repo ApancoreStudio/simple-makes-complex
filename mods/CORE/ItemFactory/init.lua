@@ -1,5 +1,4 @@
-local ItemFactory = Mod:new()
+local modInfo = Mod.getInfo('smc__core__item_factory')
+local require = modInfo.require
 
-ItemFactory.Class = ItemFactory.require('ItemFactory')
-
-Api.addModToGlobalSpace(ItemFactory, 'Core.ItemFactory')
+return require('ItemFactory')

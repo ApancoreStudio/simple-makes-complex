@@ -10,7 +10,7 @@ local Peak = require('MapGen.Peak')
 ---@class MapGen.Triangulation.FakePeak : MapGen.Peak
 ---@field id          number
 ---@field getPeakPos  fun():vector
-local FakePeak = Mod:getClassExtended(Peak, {})
+local FakePeak = Class.extend(Peak, {})
 
 ---Returns a fake `MapGen.Peak` that has no noise parameters.
 ---Note that the initialized peak should not be used in generation.

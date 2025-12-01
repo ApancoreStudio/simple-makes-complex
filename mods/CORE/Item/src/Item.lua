@@ -1,7 +1,9 @@
-local modInfo = Mod.getInfo()
+local modInfo = Mod.getInfo('smc__core__item')
 local require = modInfo.require
 
 local VisualEnum = require('Item.VisualEnum')
+
+local ItemFactory = Mod.getInfo('smc__core__item_factory').require('ItemFactory')
 
 ---@class Item
 ---@field itemDef         Item.ItemDefinition
@@ -61,7 +63,7 @@ local defMerge = function(...)
 	return table.merge(...)
 end
 
----@param itemDef  Item.ItemDefinition
+---@param itemDef  Item.ItemDefinition|Node.NodeDefinition
 ---@return         Item
 function Item:new(itemDef)
 	---Adding default parameters
@@ -103,7 +105,7 @@ end
 ---@return            Item
 function Item:getExtended(defaultDef)
 	---@type Item
-	local ChildClass = Mod:getClassExtended(self, {
+	local ChildClass = Class.extend(self, {
 		defaultDef = defaultDef,
 	})
 
@@ -119,7 +121,7 @@ function Item:getFactory(defaultDef)
 	end
 
 	---@type ItemFactory
-	local instance = Core.ItemFactory():new(self, defaultDef)
+	local instance = ItemFactory:new(self, defaultDef)
 
 	return instance
 end

@@ -1,8 +1,8 @@
 ---@type Item.Callbacks
-local ItemCallbacks = Core.Item.require('Item.Callbacks')
+local ItemCallbacks = Mod.getInfo('smc__core__item').require('Item.Callbacks')
 
 ---@class Node.Callbacks : Item.Callbacks
-local Callbacks = Mod:getClassExtended(ItemCallbacks, {})
+local Callbacks = Class.extend(ItemCallbacks, {})
 
 ---Node constructor; called after adding node.
 ---Can set up metadata and stuff like that.

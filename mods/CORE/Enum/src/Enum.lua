@@ -3,7 +3,7 @@
 ---@class Enum
 local Enum = {}
 
----@param enum  table[]
+---@param enum  string[]
 ---@return Enum
 function Enum:new(enum)
 	local metaEnum = {}

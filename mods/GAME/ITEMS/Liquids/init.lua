@@ -1,3 +1,6 @@
+---@type  Node
+local Node = Mod.getInfo('smc__core__node').require('Node')
+
 ---@type Node.NodeDefinition
 local defaultLiquidDef = {
 	settings = {
@@ -19,7 +22,7 @@ local defaultLiquidDef = {
 }
 
 ---@type Node
-local defaultLiquid = Core.Node.Class:getExtended(defaultLiquidDef)
+local defaultLiquid = Node:getExtended(defaultLiquidDef)
 
 local liquidFactory = defaultLiquid:getFactory()
 

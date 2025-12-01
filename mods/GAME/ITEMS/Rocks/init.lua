@@ -1,3 +1,9 @@
+---@type TileSheet
+local TileSheet = Mod.getInfo('smc__core__tilesheet').require('TileSheet')
+
+---@type  Node
+local Node = Mod.getInfo('smc__core__node').require('Node')
+
 ---@type Node.NodeDefinition
 local defaultRockDef = {
 	settings = {
@@ -11,12 +17,12 @@ local defaultRockDef = {
 }
 
 ---@type Node
-local defaultRock = Core.Node.Class:getExtended(defaultRockDef)
+local defaultRock = Node:getExtended(defaultRockDef)
 
 local rockFactory = defaultRock:getFactory()
 
 ---@type TileSheet
-local ts = Core.TileSheet:getModClassInstance("rocks_sheet.png", 16, 16)
+local ts = TileSheet:new("rocks_sheet.png", 16, 16)
 
 rockFactory:registerNodesByShortDef({
 	{"sylite",    "Sylite",    nil, {ts:t(0, 0)}},

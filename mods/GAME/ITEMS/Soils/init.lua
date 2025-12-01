@@ -1,3 +1,9 @@
+---@type TileSheet
+local TileSheet = Mod.getInfo('smc__core__tilesheet').require('TileSheet')
+
+---@type  Node
+local Node = Mod.getInfo('smc__core__node').require('Node')
+
 ---@type Node.NodeDefinition
 local defaultSoilDef = {
 	settings = {
@@ -12,12 +18,12 @@ local defaultSoilDef = {
 }
 
 ---@type Node
-local defaultSoil = Core.Node.Class:getExtended(defaultSoilDef)
+local defaultSoil = Node:getExtended(defaultSoilDef)
 
 local soilFactory = defaultSoil:getFactory()
 
 ---@type TileSheet
-local ts = Core.TileSheet:getModClassInstance("soils_sheet.png", 16, 16)
+local ts = TileSheet:new("soils_sheet.png", 16, 16)
 
 local clayTiles = {
 	ts:t(0,0)

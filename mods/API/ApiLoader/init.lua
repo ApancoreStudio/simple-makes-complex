@@ -1,5 +1,5 @@
 Api = {}
-
+--[[
 ---@alias Domain     table<string,Mod|SubDomain> Global table for accessing public classes provided by mods.
 ---@alias SubDomain  table<string,Mod>
 
@@ -46,7 +46,7 @@ Api.addModToGlobalSpace = function(mod, location, force)
 	-- TODO: баг: ликвидные имена не определяются шаблоном
 	--[[if not location:match('^[%a_][%w_]*([%.][%a_][%w_]*)*$') then
 		error('bad argument #2 to \'Api.addModToGlobalSpace\' (invalid format)')
-	end--]]
+	end --] ]
 
 	-- Split `location` into fields -- TODO: !!!Make a String function!!!
 	local fields = {}
@@ -88,4 +88,4 @@ Api.addModToGlobalSpace = function(mod, location, force)
         error(string.format('field \'%s\' already exists in \'%s\'', last_field, location))
     end
 	current[last_field] = mod
-end
+end --]]

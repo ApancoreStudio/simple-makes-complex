@@ -1,9 +1,17 @@
+local itemRequire = Mod.getInfo('smc__core__item').require
+
+---@type Item
+local Item = itemRequire('Item')
+
 ---@type Item.VisualEnum
-local VisualEnum = Core.Item.require('Item.VisualEnum')
+local VisualEnum = itemRequire('Item.VisualEnum')
+
+---@type ItemFactory
+local ItemFactory = Mod.getInfo('smc__core__item_factory').require('ItemFactory')
 
 ---@class Node : Item
 ---@field defaultDef  Node.NodeDefinition
-local Node = Core.Item:getModClassExtended({})
+local Node = Class.extend(Item, {})
 
 ---@param nodeDef Node.NodeDefinition
 ---@return        Node
@@ -11,7 +19,7 @@ function Node:new(nodeDef)
 	nodeDef.settings.visual = VisualEnum.ITEM_3D
 
 	---@type Node
-	local instance = Core.Item:getModClassInstance(nodeDef)
+	local instance = Item:new(nodeDef)
 
 	return instance
 end
@@ -23,7 +31,7 @@ end
 ---@return            Node
 function Node:getExtended(defaultDef)
 	---@type Node
-	local ChildClass = Mod:getClassExtended(self, {
+	local ChildClass = Class.extend(self, {
 		defaultDef = defaultDef,
 	})
 
@@ -39,7 +47,7 @@ function Node:getFactory(defaultDef)
 	end
 
 	---@type ItemFactory
-	local instance = Core.ItemFactory:getModClassInstance(self, defaultDef)
+	local instance = ItemFactory:new(self, defaultDef)
 
 	return instance
 end

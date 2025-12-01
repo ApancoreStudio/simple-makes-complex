@@ -1,8 +1,8 @@
 ---@type Item.Settings
-local ItemSettings = Core.Item.require('Item.Settings')
+local ItemSettings = Mod.getInfo('smc__core__item').require('Item.Settings')
 
 ---@class Node.Settings : Item.Settings
-local Settings = Mod:getClassExtended(ItemSettings, {})
+local Settings = Class.extend(ItemSettings, {})
 
 ---See "Node drawtypes"
 ---@type string?

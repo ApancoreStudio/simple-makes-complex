@@ -1,5 +1,4 @@
-local MapGen = Mod:new()
+local modInfo = Mod.getInfo('smc__core__map_gen')
+local require = modInfo.require
 
-MapGen.Class = MapGen.require('MapGen')
-
-Api.addModToGlobalSpace(MapGen, 'Core.MapGen')
+return require('MapGen')

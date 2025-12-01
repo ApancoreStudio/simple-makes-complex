@@ -664,8 +664,6 @@ function MapGen:onMapGenerated(voxelManip, minPos, maxPos, blockseed)
 	-- local param2_data = voxelManip:get_param2_data()
 	local area = VoxelArea:new({MinEdge = eMin, MaxEdge = eMax})
 
-	data[area:index(0,50,0)] = core.get_content_id('rocks:malachite')
-
 	local index
 	-- Initial generation: landscape
 	for z = minPos.z, maxPos.z do

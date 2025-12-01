@@ -28,6 +28,7 @@ function Mod.getInfo(modname)
 	return {name = name, shortName = shortName, path = path, require = require}
 end
 
+--[[
 function Mod:new()
 	---@type Mod
 	local instance = setmetatable(Mod.getInfo(), { __index = self })
@@ -61,6 +62,6 @@ function Mod:getModClassExtended(ChildClass)
 	local childClass = Mod:getClassExtended(self.Class, ChildClass or {})
 
 	return childClass
-end
+end  --]]
 
 return Mod

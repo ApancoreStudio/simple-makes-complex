@@ -5,6 +5,12 @@
 -- so global tables need to be preloaded manually.
 
 -- --- Global APIs load --
+-- Api loader
+dofile(core.get_modpath('smc__api__api_loader')..'/init.lua')
+
+-- Class
+dofile(core.get_modpath('smc__api__class')..'/init.lua')
+
 -- Ensure
 dofile(core.get_modpath('smc__api__ensure')..'/init.lua')
 
@@ -170,8 +176,8 @@ mapGenerator:register2DPeaks("world",
 })
 
 mapGenerator:registerCavern('world', 'cavern1', {
-	minY = -100,
-	maxY = -10,
+	minY = -48,
+	maxY = 0,
 	smoothDistance = 20,
 	threshold = 0.3,
 	noiseParams ={

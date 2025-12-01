@@ -44,7 +44,6 @@ local Cavern = require('MapGen.Cavern')
 ---@field isRunning                   boolean  A static field that guarantees that only one instance of the `MapGen` class will work.
 ---@field nodeIDs                     table<string, number>
 ---@field waterLevel                  number
----@field biomesBorderScattering      number
 local MapGen = {
 	layersByName          = {},
 	layersList            = {},
@@ -56,7 +55,6 @@ local MapGen = {
 ---@class MapGenDef
 ---@field nodes                   table<string, string>
 ---@field waterLevel              number?
----@field biomesBorderScattering  number?
 
 ---@param def  MapGenDef
 ---@return MapGen
@@ -72,7 +70,6 @@ function MapGen:new(def)
 		nodes                  = def.nodes,
 		nodeIDs                = nodesIDs,
 		waterLevel             = def.waterLevel or 0,
-		biomesBorderScattering = def.biomesBorderScattering or 0
 	}, {__index = self})
 
 	return instance
@@ -301,24 +298,32 @@ local function generateNode(mapGenerator, layer, height, temp, humidity, data, i
 	local ids =  mapGenerator.nodeIDs
 	local waterLevel = mapGenerator.waterLevel
 
-	local scattering = mapGenerator.biomesBorderScattering
+	-- Creating a rougher biome boundary.
+	local scatteringGorizontal = layer.biomesGorizontalScattering
+	local scatteringVertical = layer.biomesVerticalScattering
+	local scattHeight = y
 
-	if scattering ~= 0 then
+	if scatteringGorizontal ~= 0 then
 		---@diagnostic disable-next-line: param-type-not-match
-		scattering = math.random(scattering * -1, scattering)
-		temp     = temp + scattering
-		humidity = humidity + scattering
-		--scatteringY = y + scattering
+		scatteringGorizontal = math.random(scatteringGorizontal * -1, scatteringGorizontal)
+		temp     = temp + scatteringGorizontal
+		humidity = humidity + scatteringGorizontal
 	end
 
-	temp     = mathMin(layer.maxTemp,     mathMax(layer.minTemp,     temp))
-	humidity = mathMin(layer.maxHumidity, mathMax(layer.minHumidity, humidity))
-	--scatteringY = mathMin(layer.maxY, mathMax(layer.minY, scatteringY + scattering))
+	if scatteringVertical ~= 0 then
+		---@diagnostic disable-next-line: param-type-not-match
+		scatteringVertical = math.random(scatteringVertical * -1, scatteringVertical)
+		scattHeight = scattHeight + scatteringVertical
+	end
 
-	height, temp, humidity = mathRound(height), mathRound(temp), mathRound(humidity)
+	temp        = math.clamp(temp, layer.minTemp, layer.maxTemp)
+	humidity    = math.clamp(humidity, layer.minHumidity, layer.maxHumidity)
+	scattHeight = math.clamp(scattHeight, layer.minY, layer.maxY)
+
+	height, scattHeight, temp, humidity = mathRound(height), mathRound(scattHeight), mathRound(temp), mathRound(humidity)
 
 	---@type MapGen.Biome
-	local biome = layer.biomesDiagram[y][temp][humidity]
+	local biome = layer.biomesDiagram[scattHeight][temp][humidity]
 
 	-- If the block is above surface height and above water level...
 	if y > height and y > waterLevel then

@@ -69,7 +69,6 @@ local MapGen = mapGenRequire('MapGen')
 		water = "liquids:water_source",
 	},
 	waterLevel = 10,
-	biomesBorderScattering = 5,
 })
 
 local function calcTemp(layer, value, height)
@@ -89,6 +88,8 @@ mapGenerator:RegisterLayer("world", {
 	maxHumidity  = 100,
 	calcTemp     = calcTemp,
 	calcHumidity = calcHumidity,
+	biomesVerticalScattering   = 10,
+	biomesGorizontalScattering = 5
 })
 
 local land1 = {
@@ -242,7 +243,7 @@ mapGenerator:registerBiome('world', "biome1", {
 	tempPoint = 0,
 	humidityPoint = 0,
 	minY = -10000,
-	maxY = 1000,
+	maxY = -25,
 	groundNodes = {
 		soil   = "soils:clay_soil_baren",
 		turf   = "soils:clay_soil_baren",
@@ -257,7 +258,7 @@ mapGenerator:registerBiome('world', "biome1", {
 mapGenerator:registerBiome('world', "biome2", {
 	tempPoint = 100,
 	humidityPoint = 100,
-	minY = -1000,
+	minY = -25,
 	maxY = 1000,
 	groundNodes = {
 		soil   = "soils:rocky_soil_baren",

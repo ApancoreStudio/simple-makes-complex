@@ -1,21 +1,23 @@
 ---@class MapGen.Layer
----@field name               string
----@field minY               number
----@field maxY               number
----@field minTemp            number
----@field maxTemp            number
----@field minHumidity        number
----@field maxHumidity        number
----@field calcTemp           fun(self:MapGen.Layer, value:number, height:number):number
----@field calcHumidity       fun(self:MapGen.Layer, value:number, height:number):number
----@field peaksList          MapGen.Peak[]
----@field biomesByName       table<string, MapGen.Biome>
----@field biomesList         MapGen.Biome[]
----@field biomesDiagram      table
----@field cavernsByName      table<string, MapGen.Cavern>
----@field cavernsList        MapGen.Cavern[]
----@field trianglesList      MapGen.Triangle[]
----@field tetrahedronsList   MapGen.Tetrahedron[]
+---@field name                        string
+---@field minY                        number
+---@field maxY                        number
+---@field minTemp                     number
+---@field maxTemp                     number
+---@field minHumidity                 number
+---@field maxHumidity                 number
+---@field calcTemp                    fun(self:MapGen.Layer, value:number, height:number):number
+---@field calcHumidity                fun(self:MapGen.Layer, value:number, height:number):number
+---@field peaksList                   MapGen.Peak[]
+---@field biomesByName                table<string, MapGen.Biome>
+---@field biomesList                  MapGen.Biome[]
+---@field biomesDiagram               table
+---@field biomesGorizontalScattering  number
+---@field biomesVerticalScattering    number
+---@field cavernsByName               table<string, MapGen.Cavern>
+---@field cavernsList                 MapGen.Cavern[]
+---@field trianglesList               MapGen.Triangle[]
+---@field tetrahedronsList            MapGen.Tetrahedron[]
 local Layer = {
 	peaksList        = {},
 	biomesByName     = {},
@@ -31,14 +33,16 @@ local Layer = {
 ---
 ---**Only for EmmyLua.**
 ---@class MapGen.LayerDef
----@field minY               number
----@field maxY               number
----@field minTemp            number
----@field maxTemp            number
----@field minHumidity        number
----@field maxHumidity        number
----@field calcTemp           (fun(self:MapGen.Layer, value:number, height:number):number)?
----@field calcHumidity       (fun(self:MapGen.Layer, value:number, height:number):number)?
+---@field minY                        number
+---@field maxY                        number
+---@field minTemp                     number
+---@field maxTemp                     number
+---@field minHumidity                 number
+---@field maxHumidity                 number
+---@field calcTemp                    (fun(self:MapGen.Layer, value:number, height:number):number)?
+---@field calcHumidity                (fun(self:MapGen.Layer, value:number, height:number):number)?
+---@field biomesGorizontalScattering  number?
+---@field biomesVerticalScattering    number?
 
 ---@param self    MapGen.Layer
 ---@param value   number
@@ -64,15 +68,17 @@ function Layer:new(name, def)
 
 	---@type MapGen.Layer
 	local instance = setmetatable({
-		name         = name,
-		minY         = def.minY,
-		maxY         = def.maxY,
-		minTemp      = def.minTemp,
-		maxTemp      = def.maxTemp,
-		minHumidity  = def.minHumidity,
-		maxHumidity  = def.maxHumidity,
-		calcTemp     = def.calcTemp,
-		calcHumidity = def.calcHumidity,
+		name                       = name,
+		minY                       = def.minY,
+		maxY                       = def.maxY,
+		minTemp                    = def.minTemp,
+		maxTemp                    = def.maxTemp,
+		minHumidity                = def.minHumidity,
+		maxHumidity                = def.maxHumidity,
+		calcTemp                   = def.calcTemp,
+		calcHumidity               = def.calcHumidity,
+		biomesGorizontalScattering = def.biomesGorizontalScattering or 0,
+		biomesVerticalScattering   = def.biomesVerticalScattering or 0,
 	}, {__index = self})
 
 	return instance

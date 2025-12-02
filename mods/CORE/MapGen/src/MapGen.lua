@@ -24,6 +24,9 @@ local require = modInfo.require
 ---@type MapGen.Layer
 local Layer = require('MapGen.Layer')
 
+---@type MapGen.StaticLayer
+local StaticLayer = require('MapGen.StaticLayer')
+
 ---@type MapGen.Peak
 local Peak = require('MapGen.Peak')
 
@@ -39,6 +42,8 @@ local Cavern = require('MapGen.Cavern')
 ---@class MapGen
 ---@field layersByName                table<string, MapGen.Layer>
 ---@field layersList                  MapGen.Layer[]
+---@field staticsByName               table<string, MapGen.StaticLayer>
+---@field staticsList                 MapGen.StaticLayer[]
 ---@field peaksMultinoiseInitialized  boolean  Is the fractal noise of the peaks initialized? This is necessary for a one-time noise initialization.
 ---@field cavernsNoiseInitialized     boolean  Is the fractal noise of the caverns initialized? This is necessary for a one-time noise initialization.
 ---@field isRunning                   boolean  A static field that guarantees that only one instance of the `MapGen` class will work.
@@ -47,9 +52,11 @@ local Cavern = require('MapGen.Cavern')
 local MapGen = {
 	layersByName          = {},
 	layersList            = {},
+	staticsByName         = {},
+	staticsList           = {},
 	peaksMultinoiseInitialized = false,
-	cavernsNoiseInitialized = false,
-	isRunning             = false,
+	cavernsNoiseInitialized    = false,
+	isRunning                  = false,
 }
 
 ---@class MapGenDef
@@ -94,6 +101,25 @@ function MapGen:getLayerByHeight(yPos)
 	end
 end
 
+---Determines which statics layer a node belongs to based on its height coordinate.
+---@param yPos  number
+---@return      MapGen.StaticLayer?
+function MapGen:getStaticByHeight(yPos)
+	--- TODO: возможно здесь получится сделать более оптимизированный алгоритм
+	--- учитывая тот факт, что эта функция вызывается для каждой ноды в on_generated
+	--- и может быть даже не один раз
+	--- Можно подумать над тем, чтобы использовать сортированный список
+
+	---@param static  MapGen.StaticLayer
+	for _, static in  ipairs(self.staticsList) do
+
+		if yPos >= static.minY and yPos <= static.maxY then
+			return static
+		end
+
+	end
+end
+
 
 
 -- --- REGISTRATION METHODS ---
@@ -103,7 +129,7 @@ end
 ---Note: layers must not overlap.
 ---@param name  string           The name that will be assigned to the layer. The name must be unique for each layer.
 ---@param def   MapGen.LayerDef  Layer description table, see details `MapGen.LayerDef`
-function MapGen:RegisterLayer(name, def)
+function MapGen:registerLayer(name, def)
 	-- Layers with the same name cannot exist.
 	assert(self.layersByName[name] == nil, ('A layer named `%s` is already registered.'):format(name))
 
@@ -116,8 +142,32 @@ function MapGen:RegisterLayer(name, def)
 	self.layersByName[name] = layer
 	table.insert(self.layersList, layer)
 
-	-- Sort layers by maxY descending for processing priority
+	-- Sort layers by maxY descending for processing priority.
 	table.sort(self.layersList, function(a, b)
+		return a.maxY > b.maxY
+	end)
+end
+
+---Mark the world area between two heights as a `MapGen.StaticLayer`.
+---
+---Note: layers must not overlap.
+---@param name  string                     The name that will be assigned to the static layer. The name must be unique for each layer.
+---@param def   MapGen.StaticLayerDef  Static layer description table, see details `MapGen.StaticLayerDef`
+function MapGen:registerStaticLayer(name, def)
+	-- Static layer with the same name cannot exist.
+	assert(self.staticsByName[name] == nil, ('A static layer named `%s` is already registered.'):format(name))
+
+	-- Static layers cannot overlap.
+	assert(self:getStaticByHeight(def.minY) == nil and self:getLayerByHeight(def.maxY) == nil, 'Registered static layers must not overlap!')
+
+	---@type MapGen.StaticLayer
+	local static = StaticLayer:new(name, def)
+
+	self.staticsByName[name] = static
+	table.insert(self.staticsList, static)
+
+	-- Sort srtatics by maxY descending for processing priority.
+	table.sort(self.staticsList, function(a, b)
 		return a.maxY > b.maxY
 	end)
 end
@@ -328,33 +378,33 @@ local function generateNode(mapGenerator, layer, height, temp, humidity, data, i
 	-- If the block is above surface height and above water level...
 	if y > height and y > waterLevel then
 		-- ... then airspace is generated.
-		biome.generateAir(mapGenerator, biome, data, index, x, y, z)
+		biome:generateAir(mapGenerator, data, index, x, y, z)
 
 	-- If the block is above the surface height BUT below the water level...
 	elseif y > height and y <= waterLevel then
 		-- ... then underwater space is generated.
-		biome.generateWater(mapGenerator, biome, data, index, x, y, z)
+		biome:generateWater(mapGenerator, data, index, x, y, z)
 
 	-- If the block is below the surface height...
 	elseif y <= height then
 		-- ... and a cavern is generated in the block...
 		if isCavern(layer, x, y, z) then
 			-- ... then airspace is generated.
-			biome.generateCavernAir(mapGenerator, biome, data, index, x, y, z)
+			biome:generateCavernAir(mapGenerator, data, index, x, y, z)
 
 		-- ... or if the surface height is above the water level...
 		elseif height > waterLevel then
 			--- ... and the height of the block is equal to the height of the surface...
 			if y == height then
 				-- ... then turf is generated.
-				biome.generateTurf(mapGenerator, biome, data, index, x, y, z)
+				biome:generateTurf(mapGenerator, data, index, x, y, z)
 			-- ... or if the height of the block falls within the thickness of the soil layer...
 			elseif y > height - biome.soilHeight then
 				-- ... then soil is generated.
-				biome.generateSoil(mapGenerator, biome, data, index, x, y, z)
+				biome:generateSoil(mapGenerator, data, index, x, y, z)
 			else
 				-- ... else e a stone is generated.
-				biome.generateRock(mapGenerator, biome, data, index, x, y, z)
+				biome:generateRock(mapGenerator, data, index, x, y, z)
 			end
 
 		-- ... or if the surface height is below the water level...
@@ -362,10 +412,10 @@ local function generateNode(mapGenerator, layer, height, temp, humidity, data, i
 			-- ... and if the height of the block falls within the thickness of the soil layer...
 			if y > height - biome.soilHeight then
 				-- ... then the river/ocean bottom is generated.
-				biome.generateBottom(mapGenerator, biome, data, index, x, y, z)
+				biome:generateBottom(mapGenerator, data, index, x, y, z)
 			else
 				-- ... else a stone is generated.
-				biome.generateRock(mapGenerator, biome, data, index, x, y, z)
+				biome:generateRock(mapGenerator, data, index, x, y, z)
 			end
 		end
 	else
@@ -623,6 +673,14 @@ end
 ---@param y             number
 ---@param z             number
 local function generatorHandler(mapGenerator, data, index, x, y, z)
+	-- If the node belongs to a static layer, then a static node is generated.
+	local static = mapGenerator:getStaticByHeight(y)
+	if static ~= nil then
+		static:generateStaticNode(mapGenerator, data, index, x, y, z)
+
+		return
+	end
+
 	-- If generation occurs outside the layers, then a void is generated.
 	local layer = mapGenerator:getLayerByHeight(y)
 	if layer == nil then

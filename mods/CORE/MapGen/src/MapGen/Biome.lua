@@ -18,7 +18,7 @@ local id = core.get_content_id
 ---@field generateBottom     generateFunc
 local Biome = {}
 
----@alias generateFunc  fun(mapGenerator:MapGen, biome:MapGen.Biome, data:number[], index:number, x:number, y:number, z:number)
+---@alias generateFunc  fun(self, mapGenerator:MapGen, data:number[], index:number, x:number, y:number, z:number)
 
 ---Definition table for the `MapGen.Biome`.
 ---
@@ -41,81 +41,81 @@ local Biome = {}
 
 -- Default generate functions
 
+---@param self          MapGen.Biome
 ---@param mapGenerator  MapGen
----@param biome         MapGen.Biome
 ---@param data          number[]
 ---@param index         number
 ---@param x             number
 ---@param y             number
 ---@param z             number
-local defaultGenerateAir = function(mapGenerator, biome, data, index, x, y, z)
+local defaultGenerateAir = function(self, mapGenerator, data, index, x, y, z)
 	data[index] = mapGenerator.nodeIDs.air
 end
 
+---@param self          MapGen.Biome
 ---@param mapGenerator  MapGen
----@param biome         MapGen.Biome
 ---@param data          number[]
 ---@param index         number
 ---@param x             number
 ---@param y             number
 ---@param z             number
-local defaultGenerateCavernAir = function(mapGenerator, biome, data, index, x, y, z)
-	biome.generateAir(mapGenerator, biome, data, index, x, y, z)
+local defaultGenerateCavernAir = function(self, mapGenerator, data, index, x, y, z)
+	self:generateAir(mapGenerator, data, index, x, y, z)
 end
 
+---@param self          MapGen.Biome
 ---@param mapGenerator  MapGen
----@param biome         MapGen.Biome
 ---@param data          number[]
 ---@param index         number
 ---@param x             number
 ---@param y             number
 ---@param z             number
-local defaultGenerateWater = function(mapGenerator, biome, data, index, x, y, z)
+local defaultGenerateWater = function(self, mapGenerator, data, index, x, y, z)
 	data[index] = mapGenerator.nodeIDs.water
 end
 
+---@param self          MapGen.Biome
 ---@param mapGenerator  MapGen
----@param biome         MapGen.Biome
 ---@param data          number[]
 ---@param index         number
 ---@param x             number
 ---@param y             number
 ---@param z             number
-local defaultGenerateRock = function(mapGenerator, biome, data, index, x, y, z)
-	data[index] = biome.groundNodesIDs.rock
+local defaultGenerateRock = function(self, mapGenerator, data, index, x, y, z)
+	data[index] = self.groundNodesIDs.rock
 end
 
+---@param self          MapGen.Biome
 ---@param mapGenerator  MapGen
----@param biome         MapGen.Biome
 ---@param data          number[]
 ---@param index         number
 ---@param x             number
 ---@param y             number
 ---@param z             number
-local defaultGenerateTurf = function(mapGenerator, biome, data, index, x, y, z)
-	data[index] = biome.groundNodesIDs.turf
+local defaultGenerateTurf = function(self, mapGenerator, data, index, x, y, z)
+	data[index] = self.groundNodesIDs.turf
 end
 
+---@param self          MapGen.Biome
 ---@param mapGenerator  MapGen
----@param biome         MapGen.Biome
 ---@param data          number[]
 ---@param index         number
 ---@param x             number
 ---@param y             number
 ---@param z             number
-local defaultGenerateSoil = function(mapGenerator, biome, data, index, x, y, z)
-	data[index] = biome.groundNodesIDs.soil
+local defaultGenerateSoil = function(self, mapGenerator,data, index, x, y, z)
+	data[index] = self.groundNodesIDs.soil
 end
 
+---@param self          MapGen.Biome
 ---@param mapGenerator  MapGen
----@param biome         MapGen.Biome
 ---@param data          number[]
 ---@param index         number
 ---@param x             number
 ---@param y             number
 ---@param z             number
-local defaultGenerateBottom = function(mapGenerator, biome, data, index, x, y, z)
-	data[index] = biome.groundNodesIDs.bottom
+local defaultGenerateBottom = function(self, mapGenerator, data, index, x, y, z)
+	data[index] = self.groundNodesIDs.bottom
 end
 
 

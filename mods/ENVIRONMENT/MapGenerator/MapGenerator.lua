@@ -79,7 +79,7 @@ local function calcHumidity(layer, value, height)
 	return value
 end
 
-mapGenerator:RegisterLayer("world", {
+mapGenerator:registerLayer("world", {
 	minY         = -50,
 	maxY         = 50,
 	minTemp      = 0,
@@ -208,7 +208,7 @@ local rocksNoiseParams ={
 	lacunarity = 4,
 }
 
-local function generateRock(mapGenerator, biome, data, index, x, y, z)
+local function generateRock(biome, mapGenerator, data, index, x, y, z)
 	local ids =  mapGenerator.nodeIDs
 
 	if rocksNoise == nil then
@@ -235,7 +235,7 @@ local function generateRock(mapGenerator, biome, data, index, x, y, z)
 	end
 end
 
-local function generateSoil(mapGenerator, biome, data, index, x, y, z)
+local function generateSoil(biome, mapGenerator, data, index, x, y, z)
 	data[index] = biome.groundNodesId.turf
 end
 

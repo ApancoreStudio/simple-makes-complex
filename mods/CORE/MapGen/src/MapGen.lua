@@ -349,31 +349,33 @@ local function generateNode(mapGenerator, layer, height, temp, humidity, data, i
 	local waterLevel = mapGenerator.waterLevel
 
 	-- Creating a rougher biome boundary.
-	local scatteringGorizontal = layer.biomesGorizontalScattering
-	local scatteringVertical = layer.biomesVerticalScattering
-	local scattHeight = y
+	local scatteringGorizontal = layer.biomesGorizontalScattering or 0
+	local scatteringVertical   = layer.biomesVerticalScattering or 0
+	local scattTemp     = temp
+	local scattHumidity = humidity
+	local scattHeight   = y
 
 	if scatteringGorizontal ~= 0 then
 		---@diagnostic disable-next-line: param-type-not-match
-		scatteringGorizontal = math.random(scatteringGorizontal * -1, scatteringGorizontal)
-		temp     = temp + scatteringGorizontal
-		humidity = humidity + scatteringGorizontal
+		scattTemp = scattTemp + math.random(scatteringGorizontal * -1, scatteringGorizontal)
+		---@diagnostic disable-next-line: param-type-not-match
+		scattHumidity = scattHumidity + math.random(scatteringGorizontal * -1, scatteringGorizontal)
 	end
 
 	if scatteringVertical ~= 0 then
 		---@diagnostic disable-next-line: param-type-not-match
-		scatteringVertical = math.random(scatteringVertical * -1, scatteringVertical)
-		scattHeight = scattHeight + scatteringVertical
+		scattHeight = scattHeight + math.random(scatteringVertical * -1, scatteringVertical)
 	end
 
-	temp        = math.clamp(temp, layer.minTemp, layer.maxTemp)
-	humidity    = math.clamp(humidity, layer.minHumidity, layer.maxHumidity)
-	scattHeight = math.clamp(scattHeight, layer.minY, layer.maxY)
+	scattTemp     = math.clamp(scattTemp, layer.minTemp, layer.maxTemp)
+	scattHumidity = math.clamp(scattHumidity, layer.minHumidity, layer.maxHumidity)
+	scattHeight   = math.clamp(scattHeight, layer.minY, layer.maxY)
 
-	height, scattHeight, temp, humidity = mathRound(height), mathRound(scattHeight), mathRound(temp), mathRound(humidity)
+	scattHeight, scattTemp, scattHumidity = mathRound(scattHeight), mathRound(scattTemp), mathRound(scattHumidity)
+	height, temp, humidity = mathRound(height), mathRound(scattTemp), mathRound(scattHumidity)
 
 	---@type MapGen.Biome
-	local biome = layer.biomesDiagram[scattHeight][temp][humidity]
+	local biome = layer.biomesDiagram[scattHeight][scattTemp][scattHumidity]
 
 	-- If the block is above surface height and above water level...
 	if y > height and y > waterLevel then

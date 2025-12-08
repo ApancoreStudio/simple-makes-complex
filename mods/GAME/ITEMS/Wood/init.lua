@@ -68,13 +68,40 @@ logFactory:registerItems({
 			tiles = t(2, 1),
 		},
 	},
-		---@type Node.NodeDefinition
+	---@type Node.NodeDefinition
 	{
 		settings = {
 			name = "fis_log",
 			title = "Fis Log",
 			--description = "",
 			tiles = t(4, 1),
+		},
+	},
+	---@type Node.NodeDefinition
+	{
+		settings = {
+			name = "tammoy_log",
+			title = "Tammoy Log",
+			--description = "",
+			tiles = t(6, 1),
+		},
+	},
+	---@type Node.NodeDefinition
+	{
+		settings = {
+			name = "dallalia_log",
+			title = "Dallalia Log",
+			--description = "",
+			tiles = t(8, 1),
+		},
+	},
+	---@type Node.NodeDefinition
+	{
+		settings = {
+			name = "zuph_log",
+			title = "Zuph Log",
+			--description = "",
+			tiles = t(10, 1),
 		},
 	},
 })
@@ -89,7 +116,7 @@ planksFactory:registerItems({
 			tiles = { logTileSheet:t(0, 4) },
 		},
 	},
-		---@type Node.NodeDefinition
+	---@type Node.NodeDefinition
 	{
 		settings = {
 			name = "allwhere_planks",
@@ -98,13 +125,40 @@ planksFactory:registerItems({
 			tiles = { logTileSheet:t(2, 4) },
 		},
 	},
-		---@type Node.NodeDefinition
+	---@type Node.NodeDefinition
 	{
 		settings = {
 			name = "fis_planks",
 			title = "Fis Planks",
 			--description = "",
 			tiles = { logTileSheet:t(4, 4) },
+		},
+	},
+	---@type Node.NodeDefinition
+	{
+		settings = {
+			name = "tammoy_planks",
+			title = "Tammoy Planks",
+			--description = "",
+			tiles = { logTileSheet:t(6, 4) },
+		},
+	},
+	---@type Node.NodeDefinition
+	{
+		settings = {
+			name = "dallalia_planks",
+			title = "Dallalia Planks",
+			--description = "",
+			tiles = { logTileSheet:t(8, 4) },
+		},
+	},
+	---@type Node.NodeDefinition
+	{
+		settings = {
+			name = "zuph_planks",
+			title = "Zuph Planks",
+			--description = "",
+			tiles = { logTileSheet:t(10, 4) },
 		},
 	},
 })

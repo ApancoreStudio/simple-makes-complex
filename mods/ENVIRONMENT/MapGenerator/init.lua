@@ -1,7 +1,18 @@
--- World generation runs in the mapgen environment (separate thread)
--- The Mapgen environment is isolated from the main enviroment.
+-- World generation occurs in a separate thread (MapGen Environment).
+-- But for the main thread, the mapgenerator object is also initialized.
 
-core.register_mapgen_script(core.get_modpath(core.get_current_modname())..'/MapGenerator.lua')
+local mapGeneneratorRequire = Mod.getInfo('smc__core__map_generator').require
+
+-- Main env init
+local mapGenerator = mapGeneneratorRequire('mapGenerator')
+
+-- Async env init
+core.register_mapgen_script(core.get_modpath('smc__core__map_generator')..'/src/asyncInit.lua')
+
+
+-- --- Register vanilla ores & decorations ---
+-- For now, the generation does not have its own support
+-- for the generation of ores and decorations, so vanilla ones are used.
 
 core.register_ore({
 	ore_type       = "scatter",
@@ -21,3 +32,5 @@ core.register_decoration({
 	fill_ratio = 0.1,
 	decoration = "plants:plants",
 })
+
+return mapGenerator

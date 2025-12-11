@@ -27,7 +27,6 @@ local MapGen = mapGenRequire('MapGen')
 		-- Liquids
 		water = "liquids:water_source",
 	},
-	waterLevel = 10,
 })
 
 local function calcTemp(layer, value, height)

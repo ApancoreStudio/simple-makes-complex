@@ -48,7 +48,6 @@ local Cavern = require('MapGen.Cavern')
 ---@field cavernsNoiseInitialized     boolean  Is the fractal noise of the caverns initialized? This is necessary for a one-time noise initialization.
 ---@field isRunning                   boolean  A static field that guarantees that only one instance of the `MapGen` class will work.
 ---@field nodeIDs                     table<string, number>
----@field waterLevel                  number
 local MapGen = {
 	layersByName          = {},
 	layersList            = {},
@@ -59,9 +58,11 @@ local MapGen = {
 	isRunning                  = false,
 }
 
+---Definition table for the `MapGen`.
+---
+---**Only for EmmyLua.**
 ---@class MapGenDef
 ---@field nodes                   table<string, string>
----@field waterLevel              number?
 
 ---@param def  MapGenDef
 ---@return MapGen
@@ -76,7 +77,6 @@ function MapGen:new(def)
 	local instance = setmetatable({
 		nodes                  = def.nodes,
 		nodeIDs                = nodesIDs,
-		waterLevel             = def.waterLevel or 0,
 	}, {__index = self})
 
 	return instance
@@ -346,7 +346,7 @@ end
 ---@param z             number
 local function generateNode(mapGenerator, layer, height, temp, humidity, data, index, x, y, z)
 	local ids =  mapGenerator.nodeIDs
-	local waterLevel = mapGenerator.waterLevel
+	local waterLevel = layer.waterLevel
 
 	-- Creating a rougher biome boundary.
 	local scatteringGorizontal = layer.biomesGorizontalScattering or 0

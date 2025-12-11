@@ -6,6 +6,7 @@
 ---@field maxTemp                     number
 ---@field minHumidity                 number
 ---@field maxHumidity                 number
+---@field waterLevel                  number
 ---@field calcTemp                    fun(self:MapGen.Layer, value:number, height:number):number
 ---@field calcHumidity                fun(self:MapGen.Layer, value:number, height:number):number
 ---@field peaksList                   MapGen.Peak[]
@@ -39,6 +40,7 @@ local Layer = {
 ---@field maxTemp                     number
 ---@field minHumidity                 number
 ---@field maxHumidity                 number
+---@field waterLevel?                 number
 ---@field calcTemp                    (fun(self:MapGen.Layer, value:number, height:number):number)?
 ---@field calcHumidity                (fun(self:MapGen.Layer, value:number, height:number):number)?
 ---@field biomesGorizontalScattering  number?
@@ -75,6 +77,7 @@ function Layer:new(name, def)
 		maxTemp                    = def.maxTemp,
 		minHumidity                = def.minHumidity,
 		maxHumidity                = def.maxHumidity,
+		waterLevel                 = def.waterLevel or 0,
 		calcTemp                   = def.calcTemp,
 		calcHumidity               = def.calcHumidity,
 		biomesGorizontalScattering = def.biomesGorizontalScattering or 0,

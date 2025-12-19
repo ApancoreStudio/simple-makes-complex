@@ -1,4 +1,4 @@
-![image](/menu/header.png)
+![image|1000](/menu/header.png)
 
 # Description
 Simple Makes Complex is a Luanti engine-based game focused on the multiplayer gameplay.

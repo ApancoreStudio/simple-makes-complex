@@ -1,6 +1,6 @@
 ![image](/menu/header_scale.png)
 
-# Description
+# Simple Makes Complex
 Simple Makes Complex is a Luanti engine-based game focused on the multiplayer gameplay.
 
 # Licensing

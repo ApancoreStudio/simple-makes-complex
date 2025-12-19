@@ -26,19 +26,19 @@ local CraftSystem = {
 ---@alias processualCraftFunc  fun(self:CraftSystem.ProcessualCraft, input:ItemStack[], workbenchMeta:NodeMetaRef?, processTime:number):boolean
 
 ---@class CraftSystem.BaseCraft
----@field type           CraftSystem.Craft.Type
----@field group          CraftSystem.Craft.Group
----@field output         string
----@field recipe         CraftSystem.Craft.Recipe
----@field return         table? TODO: доделать тут тип
+---@field type        CraftSystem.Craft.Type
+---@field group       CraftSystem.Craft.Group
+---@field output      string
+---@field recipe      CraftSystem.Craft.Recipe
+---@field return      table? TODO: доделать тут тип
 ---@field craftFunc  (fun(self, ...):boolean)?
 
 ---@class CraftSystem.ShapelessCraft : CraftSystem.BaseCraft
 ---@field craftFunc  shapelessCraftFunc?
 
 ---@class CraftSystem.ProcessualCraft : CraftSystem.BaseCraft
----@field processTime    number
----@field craftFunc  processualCraftFunc?
+---@field processTime  number
+---@field craftFunc    processualCraftFunc?
 
 ---@param type  CraftSystem.Craft.Type
 ---@return      CraftSystem.shapelessCraftsList|CraftSystem.processualCraftsList

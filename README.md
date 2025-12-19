@@ -9,4 +9,4 @@ Simple Makes Complex is a Luanti engine-based game focused on the multiplayer ga
 - Media assets are used and distributed under [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/).
 
 # Assets used
-- Font used in the title: https://fontstruct.com/fontstructions/show/2722233/gbjve (danil_2461, [CC0](http://creativecommons.org/publicdomain/zero/1.0/))
+- Font used in the `/menu/last_header.png`: https://fontstruct.com/fontstructions/show/2722233/gbjve (danil_2461, [CC0](http://creativecommons.org/publicdomain/zero/1.0/))

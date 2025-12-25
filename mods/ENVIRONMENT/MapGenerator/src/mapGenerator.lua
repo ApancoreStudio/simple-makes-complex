@@ -12,20 +12,20 @@ local MapGen = mapGenRequire('MapGen')
 	local mapGenerator = MapGen:new({
 	nodes = {
 		-- Special nodes
-		air = "air",
+		air = 'air',
 
 		-- Rocks
-		sylite    = "rocks:sylite",
-		tauitite  = "rocks:tauitite",
-		iyellite  = "rocks:iyellite",
-		falmyte   = "rocks:falmyte",
-		hapcoryte = "rocks:hapcoryte",
-		burcite   = "rocks:burcite",
-		felhor    = "rocks:felhor",
-		malachite = "rocks:malachite",
+		sylite    = 'rocks:sylite',
+		tauitite  = 'rocks:tauitite',
+		iyellite  = 'rocks:iyellite',
+		falmyte   = 'rocks:falmyte',
+		hapcoryte = 'rocks:hapcoryte',
+		burcite   = 'rocks:burcite',
+		felhor    = 'rocks:felhor',
+		malachite = 'rocks:malachite',
 
 		-- Liquids
-		water = "liquids:water_source",
+		water = 'liquids:water_source',
 	},
 })
 
@@ -37,16 +37,16 @@ local function calcHumidity(layer, value, height)
 	return value
 end
 
-mapGenerator:registerLayer("world", {
-	minY         = -50,
-	maxY         = 50,
-	minTemp      = 0,
+mapGenerator:registerLayer('midgard', {
+	minY         = -256,
+	maxY         = 256,
+	minTemp      = -100,
 	maxTemp      = 100,
 	minHumidity  = 0,
 	maxHumidity  = 100,
 	calcTemp     = calcTemp,
 	calcHumidity = calcHumidity,
-	biomesVerticalScattering   = 10,
+	biomesVerticalScattering   = 5,
 	biomesGorizontalScattering = 5
 })
 
@@ -102,7 +102,7 @@ local climat0 = {
 
 local v = vector.new
 
-mapGenerator:register2DPeaks("world",
+mapGenerator:register2DPeaks('midgard',
 {
 	landscapeNoise = land1,
 	tempNoise      = climat2,
@@ -114,7 +114,7 @@ mapGenerator:register2DPeaks("world",
 	v(500, 0, -500),
 })
 
-mapGenerator:register2DPeaks("world",
+mapGenerator:register2DPeaks('midgard',
 {
 	landscapeNoise = land2,
 	tempNoise      = climat1,
@@ -124,7 +124,7 @@ mapGenerator:register2DPeaks("world",
 	v(200, 0, -400),
 })
 
-mapGenerator:register2DPeaks("world",
+mapGenerator:register2DPeaks('midgard',
 {
 	landscapeNoise = land2,
 	tempNoise      = climat2,
@@ -134,7 +134,7 @@ mapGenerator:register2DPeaks("world",
 	v(-300, 0, -200),
 })
 
-mapGenerator:registerCavern('world', 'cavern1', {
+mapGenerator:registerCavern('midgard', 'cavern1', {
 	minY = -48,
 	maxY = 0,
 	smoothDistance = 20,
@@ -193,40 +193,25 @@ local function generateRock(biome, mapGenerator, data, index, x, y, z)
 	end
 end
 
+---@param biome MapGen.Biome
 local function generateSoil(biome, mapGenerator, data, index, x, y, z)
-	data[index] = biome.groundNodesId.turf
+	data[index] = biome.groundNodesIDs.turf
 end
 
-mapGenerator:registerBiome('world', "biome1", {
+mapGenerator:registerBiome('midgard', 'swamp', {
 	tempPoint = 0,
-	humidityPoint = 0,
-	minY = -10000,
-	maxY = -25,
+	humidityPoint = 80,
+	minY = 100,
+	maxY = 0,
 	groundNodes = {
-		soil   = "soils:clay_soil_baren",
-		turf   = "soils:clay_soil_baren",
-		rock   = "rocks:sylite",
-		bottom = "soils:rocky_soil_baren",
-	},
-	soilHeight = 5,
-	--generateRock = generateRock,
-	--generateSoil = generateSoil,
-})
-
-mapGenerator:registerBiome('world', "biome2", {
-	tempPoint = 100,
-	humidityPoint = 100,
-	minY = -25,
-	maxY = 1000,
-	groundNodes = {
-		soil   = "soils:rocky_soil_baren",
-		turf   = "soils:rocky_soil_baren",
-		rock   = "rocks:felhor",
-		bottom = "soils:clay_soil_baren",
+		soil   = 'soils:clay_soil_baren',
+		turf   = 'soils:clay_soil_baren',
+		rock   = 'rocks:sylite',
+		bottom = 'soils:rocky_soil_baren',
 	},
 	soilHeight = 3,
-	--generateRock = generateRock,
-	--generateSoil = generateSoil,
+	generateRock = generateRock,
+	generateSoil = generateSoil,
 })
 
 return mapGenerator

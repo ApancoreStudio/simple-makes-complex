@@ -162,3 +162,46 @@ planksFactory:registerItems({
 		},
 	},
 })
+
+-- сундучки
+
+---@type TileSheet
+local caseTileSheet = TileSheet:new("cases_sheet.png", 16, 16)
+
+local function getCaseTiles(x, y)
+	return {
+		caseTileSheet:t(x, y),
+		caseTileSheet:t(x, y),
+		caseTileSheet:t(x, y+1),
+	}
+end
+
+local t = getCaseTiles
+
+planksFactory:registerItems({
+	---@type Node.NodeDefinition
+	{
+		settings = {
+			name = "case_closed",
+			title = "Case",
+			--description = "",
+			tiles = t(0,0)
+		},
+	},
+	---@type Node.NodeDefinition
+	{
+		settings = {
+			name = "case_open",
+			title = "Case",
+			--description = "",
+			tiles = t(1,0);
+			drawtype = 'nodebox';
+			node_box = {
+				type = "fixed",
+				fixed = {
+					{-0.5, -0.5, -0.5, 0.5, 0.5 - 1/16*2, 0.5},
+				}
+			}
+		},
+	},
+})

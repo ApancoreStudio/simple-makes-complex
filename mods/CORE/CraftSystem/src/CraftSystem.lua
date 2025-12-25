@@ -3,8 +3,6 @@ local HASH_SPLITTER = '&'
 local modInfo = Mod.getInfo('smc__core__craft_system')
 local require = modInfo.require
 
-local CraftTypes = require('CraftSystem.CraftTypes')
-
 ---@alias CraftSystem.shapelessCraftsList   table<CraftSystem.Craft.Group, table<string, CraftSystem.ShapelessCraft[]>>
 ---@alias CraftSystem.processualCraftsList  table<CraftSystem.Craft.Group, table<string, CraftSystem.ProcessualCraft[]>>
 
@@ -60,7 +58,7 @@ end
 ---@param group  CraftSystem.Craft.Group
 ---@return       table<string, table>
 local function getCraftGroup(type, group)
-	local craftList = getCraftList(CraftTypes.type)
+	local craftList = getCraftList(type)
 
 	---@type  table<string, table>?
 	local craftGroup = craftList[group]

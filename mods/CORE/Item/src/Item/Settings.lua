@@ -13,10 +13,13 @@ Settings.title = nil
 ---@type string?
 Settings.description = nil
 
+---@alias Item.Visual
+---'item_2d'|
+---'item_3d'
+
 ---Visual node type.
----Values ​​are specified via an enumeration `Item.VisualEnum`.
----@type Enum.EnumKey?
-Settings.visual = ""
+---@type Item.Visual?
+Settings.visual = nil
 
 
 

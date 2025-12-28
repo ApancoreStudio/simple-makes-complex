@@ -3,9 +3,6 @@ local itemRequire = Mod.getInfo('smc__core__item').require
 ---@type Item
 local Item = itemRequire('Item')
 
----@type Item.VisualEnum
-local VisualEnum = itemRequire('Item.VisualEnum')
-
 ---@type ItemFactory
 local ItemFactory = Mod.getInfo('smc__core__item_factory').require('ItemFactory')
 
@@ -16,7 +13,7 @@ local Node = Class.extend(Item, {})
 ---@param nodeDef Node.NodeDefinition
 ---@return        Node
 function Node:new(nodeDef)
-	nodeDef.settings.visual = VisualEnum.ITEM_3D
+	nodeDef.settings.visual = 'item_3d'
 
 	---@type Node
 	local instance = Item:new(nodeDef)

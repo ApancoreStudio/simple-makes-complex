@@ -1,8 +1,6 @@
 local modInfo = Mod.getInfo('smc__core__item')
 local require = modInfo.require
 
-local VisualEnum = require('Item.VisualEnum')
-
 local ItemFactory = Mod.getInfo('smc__core__item_factory').require('ItemFactory')
 
 ---@class Item
@@ -76,15 +74,15 @@ function Item:new(itemDef)
 	local visual = itemDef.settings.visual
 
 	if visual == nil then
-		visual = VisualEnum.ITEM_2D
+		visual = 'item_2d'
 	end
 
 	itemDef.settings.visual = nil
 
-	if visual == VisualEnum.ITEM_3D then
+	if visual == 'item_3d' then
 		register3dItem(luantiDef)
 	else
-		visual = VisualEnum.ITEM_2D
+		visual = 'item_2d'
 		registerFlatItem(luantiDef)
 	end
 

@@ -29,7 +29,7 @@ local CraftSystem = {
 ---@field output      string
 ---@field recipe      CraftSystem.Craft.Recipe
 ---@field return      table? TODO: доделать тут тип
----@field craftFunc  (fun(self, ...):boolean)?
+---@field craftFunc   (fun(self, ...):boolean)?
 
 ---@class CraftSystem.ShapelessCraft : CraftSystem.BaseCraft
 ---@field craftFunc  shapelessCraftFunc?

@@ -32,7 +32,7 @@ function Formspec:new(def)
 		return instance
 	end
 
-	local version = ('formspec_version[%s]'):format( def.version or 10) -- Formspec version 10 (5.13.0)
+	local version = ('formspec_version[%s]'):format( def.version or 10) -- formspec version 10 (5.13.0)
 
 	local size = ('size[%s,%s,%s]'):format(def.size.x, def.size.y, def.size.fixed_size or true)
 
@@ -462,3 +462,4 @@ end
 
 
 return Formspec
+

@@ -249,9 +249,23 @@ function Formspec:animatedImage(x, y, w, h, textureName, frameCount, frameDurati
 end
 
 ---Show a mesh model.
----TODO
-function Formspec:model()
+---@param x               number
+---@param y               number
+---@param w               number
+---@param h               number
+---@param name            string    Element name that can be used for styling
+---@param mesh            string    The mesh model to use.
+---@param textures        string    The mesh textures to use according to the mesh materials. Texture names must be separated by commas.
+---@param rotation        number?   Initial rotation of the camera, format x,y. The axes are euler angles in degrees.
+---@param continuous      boolean?  Whether the rotation is continuous. Default `false`.
+---@param mouseControl    boolean?  Whether the model can be controlled with the mouse. Default `true`.
+---@param frameLoopRange  string?   Range of the animation frames. Defaults to the full range of all available frames. Syntax: `<begin>,<end>`.
+---@param animationSpeed  number?   Sets the animation speed. Default 0 FPS.
+function Formspec:model(x, y, w, h, name, mesh, textures, rotation, continuous, mouseControl, frameLoopRange, animationSpeed)
+	local element = ('model[%s,%s;%s,%s;%s;%s;%s;%s;%s;%s;%s;%s]'):format(
+		x, y, w, h, name, mesh, textures, rotation or '', continuous or '', mouseControl or '', frameLoopRange or '', animationSpeed or '')
 
+	self:addElement(element)
 end
 
 ---Show an inventory image of registered item/node.
@@ -267,14 +281,43 @@ function Formspec:itemImage(x, y, w, h, itemName)
 	self:addElement(element)
 end
 
----TODO
-function Formspec:bgcolor()
+---Sets background color of formspec.
+---
+---`fullscreen`:
+--- * `false`: Only the non-fullscreen background color is drawn. (default)
+--- * `true`: Only the fullscreen background color is drawn.
+--- * `both`: The non-fullscreen and the fullscreen background color are drawn.
+--- * `neither`: No background color is drawn.
+---@param bgcolor     ColorString   Define the color of the non-fullscreen and the fullscreen background.
+---@param fullscreen  'false'|'true'|'both'|'neither'
+---@param fbgcolor     ColorString?  Define the color of the non-fullscreen and the fullscreen background.
+function Formspec:bgcolor(bgcolor, fullscreen, fbgcolor)
+	local element = ('bgcolor[%s;%s;%s]'):format(
+		bgcolor, fullscreen or '', fbgcolor or '')
 
+	self:addElement(element)
 end
 
----TODO
-function Formspec:background()
+---Example for formspec 8x4 in 16x resolution: image shall be sized 8 times 16px times 4 times 16px.
+---@param x            number
+---@param y            number
+---@param w            number
+---@param h            number
+---@param textureName  string
+---@param autoClip     boolean?  If is `true`, the background is clipped
+---to the formspec size (x and y are used as offset values, w and h are ignored)
+function Formspec:background(x, y, w, h, textureName, autoClip)
+	local element
 
+	if autoClip ~= nil then
+		element = ('background[%s,%s;%s,%s;%s;%s]'):format(
+		x, y, w, h, textureName, autoClip)
+	else
+		element = ('background[%s,%s;%s,%s;%s]'):format(
+			x, y, w, h, textureName)
+	end
+
+	self:addElement(element)
 end
 
 ---TODO

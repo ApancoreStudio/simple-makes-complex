@@ -21,7 +21,7 @@ core.register_globalstep(function(deltaTime)
 
 		if timer >= callback.timeDelay then
 			callback.callbackFunc(deltaTime)
-			callback.timer = 0.0
+			callback.timer = timer - callback.timeDelay
 		else
 			callback.timer = timer
 		end
@@ -51,7 +51,7 @@ core.register_globalstep(function(deltaTime)
 
 			if timer >= callback.timeDelay then
 				callback.callbackFunc(deltaTime, player)
-				callback.timer = 0.0
+				callback.timer = timer - callback.timeDelay
 			else
 				callback.timer = timer
 			end

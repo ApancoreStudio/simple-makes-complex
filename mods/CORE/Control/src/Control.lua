@@ -1,49 +1,84 @@
----@class Callbacks.Control
+---@class Events.Control
 local Control = {}
 
 -- control.on_press
-Callbacks.registerCallback('control.on_press')
+Events.registerEvent('control.on_press')
 
 ---@param callbackFunc  fun(player:Player, controlName:string)
 function Control.subcribeOnPress(callbackFunc)
-	Callbacks.subscribe('control.on_press', callbackFunc)
+	Events.subscribe('control.on_press', callbackFunc)
 end
 
 
 -- control.on_release
-Callbacks.registerCallback('control.on_release')
+Events.registerEvent('control.on_release')
 
 ---@param callbackFunc  fun(player:Player, controlName:string, holdTime:number)
 function Control.subcribeOnRelease(callbackFunc)
-	Callbacks.subscribe('control.on_release', callbackFunc)
+	Events.subscribe('control.on_release', callbackFunc)
 end
 
 
 -- control.on_hold
-Callbacks.registerCallback('control.on_hold')
+Events.registerEvent('control.on_hold')
 
 ---@param callbackFunc  fun(player:Player, controlName:string, holdTime:number, dtime:number)
 function Control.subcribeOnHold(callbackFunc)
-	Callbacks.subscribe('control.on_hold', callbackFunc)
+	Events.subscribe('control.on_hold', callbackFunc)
 end
 
 
 -- control.on_wield_change
-Callbacks.registerCallback('control.on_wield_change')
+Events.registerEvent('control.on_wield_change')
 
 ---@param callbackFunc  fun(player:Player, player_wield_index:number, player_last_wield_index:number)
 function Control.subcribeOnWieldChange(callbackFunc)
-	Callbacks.subscribe('control.on_wield_change', callbackFunc)
+	Events.subscribe('control.on_wield_change', callbackFunc)
 end
 
-local ControlKeys = {
+
+-- --- Call events ---
+
+local ControlPressKeys = {
 	'up', 'down', 'left', 'right', 'jump', 'aux1', 'sneak', 'dig', 'place', 'zoom'
+}
+
+local ControlMovementKeys = {
+	'movement_x', 'movement_y'
 }
 
 local playersLastControl = {}
 local playersControlTimer = {}
 
---TODO: on_join & on_leave
+core.register_on_joinplayer(function(player, last_login)
+	local playerName = player:get_player_name()
+	if playerName == nil then
+		return
+	end
+
+	local nowControl = player:get_player_control()
+	if nowControl == nil then
+		return
+	end
+
+	local controlTimer = {}
+	for _, key in ipairs(ControlPressKeys) do
+		controlTimer[key] = 0.0
+	end
+
+	playersLastControl[playerName]  = nowControl
+	playersControlTimer[playerName] = controlTimer
+end)
+
+core.register_on_leaveplayer(function(player, timed_out)
+	local playerName = player:get_player_name()
+	if playerName == nil then
+		return
+	end
+
+	playersLastControl[playerName]  = nil
+	playersControlTimer[playerName] = nil
+end)
 
 Api.registerGlobalStepForEachPlayer(0, function(player, deltaTime)
 	if player == nil then
@@ -70,32 +105,36 @@ Api.registerGlobalStepForEachPlayer(0, function(player, deltaTime)
 		return
 	end
 
-	local control
-	for _, key in ipairs(ControlKeys) do
+	for _, key in ipairs(ControlPressKeys) do
 		local lastPressed = lastControl[key]
 		local nowPressed  = nowControl[key]
 
 		-- on_press
 		if not lastPressed and nowPressed then
-			Callbacks.call('control.on_press', key)
+			Events.call('control.on_press', key)
 
 			controlTimer[key] = 0
 
 		-- on_release
 		elseif lastPressed and not nowPressed then
-			Callbacks.call('control.on_release', key, controlTimer[key])
+			Events.call('control.on_release', key, controlTimer[key])
 
 			controlTimer[key] = 0
 
 		-- on_hold
 		elseif lastPressed and nowPressed then
-			Callbacks.call('control.on_hold', key, controlTimer[key], deltaTime)
+			Events.call('control.on_hold', key, controlTimer[key], deltaTime)
 
 			controlTimer[key] = controlTimer[key] + deltaTime
 		end
 	end
 
-	playersLastControl[playerName] = nowControl
+	--TODO: add player movement callbacks
+
+	--TODO: add mouse movement callbacks on dir
+
+	playersLastControl[playerName]  = nowControl
+	playersControlTimer[playerName] = controlTimer
 end)
 
 return Control

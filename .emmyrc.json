@@ -25,7 +25,7 @@
 	  "globals": [
 		"core",
 		"table",
-		"Callbacks",
+		"Events",
 		"VoxelArea",
 		"VoxelManip",
 		"vector",

@@ -10,9 +10,18 @@ local ItemFactory = Mod.getInfo('smc__core__item_factory').require('ItemFactory'
 ---@field defaultDef  Node.NodeDefinition
 local Node = Class.extend(Item, {})
 
+---The alias `table.merge` for EmmyLua
+---@type fun(...):(Node.NodeDefinition)
+local defMerge = function(...)
+	return table.merge(...)
+end
+
 ---@param nodeDef Node.NodeDefinition
 ---@return        Node
 function Node:new(nodeDef)
+	---Adding default parameters
+	nodeDef = defMerge(nodeDef, self.defaultDef, true)
+
 	nodeDef.settings.visual = 'item_3d'
 
 	---@type Node

@@ -7,7 +7,7 @@ local ItemFactory = Mod.getInfo('smc__core__item_factory').require('ItemFactory'
 ---@field itemDef         Item.ItemDefinition
 ---@field luantiDef       table
 ---@field getVisual       fun(): string
----@field defaultDef  Item.ItemDefinition
+---@field defaultDef      Item.ItemDefinition
 local Item = {
 	defaultDef = {
 		settings = {

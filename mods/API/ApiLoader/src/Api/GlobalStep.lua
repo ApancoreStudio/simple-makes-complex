@@ -32,7 +32,7 @@ end)
 local callsForEachPlayer = {}
 
 ---@param timeDelay     number
----@param callbackFunc  fun(player:Player, deltaTime:number)
+---@param callbackFunc  fun(deltaTime:number, player:Player)
 function Api.registerGlobalStepForEachPlayer(timeDelay, callbackFunc)
 	table.insert(callsWithDelay, {
 		timeDelay    = timeDelay,

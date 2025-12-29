@@ -80,7 +80,7 @@ core.register_on_leaveplayer(function(player, timed_out)
 	playersControlTimer[playerName] = nil
 end)
 
-Api.registerGlobalStepForEachPlayer(0, function(player, deltaTime)
+Api.registerGlobalStepForEachPlayer(0, function(deltaTime, player)
 	if player == nil then
 		return
 	end

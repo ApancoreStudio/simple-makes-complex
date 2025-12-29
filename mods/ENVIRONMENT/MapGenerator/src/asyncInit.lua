@@ -5,9 +5,6 @@
 -- so global tables need to be preloaded manually.
 
 -- --- Global APIs load --
--- Api loader
-dofile(core.get_modpath('smc__api__api_loader')..'/init.lua')
-
 -- Class
 dofile(core.get_modpath('smc__api__class')..'/init.lua')
 
@@ -36,6 +33,10 @@ dofile(core.get_modpath('smc__api__mod')..'/init.lua')
 
 -- Table
 dofile(core.get_modpath('smc__api__table')..'/init.lua')
+
+-- TODO: пока что закоментировано, поскольку вызывает ошибку из-за global_step
+-- Api loader
+-- dofile(core.get_modpath('smc__api__api_loader')..'/init.lua')
 
 ---@type  MapGen
 local mapGenerator = dofile(core.get_modpath('smc__core__map_generator')..'/src/mapGenerator.lua')

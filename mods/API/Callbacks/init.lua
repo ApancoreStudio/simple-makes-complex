@@ -1,9 +1,8 @@
----Global API for implementing callbacks.
 Callbacks = {}
 
----@alias callbackFunc  fun(callbackName, ...)
+---@alias Callbacks.callbackFunc  fun(callbackName, ...)
 
----@type table<string, callbackFunc[]>
+---@type table<string, Callbacks.callbackFunc[]>
 local registeredCallbacks = {}
 
 ---@param callbackName string
@@ -14,7 +13,7 @@ function Callbacks.registerCallback(callbackName)
 end
 
 ---@param callbackName  string
----@param callbackFunc  callbackFunc
+---@param callbackFunc  Callbacks.callbackFunc
 function Callbacks.subscribe(callbackName, callbackFunc)
 	local callbacks = registeredCallbacks[callbackName]
 	assert(callbacks ~= nil, ('Callback %s does not exist'):format(callbackName))
@@ -22,6 +21,8 @@ function Callbacks.subscribe(callbackName, callbackFunc)
 	table.insert(callbacks, callbackFunc)
 end
 
+---@param callbackName  string
+---@param ...           any
 function Callbacks.call(callbackName, ...)
 	local callbacks = registeredCallbacks[callbackName]
 	assert(callbacks ~= nil, ('Callback %s does not exist'):format(callbackName))

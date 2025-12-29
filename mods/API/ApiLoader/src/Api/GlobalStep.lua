@@ -2,12 +2,12 @@
 local callsWithDelay = {}
 
 ---@param timeDelay     number
----@param callbackFunc  fun(deltaTime)
+---@param callbackFunc  fun(deltaTime:number)
 function Api.registerGlobalStepWithDelay(timeDelay, callbackFunc)
 	table.insert(callsWithDelay, {
 		timeDelay    = timeDelay,
 		callbackFunc = callbackFunc,
-		timer        = 0
+		timer        = 0.0
 	})
 end
 
@@ -21,7 +21,7 @@ core.register_globalstep(function(deltaTime)
 
 		if timer >= callback.timeDelay then
 			callback.callbackFunc(deltaTime)
-			callback.timer = 0
+			callback.timer = 0.0
 		else
 			callback.timer = timer
 		end
@@ -32,12 +32,12 @@ end)
 local callsForEachPlayer = {}
 
 ---@param timeDelay     number
----@param callbackFunc  fun(player, deltaTime)
+---@param callbackFunc  fun(player:Player, deltaTime:number)
 function Api.registerGlobalStepForEachPlayer(timeDelay, callbackFunc)
 	table.insert(callsWithDelay, {
 		timeDelay    = timeDelay,
 		callbackFunc = callbackFunc,
-		timer        = 0
+		timer        = 0.0
 	})
 end
 
@@ -51,7 +51,7 @@ core.register_globalstep(function(deltaTime)
 
 			if timer >= callback.timeDelay then
 				callback.callbackFunc(deltaTime, player)
-				callback.timer = 0
+				callback.timer = 0.0
 			else
 				callback.timer = timer
 			end

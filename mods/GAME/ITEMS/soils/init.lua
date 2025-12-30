@@ -237,3 +237,17 @@ soilFactory:registerItems({
 	},
 
 }, true)
+
+---@type TileSheet
+local tsT = TileSheet:new("soils_turfs_sheet.png", 16, 16)
+
+Node:new({
+	settings = {
+		name = 'soils:turf_swamp',
+		tiles = {tsT:t(0,0), ts:t(6, 0), ts:t(6,0)..'^'..tsT:t(0,1)},
+				groups = {
+			dig_immediate = 2,
+			soil_fertiliry = 100, -- Soil fertility for agriculture
+		}
+	}
+})

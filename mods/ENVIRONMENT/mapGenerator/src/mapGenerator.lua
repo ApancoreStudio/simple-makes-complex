@@ -204,14 +204,14 @@ mapGenerator:registerBiome('midgard', 'swamp', {
 	minY = 100,
 	maxY = 0,
 	groundNodes = {
-		soil   = 'soils:clay_soil_baren',
-		turf   = 'soils:clay_soil_baren',
+		soil   = 'soils:rocky_soil_baren',
+		turf   = 'soils:turf_swamp',
 		rock   = 'rocks:sylite',
 		bottom = 'soils:rocky_soil_baren',
 	},
 	soilHeight = 3,
 	generateRock = generateRock,
-	generateSoil = generateSoil,
+	--generateSoil = generateSoil,
 })
 
 return mapGenerator

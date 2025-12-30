@@ -27,10 +27,26 @@ core.register_ore({
 
 core.register_decoration({
 	deco_type = "simple",
-	place_on = "soils:clay_soil_baren",
+	place_on = "soils:turf_swamp",
 	sidelen = 8,
-	fill_ratio = 0.1,
+	fill_ratio = 0.4,
 	decoration = "plants:plants",
+})
+
+core.register_decoration({
+	deco_type = "simple",
+	place_on = "soils:turf_swamp",
+	sidelen = 8,
+	fill_ratio = 0.05,
+	decoration = "plants:plant0",
+})
+
+core.register_decoration({
+	deco_type = "simple",
+	place_on = "soils:turf_swamp",
+	sidelen = 8,
+	fill_ratio = 0.01,
+	decoration = "plants:plant2",
 })
 
 return mapGenerator

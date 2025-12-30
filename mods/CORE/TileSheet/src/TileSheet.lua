@@ -84,7 +84,7 @@ end
 ---@param y  number
 ---@return   string
 function TileSheet:getTextureName(x, y)
-	local textureName = self.image .. '^[sheet:'.. self.width .. 'x' .. self.height .. ':' .. x .. ',' .. y
+	local textureName = '('..self.image .. '^[sheet:'.. self.width .. 'x' .. self.height .. ':' .. x .. ',' .. y..')'
 
 	return textureName
 end

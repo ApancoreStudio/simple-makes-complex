@@ -61,11 +61,22 @@ local defMerge = function(...)
 	return table.merge(...)
 end
 
----@param itemDef  Item.ItemDefinition|Node.NodeDefinition
----@return         Item
-function Item:new(itemDef)
+---@param itemDef     Item.ItemDefinition|Node.NodeDefinition
+---@param addModName  boolean?  Whether to add the mod name to the settings.name. Default: `true`
+---@return            Item
+function Item:new(itemDef, addModName)
+	if addModName == nil then
+		addModName = true
+	end
+
 	---Adding default parameters
 	itemDef = defMerge(itemDef, self.defaultDef, true)
+
+	local modName = Mod.getInfo().shortName
+
+	if addModName then
+		itemDef.settings.name = modName .. ':' .. itemDef.settings.name
+	end
 
 	---@type Item
 	local instance = setmetatable({}, {__index = self})

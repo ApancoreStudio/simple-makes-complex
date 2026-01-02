@@ -22,12 +22,9 @@ for i=0, 3 do
 	Plant:new({
 		settings = {
 			name = 'plant'..tostring(i),
-			description = 'Plant',
+			title = 'Plant',
 			tiles = { ts:t(i,0) },
 			place_param2 = 3,
 		},
 	})
 end
-
-
-core.log(dump(core.registered_nodes))

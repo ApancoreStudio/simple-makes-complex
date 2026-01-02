@@ -25,13 +25,38 @@ local defMerge = function(...)
 	return table.merge(...)
 end
 
----@param itemDef  Item.ItemDefinition
----@return         NodeDefinition|ItemDefinition
-local function itemDefToLuantiDef(itemDef)
+---@param itemDef     Item.ItemDefinition
+---@param addModName  boolean?  Whether to add the mod name to the settings.name. Default: `true`
+---@return            NodeDefinition|ItemDefinition
+local function itemDefToLuantiDef(itemDef, addModName)
+	local modName = Mod.getInfo().shortName
+	local S = core.get_translator(modName)
+
+	if addModName == nil then
+		addModName = true
+	end
+
 	itemDef = table.copy(itemDef)
 	local s = itemDef.settings
 	local c = itemDef.callbacks
-	local description = s.title .. "\n" .. s.description
+
+	if addModName then
+		s.name = modName .. ':' .. s.name
+	end
+
+	local title = s.title
+	local description = s.description
+
+	if title == nil or title == '' then
+		title = string.match(s.name, '%S:(%S+)')..'-title'
+	end
+
+	if description == nil or description == '' then
+		description = string.match(s.name, '%S:(%S+)')..'-description'
+	end
+
+	local description = S(title)..'\n'..S(description)
+
 	s.title, s.description = nil, description
 
 	local luantiDef = defMerge(s, c)
@@ -65,23 +90,13 @@ end
 ---@param addModName  boolean?  Whether to add the mod name to the settings.name. Default: `true`
 ---@return            Item
 function Item:new(itemDef, addModName)
-	if addModName == nil then
-		addModName = true
-	end
-
 	---Adding default parameters
 	itemDef = defMerge(itemDef, self.defaultDef, true)
-
-	local modName = Mod.getInfo().shortName
-
-	if addModName then
-		itemDef.settings.name = modName .. ':' .. itemDef.settings.name
-	end
 
 	---@type Item
 	local instance = setmetatable({}, {__index = self})
 
-	local luantiDef = itemDefToLuantiDef(itemDef)
+	local luantiDef = itemDefToLuantiDef(itemDef, addModName)
 	local visual = itemDef.settings.visual
 
 	if visual == nil then

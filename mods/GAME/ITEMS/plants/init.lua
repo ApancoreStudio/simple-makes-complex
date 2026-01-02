@@ -9,7 +9,6 @@ local Plant = modInfo.require('Plant')
 Plant:new({
 	settings = {
 		name = 'plants',
-		description = 'Plant',
 		tiles = { "test_plant.png" },
 		place_param2 = 3,
 	},

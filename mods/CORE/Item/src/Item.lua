@@ -52,10 +52,10 @@ local function itemDefToLuantiDef(itemDef, addModName)
 	end
 
 	if description == nil or description == '' then
-		description = string.match(s.name, '%S:(%S+)')..'-description'
+		description = string.match(s.name, '%S:(%S+)')..'-desc'
 	end
 
-	local description = S(title)..'\n'..S(description)
+	local description = S(title)..'\n'..core.colorize('#C0C0C0', S(description))
 
 	s.title, s.description = nil, description
 

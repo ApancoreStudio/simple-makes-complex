@@ -745,13 +745,14 @@ function MapGen:onMapGenerated(voxelManip, minPos, maxPos, blockseed)
 
 	-- We make changes back to LVM and recalculate light & liquids
 	voxelManip:set_data(data)
+
+	core.generate_ores(voxelManip, minPos, maxPos)
+	core.generate_decorations(voxelManip, minPos, maxPos)
+
 	--voxelManip:set_param2_data()
 	voxelManip:set_lighting({ day = 14, night = 0})
 	voxelManip:calc_lighting()
 	voxelManip:update_liquids()
-
-	core.generate_ores(voxelManip, minPos, maxPos)
-	core.generate_decorations(voxelManip, minPos, maxPos)
 
 	--voxelManip:write_to_map() -- Async edit
 end

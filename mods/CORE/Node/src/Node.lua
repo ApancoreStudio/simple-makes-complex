@@ -17,17 +17,15 @@ local defMerge = function(...)
 end
 
 ---@param nodeDef     Node.NodeDefinition
----@param addModName  boolean?  Whether to add the mod name to the settings.name. Default: `true`
 ---@return            Node
-function Node:new(nodeDef, addModName)
+function Node:new(nodeDef)
 	---Adding default parameters
 	nodeDef = defMerge(nodeDef, self.defaultDef, true)
 
 	nodeDef.settings.visual = 'item_3d'
 
 	---@type Node
-	local instance = Item:new(nodeDef, addModName)
-
+	local instance = Item:new(nodeDef)
 	return instance
 end
 

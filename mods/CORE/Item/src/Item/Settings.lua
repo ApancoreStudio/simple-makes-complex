@@ -3,7 +3,11 @@ local Settings = {}
 
 ---Technical name of the item. Must be unique and have the format `mod_name:item_name`
 ---@type string
-Settings.name = ""
+Settings.name = ''
+
+---Whether to add the mod name to the settings.name. Default: `true`
+---@type boolean?
+Settings.addModName = nil
 
 ---Item description. 1st line of item description.
 ---@type string?

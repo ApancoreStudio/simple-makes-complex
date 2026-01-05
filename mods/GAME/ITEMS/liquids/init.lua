@@ -5,6 +5,7 @@ local Node = Mod.getInfo('smc__core__node').require('Node')
 local defaultLiquidDef = {
 	settings = {
 		name = '',
+		addModName = false,
 		tiles = {},
 		waving = 3,
 		use_texture_alpha = "blend",
@@ -94,4 +95,4 @@ liquidFactory:registerItems({
 			paramtype2 = "flowingliquid",
 		}
 	}
-}, false)
+})

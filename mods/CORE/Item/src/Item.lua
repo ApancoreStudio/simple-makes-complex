@@ -15,7 +15,8 @@ local Item = {
 			title = '',
 			description = '',
 			titleColor = '#FFFFFF',
-			descriptionColor = '#C0C0C0'
+			descriptionColor = '#C0C0C0',
+			addModName = true,
 		},
 		callbacks = {}
 	}
@@ -28,21 +29,16 @@ local defMerge = function(...)
 end
 
 ---@param itemDef     Item.ItemDefinition
----@param addModName  boolean?  Whether to add the mod name to the settings.name. Default: `true`
 ---@return            NodeDefinition|ItemDefinition
-local function itemDefToLuantiDef(itemDef, addModName)
+local function itemDefToLuantiDef(itemDef)
 	local modName = Mod.getInfo().shortName
 	local S = core.get_translator(modName)
-
-	if addModName == nil then
-		addModName = true
-	end
 
 	itemDef = table.copy(itemDef)
 	local s = itemDef.settings
 	local c = itemDef.callbacks
 
-	if addModName then
+	if s.addModName then
 		s.name = modName .. ':' .. s.name
 	end
 
@@ -57,8 +53,12 @@ local function itemDefToLuantiDef(itemDef, addModName)
 		description = string.match(s.name, '%S:(%S+)')..'-desc'
 	end
 
-	---@diagnostic disable-next-line: param-type-not-match
-	local description = core.colorize(s.titleColor ,S(title))..'\n'..core.colorize(s.descriptionColor, S(description))
+	if s.titleColor ~= nil and s.descriptionColor ~= nil then
+		description = core.colorize(s.titleColor ,S(title))..'\n'..
+		core.colorize(s.descriptionColor, S(description))
+	else
+		error('Item description color parameters cannot be empty.')
+	end
 
 	s.title, s.description = nil, description
 
@@ -90,16 +90,15 @@ local defMerge = function(...)
 end
 
 ---@param itemDef     Item.ItemDefinition|Node.NodeDefinition
----@param addModName  boolean?  Whether to add the mod name to the settings.name. Default: `true`
 ---@return            Item
-function Item:new(itemDef, addModName)
+function Item:new(itemDef)
 	---Adding default parameters
 	itemDef = defMerge(itemDef, self.defaultDef, true)
 
 	---@type Item
 	local instance = setmetatable({}, {__index = self})
 
-	local luantiDef = itemDefToLuantiDef(itemDef, addModName)
+	local luantiDef = itemDefToLuantiDef(itemDef)
 	local visual = itemDef.settings.visual
 
 	if visual == nil then

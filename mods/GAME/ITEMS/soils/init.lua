@@ -236,7 +236,7 @@ soilFactory:registerItems({
 		},
 	},
 
-}, true)
+})
 
 ---@type TileSheet
 local tsT = TileSheet:new("soils_turfs_sheet.png", 16, 16)

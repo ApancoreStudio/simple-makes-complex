@@ -23,13 +23,12 @@ local defMerge = function(...)
 end
 
 ---@param itemDefs    Item.ItemDefinition[]|Node.NodeDefinition[]  List of nodes with parameters unique to them.
----@param addModName  boolean?  Whether to add the mod name to the settings.name. Default: `true`
-function ItemFactory:registerItems(itemDefs, addModName)
+function ItemFactory:registerItems(itemDefs)
 	---@param nodeDef  Item.ItemDefinition | Node.NodeDefinition
 	for _, itemDef in ipairs(itemDefs) do
 		itemDef = defMerge(itemDef, self.defaultDef, true)
 
-		self.itemClass:new(itemDef, addModName)
+		self.itemClass:new(itemDef)
 
 	end
 end
@@ -41,8 +40,7 @@ local defMerge = function(...)
 end
 
 ---@param shortNodeDefs  table     Table of the form `{ {name, title, description, tiles},  {name, title, description, tiles}, ...}`
----@param addModName     boolean?  Whether to add the mod name to the settings.name. Default: `true`
-function ItemFactory:registerNodesByShortDef(shortNodeDefs, addModName)
+function ItemFactory:registerNodesByShortDef(shortNodeDefs)
 	for _, shortNodeDef in ipairs(shortNodeDefs) do
 		---@type Node.NodeDefinition
 		local nodeDef = {
@@ -56,8 +54,7 @@ function ItemFactory:registerNodesByShortDef(shortNodeDefs, addModName)
 
 		nodeDef = defMerge(nodeDef, self.defaultDef, true)
 
-		self.itemClass:new(nodeDef, addModName)
-
+		self.itemClass:new(nodeDef)
 	end
 end
 

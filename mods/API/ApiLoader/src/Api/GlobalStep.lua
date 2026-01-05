@@ -1,4 +1,4 @@
----@type {timeDelay:number, callbackFunc:fun(deltaTime:number), timer:number}[]
+---@type {timeDelay:number, callbackFunc:fun(deltaTime:number), timer:number, lastCall:number}[]
 local callsWithDelay = {}
 
 ---@param timeDelay     number
@@ -7,28 +7,35 @@ function Api.registerGlobalStepWithDelay(timeDelay, callbackFunc)
 	table.insert(callsWithDelay, {
 		timeDelay    = timeDelay,
 		callbackFunc = callbackFunc,
-		timer        = 0.0
+		timer        = 0.0,
+		lastCall    = 0.0
 	})
 end
 
 core.register_globalstep(function(deltaTime)
 	---@type number
 	local timer
+	local lastCall
 
 	for _, callback in ipairs(callsWithDelay) do
-		timer = callback.timer
-		timer = timer + deltaTime
+		timer    = callback.timer
+		lastCall = callback.lastCall
+
+		timer    = timer + deltaTime
+		lastCall = lastCall + deltaTime
 
 		if timer >= callback.timeDelay then
-			callback.callbackFunc(deltaTime)
-			callback.timer = timer - callback.timeDelay
+			callback.callbackFunc(lastCall)
+			callback.timer    = timer - callback.timeDelay
+			callback.lastCall = 0.0
 		else
-			callback.timer = timer
+			callback.timer    = timer
+			callback.lastCall = lastCall
 		end
 	end
 end)
 
----@type {timeDelay:number, callbackFunc:fun(deltaTime:number, player), timer:number}[]
+---@type {timeDelay:number, callbackFunc:fun(deltaTime:number, player), timer:number, lastCall:number}[]
 local callsForEachPlayer = {}
 
 ---@param timeDelay     number
@@ -37,23 +44,31 @@ function Api.registerGlobalStepForEachPlayer(timeDelay, callbackFunc)
 	table.insert(callsWithDelay, {
 		timeDelay    = timeDelay,
 		callbackFunc = callbackFunc,
-		timer        = 0.0
+		timer        = 0.0,
+		lastCall     = 0.0,
 	})
 end
 
 core.register_globalstep(function(deltaTime)
 	---@type number
 	local timer
+	local lastCall
+
 	for _, player in ipairs(core.get_connected_players()) do
 		for _, callback in ipairs(callsForEachPlayer) do
-			timer = callback.timer
-			timer = timer + deltaTime
+			timer    = callback.timer
+			lastCall = callback.lastCall
+
+			timer    = timer + deltaTime
+			lastCall = lastCall + deltaTime
 
 			if timer >= callback.timeDelay then
-				callback.callbackFunc(deltaTime, player)
-				callback.timer = timer - callback.timeDelay
+				callback.callbackFunc(lastCall, player)
+				callback.timer    = timer - callback.timeDelay
+				callback.lastCall = 0.0
 			else
-				callback.timer = timer
+				callback.timer    = timer
+				callback.lastCall = lastCall
 			end
 		end
 	end

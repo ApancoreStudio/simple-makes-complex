@@ -11,9 +11,11 @@ local ItemFactory = Mod.getInfo('smc__core__item_factory').require('ItemFactory'
 local Item = {
 	defaultDef = {
 		settings = {
-			name = "",
-			title = "",
-			description = "",
+			name = '',
+			title = '',
+			description = '',
+			titleColor = '#FFFFFF',
+			descriptionColor = '#C0C0C0'
 		},
 		callbacks = {}
 	}
@@ -55,7 +57,8 @@ local function itemDefToLuantiDef(itemDef, addModName)
 		description = string.match(s.name, '%S:(%S+)')..'-desc'
 	end
 
-	local description = S(title)..'\n'..core.colorize('#C0C0C0', S(description))
+	---@diagnostic disable-next-line: param-type-not-match
+	local description = core.colorize(s.titleColor ,S(title))..'\n'..core.colorize(s.descriptionColor, S(description))
 
 	s.title, s.description = nil, description
 

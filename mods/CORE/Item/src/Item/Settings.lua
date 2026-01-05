@@ -13,6 +13,18 @@ Settings.title = nil
 ---@type string?
 Settings.description = nil
 
+---Item title color in description.
+---
+---Default: `#FFFFFF`
+---@type ColorString?
+Settings.titleColor = nil
+
+---Item description color in description.
+---
+---Default: `#C0C0C0`
+---@type ColorString?
+Settings.descriptionColor = nil
+
 ---@alias Item.Visual
 ---'item_2d'|
 ---'item_3d'

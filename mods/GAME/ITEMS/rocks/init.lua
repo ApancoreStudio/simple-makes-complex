@@ -25,14 +25,14 @@ local rockFactory = defaultRock:getFactory()
 local ts = TileSheet:new("rocks_sheet.png", 16, 16)
 
 rockFactory:registerNodesByShortDef({
-	{"sylite",    "Sylite",    nil, {ts:t(0, 0)}},
-	{"tauitite",  "Tauitite",  nil, {ts:t(0, 2)}},
-	{"iyellite",  "Iyellite",  nil, {ts:t(0, 4)}},
-	{"falmyte",   "Falmyte",   nil, {ts:t(0, 6)}},
-	{"hapcoryte", "Hapcoryte", nil, {ts:t(0, 8)}},
-	{"burcite",   "Burcite",   nil, {ts:t(0, 10)}},
-	{"felhor",    "Felhor",    nil, {ts:t(0, 12)}},
-	{"malachite", "malachite", nil, {ts:t(0, 14)}}
+	{"sylite",    {ts:t(0, 0)}},
+	{"tauitite",  {ts:t(0, 2)}},
+	{"iyellite",  {ts:t(0, 4)}},
+	{"falmyte",   {ts:t(0, 6)}},
+	{"hapcoryte", {ts:t(0, 8)}},
+	{"burcite",   {ts:t(0, 10)}},
+	{"felhor",    {ts:t(0, 12)}},
+	{"malachite", {ts:t(0, 14)}}
 })
 
 --[[

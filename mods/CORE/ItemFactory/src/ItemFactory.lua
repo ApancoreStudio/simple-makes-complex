@@ -22,7 +22,7 @@ local defMerge = function(...)
 	return table.merge(...)
 end
 
----@param itemDefs    Item.ItemDefinition[]|Node.NodeDefinition[]  List of nodes with parameters unique to them.
+---@param itemDefs  Item.ItemDefinition[]|Node.NodeDefinition[]  List of nodes with parameters unique to them.
 function ItemFactory:registerItems(itemDefs)
 	---@param nodeDef  Item.ItemDefinition | Node.NodeDefinition
 	for _, itemDef in ipairs(itemDefs) do
@@ -39,16 +39,14 @@ local defMerge = function(...)
 	return table.merge(...)
 end
 
----@param shortNodeDefs  table     Table of the form `{ {name, title, description, tiles},  {name, title, description, tiles}, ...}`
+---@param shortNodeDefs  [string, (string[]|TileDefinition[])?][]  Format list {{name, tiles}, {name, tiles}, ...}
 function ItemFactory:registerNodesByShortDef(shortNodeDefs)
 	for _, shortNodeDef in ipairs(shortNodeDefs) do
 		---@type Node.NodeDefinition
 		local nodeDef = {
 			settings = {
-				name = shortNodeDef[1],
-				title = shortNodeDef[2],
-				description = shortNodeDef[3],
-				tiles = shortNodeDef[4]
+				name  = shortNodeDef[1],
+				tiles = shortNodeDef[2]
 			}
 		}
 

@@ -106,7 +106,8 @@ function Formspec:addElement(element)
 	self.elements = self.elements..element
 end
 
----TODO: описание
+---Start of a container block, moves all physical elements in the container by (X, Y).
+---Containers can be nested, in which case the offsets are added (child containers are relative to parent containers).
 ---@param x          number
 ---@param y          number
 ---@param container  Formspec
@@ -116,11 +117,26 @@ function Formspec:container(x, y, container)
 	self:addElement(element)
 end
 
----TODO
-function Formspec:scrollContainer(x, y, container)
-	--local element = ('container[%s,%s]'):format(x, y)..container:getElements()..'container_end[]'
+---Start of a scroll_container block. All contained elements will
+---take the scroll_container coordinate as position origin,
+---be additionally moved by the current value of the scrollbar with
+---the name `scrollbar name` times `scroll factor` along the orientation `orientation` and
+---be clipped to the rectangle defined by `X`, `Y`, `W` and `H`.
+---@param x               number
+---@param y               number
+---@param w               number
+---@param h               number
+---@param scrollbarName   string
+---@param orientation     'vertical'|'horizontal'
+---@param scrollFactor    number?  Defaults to 0.1.
+---@param contentPadding  string?  TODO: разобраться, что тут
+---@param container       Formspec
+function Formspec:scrollContainer(x, y, w, h, scrollbarName, orientation, scrollFactor, contentPadding, container)
+	local element = ('scroll_container[%s,%s;%s,%s;%s;%s;%s;%s]'):format(
+		x, y, w, h, scrollbarName, orientation, scrollFactor or '', contentPadding or '')..
+		container:getElements()..'scroll_container_end[]'
 
-	--self:addElement(element)
+	self:addElement(element)
 end
 
 ---@alias Formspec.ListDef {inventoryLocation:string, listName:string, x:number, y:number, w:number, h:number,startingItemIndex:number}

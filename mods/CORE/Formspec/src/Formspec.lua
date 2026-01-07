@@ -393,9 +393,18 @@ function Formspec:imageButton()
 
 end
 
----TODO
-function Formspec:itemImageButton()
+---@param x         number
+---@param y         number
+---@param w         number
+---@param h         number
+---@param itemName  string
+---@param name      string
+---@param label     string?
+function Formspec:itemImageButton(x, y, w, h, itemName, name, label)
+	local element = ('item_image_button[%s,%s;%s,%s;%s;%s;%s]'):format(
+		x, y, w, h, itemName, name, label or '')
 
+	self:addElement(element)
 end
 
 ---TODO

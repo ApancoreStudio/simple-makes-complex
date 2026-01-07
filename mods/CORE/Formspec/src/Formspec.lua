@@ -1,7 +1,9 @@
 ---@class Formspec
 ---@field params  string
 ---@field elements  string
-local Formspec = {}
+local Formspec = {
+	elements = ''
+}
 
 ---@class FormspecDef
 ---Set the formspec version to a certain number. If not specified, version `10` is assumed.
@@ -76,7 +78,7 @@ function Formspec:new(def)
 
 	---@type Formspec
 	local instance = setmetatable({
-		formspecParams = version..size..position..anchor..padding..noPrepend..realCoordinates..allowClose,
+		params = version..size..position..anchor..padding..noPrepend..realCoordinates..allowClose,
 	}, {__index = self})
 
 	return instance
@@ -91,7 +93,7 @@ end
 ---TODO: описание
 ---@return  string
 function Formspec:getElements()
-	return self.params
+	return self.elements
 end
 
 ---TODO: описание
@@ -108,10 +110,10 @@ end
 
 ---Start of a container block, moves all physical elements in the container by (X, Y).
 ---Containers can be nested, in which case the offsets are added (child containers are relative to parent containers).
+---@param container  Formspec
 ---@param x          number
 ---@param y          number
----@param container  Formspec
-function Formspec:container(x, y, container)
+function Formspec:container(container, x, y)
 	local element = ('container[%s,%s]'):format(x, y)..container:getElements()..'container_end[]'
 
 	self:addElement(element)
@@ -122,6 +124,7 @@ end
 ---be additionally moved by the current value of the scrollbar with
 ---the name `scrollbar name` times `scroll factor` along the orientation `orientation` and
 ---be clipped to the rectangle defined by `X`, `Y`, `W` and `H`.
+---@param container       Formspec
 ---@param x               number
 ---@param y               number
 ---@param w               number
@@ -130,8 +133,7 @@ end
 ---@param orientation     'vertical'|'horizontal'
 ---@param scrollFactor    number?  Defaults to 0.1.
 ---@param contentPadding  string?  TODO: разобраться, что тут
----@param container       Formspec
-function Formspec:scrollContainer(x, y, w, h, scrollbarName, orientation, scrollFactor, contentPadding, container)
+function Formspec:scrollContainer(container, x, y, w, h, scrollbarName, orientation, scrollFactor, contentPadding)
 	local element = ('scroll_container[%s,%s;%s,%s;%s;%s;%s;%s]'):format(
 		x, y, w, h, scrollbarName, orientation, scrollFactor or '', contentPadding or '')..
 		container:getElements()..'scroll_container_end[]'
@@ -436,9 +438,19 @@ function Formspec:checkbox()
 
 end
 
----TODO
-function Formspec:scrollbar()
+---Show a scrollbar using options defined by the previous `scrollbaroptions[]`
+---@param x            number
+---@param y            number
+---@param w            number
+---@param h            number
+---@param orientation  'vertical'|'horizontal'
+---@param name         string
+---@param value        number?
+function Formspec:scrollbar(x, y, w, h, orientation, name, value)
+	local element = ('scrollbar[%s,%s;%s,%s;%s;%s;%s]'):format(
+		x, y, w, h, orientation, name, value or '')
 
+	self:addElement(element)
 end
 
 ---TODO

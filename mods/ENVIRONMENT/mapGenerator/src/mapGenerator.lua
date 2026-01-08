@@ -63,7 +63,7 @@ local land1 = {
 local land2 = {
 	offset = 20,
 	scale = 5,
-	spread = {x = 10, y = 10, z = 10},
+	spread = {x = 30, y = 30, z = 30},
 	seed = 47,
 	octaves = 3,
 	persistence = 0.4,
@@ -195,7 +195,34 @@ end
 
 ---@param biome MapGen.Biome
 local function generateSoil(biome, mapGenerator, data, index, x, y, z)
-	data[index] = biome.groundNodesIDs.turf
+	local ids =  mapGenerator.nodeIDs
+	if rocksNoise == nil then
+		rocksNoise = core.get_value_noise(rocksNoiseParams)
+	end
+
+	local noiseRocksValue = mathRound(rocksNoise:get_3d({x = x, y = y, z = z}))
+
+	if     noiseRocksValue > 4 then
+		data[index] = ids.sylite
+	else
+		data[index] = biome.groundNodesIDs.soil
+	end
+end
+
+---@param biome MapGen.Biome
+local function generateTurf(biome, mapGenerator, data, index, x, y, z)
+	local ids =  mapGenerator.nodeIDs
+	if rocksNoise == nil then
+		rocksNoise = core.get_value_noise(rocksNoiseParams)
+	end
+
+	local noiseRocksValue = mathRound(rocksNoise:get_3d({x = x, y = y, z = z}))
+
+	if     noiseRocksValue > 4 then
+		data[index] = ids.sylite
+	else
+		data[index] = biome.groundNodesIDs.turf
+	end
 end
 
 mapGenerator:registerBiome('midgard', 'swamp', {
@@ -211,7 +238,8 @@ mapGenerator:registerBiome('midgard', 'swamp', {
 	},
 	soilHeight = 3,
 	generateRock = generateRock,
-	--generateSoil = generateSoil,
+	generateTurf = generateTurf,
+	generateSoil = generateSoil,
 })
 
 return mapGenerator

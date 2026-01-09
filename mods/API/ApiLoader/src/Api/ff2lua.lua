@@ -26,6 +26,14 @@ local function uintb2num(uintb)
 	return num
 end
 
+---Converts (scaling) 16-bit unsigned integer to 8-bit unsigned integer.
+---Why? Because hex codes of colors are 8-bit: #ffffff -> ff = 256 (8 bit). Not 65536 (16 bit).
+---@param  num number  16-bit number
+---@return     number  8-bit number
+local function uint16ToUint8(num)
+	return math.floor(num / 256)
+end
+
 ---Converts given farbfeld image to ColoredDotsTable.
 ---Farbfeld format:
 ---```
@@ -46,20 +54,11 @@ end
 ---@param  backgroundColor  string?  ColorString, will be ignored while processing image. Default: `#000000FF`
 ---@return                  ColoredDotsTable
 function Api.ff2luat(filepath, backgroundColor)
-	if backgroundColor == nil then
-		backgroundColor = '#000000FF'
-	end
-
 	local file = io.open(filepath, 'rb')
+	if not file then error('Can\'t open farbfeld image: ' .. dump(filepath)) end
+	if not file:read(8) == 'farbfeld' then error('Not farbfeld image: ' .. dump(filepath)) end
 
-	if not file then
-		error('Can\'t open farbfeld image: ' .. dump(filepath))
-	end
-
-	if not file:read(8) == 'farbfeld' then
-		error('Not farbfeld image: ' .. dump(filepath))
-	end
-
+	if not backgroundColor then backgroundColor = '#000000FF' end
 	--HACK: normalizing colorstring for future string comparison ('#000' -> '#000000FF')
 	backgroundColor = core.colorspec_to_colorstring(core.colorspec_to_table(backgroundColor))
 
@@ -69,10 +68,10 @@ function Api.ff2luat(filepath, backgroundColor)
 	for i = 1,dots.size.h do
 		for j = 1,dots.size.w do
 			local color_t = {
-				r = uintb2num(file:read(2)),
-				g = uintb2num(file:read(2)),
-				b = uintb2num(file:read(2)),
-				a = uintb2num(file:read(2))
+				r = uint16ToUint8(uintb2num(file:read(2))),
+				g = uint16ToUint8(uintb2num(file:read(2))),
+				b = uint16ToUint8(uintb2num(file:read(2))),
+				a = uint16ToUint8(uintb2num(file:read(2)))
 			}
 
 			---@type string @ColorString

@@ -15,13 +15,12 @@
 
 ---@param  uintb string  unsigned int bytes
 ---@return       number
-local function uint2num(uintb)
+local function uintb2num(uintb)
 	local num = 0
 	local len = string.len(uintb)
 
 	for i = 1,len do
-		local b = string.byte(uintb, i)
-		num = num + b*(len+1-i)
+		num = num*256 + string.byte(uintb, i)
 	end
 
 	return num
@@ -65,15 +64,15 @@ function Api.ff2luat(filepath, backgroundColor)
 	backgroundColor = core.colorspec_to_colorstring(core.colorspec_to_table(backgroundColor))
 
 	---@type ColoredDotsTable
-	local dots = { size = { w = uint2num(file:read(4)), h = uint2num(file:read(4)) } }
+	local dots = { size = { w = uintb2num(file:read(4)), h = uintb2num(file:read(4)) } }
 
 	for i = 1,dots.size.h do
 		for j = 1,dots.size.w do
 			local color_t = {
-				r = uint2num(file:read(2)),
-				g = uint2num(file:read(2)),
-				b = uint2num(file:read(2)),
-				a = uint2num(file:read(2))
+				r = uintb2num(file:read(2)),
+				g = uintb2num(file:read(2)),
+				b = uintb2num(file:read(2)),
+				a = uintb2num(file:read(2))
 			}
 
 			---@type string @ColorString

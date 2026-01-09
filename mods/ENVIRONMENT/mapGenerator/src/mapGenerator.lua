@@ -101,7 +101,7 @@ local climat0 = {
 }
 
 local v = vector.new
-
+--[[
 mapGenerator:register2DPeaks('midgard',
 {
 	landscapeNoise = land1,
@@ -132,6 +132,21 @@ mapGenerator:register2DPeaks('midgard',
 },{
 	v(200, 0, 100),
 	v(-300, 0, -200),
+})--]]
+
+mapGenerator:register2DPeaksFromFile('midgard', 'map.ff', {x=250, y=250}, {
+	['#396fffff'] = {noise = {
+			landscapeNoise = land1,
+			tempNoise      = climat2,
+			humidityNoise  = climat2,
+		}
+	},
+	['3fff26ff'] = {noise = {
+			landscapeNoise = land2,
+			tempNoise      = climat2,
+			humidityNoise  = climat2,
+		}
+	}
 })
 
 mapGenerator:registerCavern('midgard', 'cavern1', {

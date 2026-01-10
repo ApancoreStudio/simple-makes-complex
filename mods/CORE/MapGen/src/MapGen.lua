@@ -1,21 +1,23 @@
 local mathAbs,  mathRound,  mathMin,  mathMax,  id
 	= math.abs, math.round, math.min, math.max, core.get_content_id
 
-local pastNoise2DCalc = {
+---@class MapGen.PastCalcNoiseValue
+local pastCalcNoiseValue = {
 	---@type MapGen.Triangle?
 	triangle = nil,
 	---@type number?
 	x        = nil,
 	---@type number?
-	y        = nil,
-	noiseValues = {
-		---@type number?
-		height   = nil,
-		---@type number?
-		humidity = nil,
-		---@type number?
-		temp     = nil,
-	}
+	z        = nil,
+	---@type number?
+	noiseValue = nil,
+}
+
+---@type table<MapGen.Layer.Category, MapGen.PastCalcNoiseValue>
+local pastNoise2DCalc = {
+	landscape = pastCalcNoiseValue,
+	temp      = pastCalcNoiseValue,
+	humidity  = pastCalcNoiseValue
 }
 
 local modInfo = Mod.getInfo('smc__core__map_gen')
@@ -44,7 +46,7 @@ local Cavern = require('MapGen.Cavern')
 ---@field layersList                  MapGen.Layer[]
 ---@field staticsByName               table<string, MapGen.StaticLayer>
 ---@field staticsList                 MapGen.StaticLayer[]
----@field peaksMultinoiseInitialized  boolean  Is the fractal noise of the peaks initialized? This is necessary for a one-time noise initialization.
+---@field layersNoisesInitialized     boolean  Is the fractal noise of the layer initialized? This is necessary for a one-time noise initialization.
 ---@field cavernsNoiseInitialized     boolean  Is the fractal noise of the caverns initialized? This is necessary for a one-time noise initialization.
 ---@field isRunning                   boolean  A static field that guarantees that only one instance of the `MapGen` class will work.
 ---@field nodeIDs                     table<string, number>
@@ -53,9 +55,9 @@ local MapGen = {
 	layersList            = {},
 	staticsByName         = {},
 	staticsList           = {},
-	peaksMultinoiseInitialized = false,
-	cavernsNoiseInitialized    = false,
-	isRunning                  = false,
+	layersNoisesInitialized = false,
+	cavernsNoiseInitialized = false,
+	isRunning               = false,
 }
 
 ---Definition table for the `MapGen`.
@@ -148,6 +150,19 @@ function MapGen:registerLayer(name, def)
 	end)
 end
 
+---@param layerName    string
+---@param category     MapGen.Layer.Category  TODO: описание
+---@param color        ColorString  TODO: описание
+---@param noiseParams  NoiseParams
+function MapGen:registerLayerNoiseColor(layerName, category, color, noiseParams)
+	---@type MapGen.Layer
+	local layer = self.layersByName[layerName]
+
+	assert(layer ~= nil, ('There is no layer named `%s` registered.'):format(layerName))
+
+	layer:addNoiseParamsColor(category, color, noiseParams)
+end
+
 ---Mark the world area between two heights as a `MapGen.StaticLayer`.
 ---
 ---Note: layers must not overlap.
@@ -175,84 +190,83 @@ end
 ---Mark a world point as `MapGen.Peak` and assign it a specific noise that will affect the generation.
 ---
 ---Note: The peaks shouldn't overlap. This won't cause any errors, but it might ruin the generation.
----@param layerName   string                        The name of the layer in which the new peak will be included.
----@param peakPos     vector                        The coordinate where the peak will be placed.
----@param multinoise  MapGen.Peak.MultinoiseParams  Noise that will be assigned to the peak and that will influence map generation
----@param groups      table<string, number>?        Peak groups that may affect processing.
-function MapGen:registerPeak(layerName, peakPos, multinoise, groups)
+---@param layerName  string  The name of the layer in which the new peak will be included.
+---@param category   MapGen.Layer.Category  TODO: описание
+---@param def        MapGen.PeakDef
+function MapGen:registerPeak(layerName, category, def)
 	---@type MapGen.Layer
 	local layer = self.layersByName[layerName]
 
 	assert(layer ~= nil, ('There is no layer named `%s` registered.'):format(layerName))
 
-	if not layer then
-		error('Invalid layer: ' .. layerName)
-	end
-
 	--TODO: добавить проверку, что координата пиков не совпадают
 
 	---@type MapGen.Peak
-	local peak = Peak:new(peakPos, multinoise, groups)
+	local peak = Peak:new(def)
 
-	layer:addPeak(peak)
+	layer:addPeak(category, peak)
 end
 
 ---Mark a world point as `MapGen.Peak` and assign it a specific noise that will affect the generation.
 ---The Y coordinate will be forced to zero, and the `is2d` group will be added to the groups field.
 ---
 ---Note: The peaks shouldn't overlap. This won't cause any errors, but it might ruin the generation.
----@param layerName   string                        The name of the layer in which the new peak will be included.
----@param peakPos     vector                        The coordinate where the peak will be placed.
----@param multinoise  MapGen.Peak.MultinoiseParams  Noise that will be assigned to the peak and that will influence map generation.
----@param groups      table<string, number>?        Peak groups that may affect processing.
-function MapGen:register2DPeak(layerName, peakPos, multinoise, groups)
-	local _peakPos = table.copy_with_metatables(peakPos)
-	_peakPos.y = 0
+---@param layerName  string                         The name of the layer in which the new peak will be included.
+---@param category   MapGen.Layer.Category  TODO: описание
+---@param def        MapGen.PeakDef
+function MapGen:register2DPeak(layerName, category, def)
+	def = table.copy_with_metatables(def)
 
-	if groups == nil then
-		groups = {is2d = 1}
+	def.pos.y = 0
+
+	if def.groups == nil then
+		def.groups = {is2d = 1}
 	else
-		groups.is2d = 1
+		def.groups.is2d = 1
 	end
 
-	self:registerPeak(layerName, _peakPos, multinoise, groups)
+	self:registerPeak(layerName, category, def)
 end
 
 ---Mark the world points as `MapGen.Peak` and assign them all a specific noise that will affect generation.
 ---The Y coordinate will be forced to zero, and the `is2d` group will be added to the groups field.
 ---
 ---Note: The peaks shouldn't overlap. This won't cause any errors, but it might ruin the generation.
----@param layerName   string                        The name of the layer in which the new peaks will be included.
----@param multinoise  MapGen.Peak.MultinoiseParams  The noise that will be assigned to each peak and will affect the map generation.
----@param peakPoses   vector[]                      Set the coordinates where the peaks will be placed.
----@param groups      table<string, number>?        Peak groups that may affect processing.
-function MapGen:register2DPeaks(layerName, multinoise, peakPoses, groups)
-	for _, peakPos in ipairs(peakPoses) do
-		self:register2DPeak(layerName, peakPos, multinoise, groups)
+---@param layerName  string                         The name of the layer in which the new peaks will be included.
+---@param category   MapGen.Layer.Category  TODO: описание
+---@param defs       MapGen.PeakDef[]
+function MapGen:register2DPeaks(layerName,category, defs)
+	for _, def in ipairs(defs) do
+		self:register2DPeak(layerName, category, def)
 	end
 end
 
 ---TODO: описание
----@alias PeakColors  table<ColorString, {noise:MapGen.Peak.MultinoiseParams, groups:table<string, number>?}>
-
----TODO: описание
----@param layerName   string      The name of the layer in which the new peaks will be included.
----@param map         string      TODO
----@param zeroPos     Position2d
----@param peakColors  PeakColors  TODO
-function MapGen:register2DPeaksFromFile(layerName, map, zeroPos,peakColors)
+---@param layerName  string      The name of the layer in which the new peaks will be included.
+---@param map        string      TODO: описание
+---@param scale      number      TODO: описание
+---@param zeroPos    Position2d  TODO: описание
+---@param category   MapGen.Layer.Category  TODO: описание
+---@param groups?    table<string, number>
+function MapGen:register2DPeaksFromFile(layerName, map, scale,zeroPos, category, groups)
 	local modPath = core.get_modpath(core.get_current_modname())
 	local peaks = Api.ff2luat(modPath .. '/textures/maps/' .. map)
+
 	local mapSize = peaks.size
 	peaks.size = nil
 
-	print(dump(peaks))
 	for color, peaksPos in pairs(peaks) do
-		local peakParams = peakColors[color]
-		assert(peakParams ~= nil, ('There are no generation settings declared for the color `%s`'):format(color))
-
 		for _, peakPos in ipairs(peaksPos) do
-			self:register2DPeak(layerName, vector.new(peakPos.x - zeroPos.x, 0, peakPos.y - zeroPos.y), peakParams.noise, peakParams.groups)
+			---@type MapGen.PeakDef
+			local def = {
+				pos = vector.new((peakPos.x - zeroPos.x) * scale, 0, (peakPos.y - zeroPos.y) * scale),
+				color = color,
+				groups = groups,
+			}
+
+			print(peakPos.x, peakPos.y)
+
+			self:register2DPeak(layerName, category, def)
 		end
 	end
 end
@@ -293,8 +307,18 @@ end
 function MapGen:initLayersTriangultaion()
 	---@param layer  MapGen.Layer
 	for _, layer in ipairs(self.layersList) do
-		layer.trianglesList = Triangulation.triangulate(layer.peaksList)
-		-- layer.tetrahedronsList  = Triangulation.tetrahedralize(layer.peaksList)
+		for category, peaks in pairs(layer.peaksList) do
+
+			layer.trianglesList[category] = Triangulation.triangulate(peaks)
+			-- layer.tetrahedronsList = Triangulation.tetrahedralize(layer.peaksList) -- 3D not supported
+		end
+	end
+end
+
+function MapGen:initLayersNoises()
+	---@param layer  MapGen.Layer
+	for _, layer in ipairs(self.layersList) do
+		layer:initNoises()
 	end
 end
 
@@ -304,22 +328,6 @@ function MapGen:initBiomesDiagram()
 	for _, layer in ipairs(self.layersList) do
 		layer:initBiomesDiagram()
 	end
-end
-
-
----Initialize peak's noises. This should be called after the map object is loaded.
-function MapGen:initPeaksMultinoise()
-	---@param layer  MapGen.Layer
-	for _, layer in ipairs(self.layersList) do
-
-		---@param peak MapGen.Peak
-		for _, peak in ipairs(layer.peaksList) do
-			peak:initMultinoise()
-		end
-
-	end
-
-	self.peaksMultinoiseInitialized = true
 end
 
 ---Initialize caverns's noises. This should be called after the map object is loaded.
@@ -507,6 +515,46 @@ local function pointInTriangle(px, pz, triangle)
 	return (u >= 0) and (v >= 0) and (u + v <= 1)
 end
 
+---Returns the weighted values of 2d noise.
+---@param category  MapGen.Layer.Category
+---@param layer     MapGen.Layer
+---@param triangle  MapGen.Triangle
+---@param x         number
+---@param y         number
+---@param z         number
+---@return          number
+local function calcNoise2dValue(category, layer, triangle, x, y, z)
+	local peak1 = triangle.p1
+	local peak2 = triangle.p2
+	local peak3 = triangle.p3
+
+	local noise1 = layer:getNoiseByColor(category, peak1:getColor())
+	local noise2 = layer:getNoiseByColor(category, peak2:getColor())
+	local noise3 = layer:getNoiseByColor(category, peak3:getColor())
+
+	local noiseValue = 0.0
+
+	local totalWeight = 0.0
+
+	-- We calculate the noise value using the smoothing formula:
+	-- ( peak1 * weight1 + peak2 * weight2 + peak3 * weight3) / totalWeight, when
+	-- totalWeight = weight1 + weight2 + weight3
+	local weight = calcWeight(triangle.h1, x, y, z)
+	noiseValue   = noiseValue   + noise1:get_2d({x = x, y = z}) * weight
+	totalWeight = totalWeight + weight
+
+	weight = calcWeight(triangle.h2, x, y, z)
+	noiseValue   = noiseValue   + noise2:get_2d({x = x, y = z}) * weight
+	totalWeight = totalWeight + weight
+
+	weight = calcWeight(triangle.h3, x, y, z)
+	noiseValue   = noiseValue   + noise3:get_2d({x = x, y = z}) * weight
+	totalWeight = totalWeight + weight
+
+	return (noiseValue / totalWeight)
+end
+
+--[[
 ---Returns the weighted values of 2d noises.
 ---@param triangle  MapGen.Triangle
 ---@param x         number
@@ -546,8 +594,55 @@ local function calcNoises2dValues(triangle, x, y, z)
 	totalWeight = totalWeight + weight
 
 	return noiseHeightValue / totalWeight, noiseTempValue / totalWeight, noiseHumidityValue / totalWeight
+end--]]
+
+---Calculates a smoothed 2D noise value based on a preliminary space partitioning.
+---
+---Returns `nil` if the point is not included in any triangle.
+---@param category  MapGen.Layer.Category
+---@param layer     MapGen.Layer
+---@param x         number
+---@param y         number
+---@param z         number
+---@return          number?
+function MapGen:getNoises2dValue(category, layer, x, y, z)
+	---@type MapGen.PastCalcNoiseValue
+	local pastCalc = pastNoise2DCalc[category]
+
+	if (pastCalc.x ~= nil and pastCalc.z ~= nil) and (x == pastCalc.x and z == pastCalc.z) then
+		return pastCalc.noiseValue
+	end
+
+	if pastCalc.triangle ~= nil and pointInTriangle(x, z, pastCalc.triangle) then
+		local noiseValue = calcNoise2dValue(category, layer, pastCalc.triangle, x, y, z)
+
+		pastCalc.x = x
+		pastCalc.z = z
+		pastCalc.noiseValue = noiseValue
+
+		return noiseValue
+	end
+
+	---@param triangle  MapGen.Triangle
+	for _, triangle in ipairs(layer.trianglesList[category]) do
+		if pointInTriangle(x, z,triangle) then
+			local noiseValue = calcNoise2dValue(category, layer, triangle, x, y, z)
+
+			pastCalc.triangle = triangle
+			pastCalc.x = x
+			pastCalc.z = z
+			pastCalc.noiseValue = noiseValue
+
+			return noiseValue
+		end
+	end
+
+	-- If the point does not fall within the triangle, it is impossible to calculate the height.
+	-- For debugging purposes only, may slow down generation:
+	--core.log('warning', string.format('The point %s %s %s does not fall within any triangle, calculating the noise value is impossible.', tostring(x), tostring(y), tostring(z)))
 end
 
+--[[
 ---Calculates a smoothed 2D noise value based on a preliminary space partitioning.
 ---
 ---Returns `nil` if the point is not included in any triangle.
@@ -601,6 +696,7 @@ function MapGen:getNoises2dValues(layer, x, y, z)
 	-- For debugging purposes only, may slow down generation:
 	--core.log('warning', string.format('The point %s %s %s does not fall within any triangle, calculating the noise value is impossible.', tostring(x), tostring(y), tostring(z)))
 end
+--]]
 
 --[[
 3D noise smoothing is too slow, so it was decided to stop using it.
@@ -717,17 +813,18 @@ local function generatorHandler(mapGenerator, data, index, x, y, z)
 	end
 
 	-- Calculating landscape height
-	local noiseHeightValue, noiseTempValue, noiseHumidityValue = mapGenerator:getNoises2dValues(layer, x, y, z)
-
-	-- If the height of the landscape is `nil`,
+	-- If the value of the noise is `nil`,
 	-- then the point does not fall within any of the triangles.
-	if noiseHeightValue == nil then
-		noiseHeightValue   = 0.0
-		noiseTempValue     = 0.0
-		noiseHumidityValue = 0.0
-	end
+	local noiseHeightValue   = mapGenerator:getNoises2dValue('landscape', layer, x, y, z) or 0.0
+	local noiseTempValue     = mapGenerator:getNoises2dValue('temp', layer, x, y, z)      or 0.0
+	local noiseHumidityValue = mapGenerator:getNoises2dValue('humidity', layer, x, y, z)  or 0.0
 
-	---@diagnostic disable-next-line: param-type-not-match
+	-- We recalculate the climate based on altitude.
+	noiseTempValue = layer:calcTemp(noiseTempValue, y)
+	noiseHumidityValue = layer:calcHumidity(noiseHumidityValue, y)
+
+	--print(noiseHeightValue, noiseTempValue, noiseHumidityValue)
+
 	generateNode(mapGenerator, layer,  noiseHeightValue, noiseTempValue, noiseHumidityValue, data, index, x, y, z)
 end
 
@@ -742,8 +839,8 @@ function MapGen:onMapGenerated(voxelManip, minPos, maxPos, blockseed)
 
 	local eMin, eMax = voxelManip:get_emerged_area()
 
-	if not self.peaksMultinoiseInitialized then
-		self:initPeaksMultinoise()
+	if not self.layersNoisesInitialized then
+		self:initLayersNoises()
 	end
 
 	if not self.cavernsNoiseInitialized then
@@ -804,6 +901,10 @@ function MapGen:run()
 	self:initLayersTriangultaion()
 
 	MapGen.isRunning = true
+
+	for _, peak in ipairs(self.layersList[1].peaksList["landscape"]) do
+		print(tostring(peak))
+	end
 end
 
 return MapGen

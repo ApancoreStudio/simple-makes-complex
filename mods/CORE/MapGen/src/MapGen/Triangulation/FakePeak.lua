@@ -17,8 +17,7 @@ local FakePeak = Class.extend(Peak, {})
 ---@param peakPos  vector
 ---@return         MapGen.Peak
 function FakePeak:new(peakPos)
-	---@diagnostic disable-next-line: missing-fields, param-type-not-match
-	local instance = Peak:new(peakPos, {}, 1)
+	local instance = Peak:new({pos = peakPos, color = '#000000'})
 
 	return instance
 end

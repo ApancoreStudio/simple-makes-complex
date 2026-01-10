@@ -133,41 +133,16 @@ mapGenerator:register2DPeaks('midgard',
 	v(200, 0, 100),
 	v(-300, 0, -200),
 })--]]
---[[
-mapGenerator:register2DPeaksFromFile('midgard', 'map.ff', {x=250, y=250}, {
-	['#396FFFFF'] = {noise = {
-			landscapeNoise = land1,
-			tempNoise      = climat2,
-			humidityNoise  = climat2,
-		}
-	},
-	['#3FFF26FF'] = {noise = {
-			landscapeNoise = land2,
-			tempNoise      = climat2,
-			humidityNoise  = climat2,
-		}
-	}
-})--]]
 
-local N = 32
-for x = -10, 10 do
-	for z = - 10, 10 do
-		local land
-		if math.random(0,1) == 0 then
-			land = land1
-		else
-			land = land2
-		end
-
-		print(x)
-
-		mapGenerator:register2DPeak('midgard', vector.new(x*N, 0, z*N), {
-			landscapeNoise = land,
-			tempNoise      = climat2,
-			humidityNoise  = climat2,
-		})
-	end
+for _, c in ipairs({'landscape', 'temp', 'humidity'}) do
+	mapGenerator:registerLayerNoiseColor('midgard', c, '#4978c6', land1)
+	mapGenerator:registerLayerNoiseColor('midgard', c, '#77ea72', land2)
 end
+
+mapGenerator:register2DPeaksFromFile('midgard', 'map.ff', 64,{x=8, y=8}, 'landscape')
+mapGenerator:register2DPeaksFromFile('midgard', 'map.ff', 100,{x=8, y=8}, 'temp')
+mapGenerator:register2DPeaksFromFile('midgard', 'map.ff', 100,{x=8, y=8}, 'humidity')
+
 --[[
 mapGenerator:registerCavern('midgard', 'cavern1', {
 	minY = -48,

@@ -1,55 +1,34 @@
 ---@class MapGen.Peak
 ---@field id                   number
 ---@field getPeakPos           fun():vector
----@field getMultinoiseParams  fun():MapGen.Peak.MultinoiseParams
----@field getMultinoise        fun():MapGen.Peak.Multinoise
----@field initMultinoise       fun()
+---@field getColor             fun():ColorString
 ---@field getGroups            fun():table<string, number>
 local Peak = {
 	id = 0,
 }
 
--- --- Helpers functions ---
-
----@param  multinoiseParams  MapGen.Peak.MultinoiseParams
----@return MapGen.Peak.Multinoise
-local function multinoiseParamsToMultinoise(multinoiseParams)
-	---@diagnostic disable-next-line: missing-fields
-	---@type MapGen.Peak.Multinoise
-	local multinoise = {}
-
-	for noiseName, noiseParams in pairs(multinoiseParams) do
-		multinoise[noiseName] = core.get_value_noise(noiseParams)
-	end
-
-	return multinoise
-end
-
-
-
 -- --- Class registration ---
 
----@param peakPos           vector
----@param multinoiseParams  MapGen.Peak.MultinoiseParams
----@param groups?           table<string, number>
----@return                  MapGen.Peak
-function Peak:new(peakPos, multinoiseParams, groups)
-	---@type  vector
-	local _peakPos = peakPos
-	---@type  MapGen.Peak.MultinoiseParams
-	local _multinoiseParams = multinoiseParams
+---Definition table for the `MapGen.Peak`.
+---
+---**Only for EmmyLua.**
+---@class MapGen.PeakDef
+---@field pos      vector
+---@field color    ColorString
+---@field groups?  table<string, number>
 
+---@param def  MapGen.PeakDef
+---@return     MapGen.Peak
+function Peak:new(def)
+	local _pos = def.pos
+	local _color = def.color
 	local _groups
 
-	if groups == nil then
+	if def.groups == nil then
 		_groups = {}
 	else
-		_groups = groups
+		_groups = def.groups
 	end
-
-	---@diagnostic disable-next-line: missing-fields
-	---@type MapGen.Peak.Multinoise
-	local _multinoise = {} -- note: must be empty until luanti mapgen objects are loaded.
 
 	---@type MapGen.Peak
 	local instance = setmetatable({},
@@ -60,35 +39,15 @@ function Peak:new(peakPos, multinoiseParams, groups)
 	})
 
 	function instance:getPeakPos()
-		return vector.new(_peakPos.x, _peakPos.y, _peakPos.z)
+		return _pos:copy()
 	end
 
-	function instance:getMultinoiseParams()
-		return  _multinoiseParams
-	end
-
-	function instance:getMultinoise()
-		if table.is_empty(_multinoise) then
-			error('Attempt to get `MapGen.Triangulation.FakePeak` noise (empty noise).')
-		end
-
-		return _multinoise
-	end
-
-	function instance:initMultinoise()
-		if not table.is_empty(_multinoise) then
-			Logger.warningLog('Multinoise has already been initialized. Re-initialization is not recommended.')
-		end
-
-		if table.is_empty(_multinoiseParams) then
-			error('Attempt to initialize `MapGen.Triangulation.FakePeak` noise (noise parameter empty).')
-		end
-
-		_multinoise = multinoiseParamsToMultinoise(_multinoiseParams)
+	function instance:getColor()
+		return _color
 	end
 
 	function instance:getGroups()
-		return _groups
+		return table.copy_with_metatables(_groups)
 	end
 
 	return instance

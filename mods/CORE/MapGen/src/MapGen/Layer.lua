@@ -10,7 +10,8 @@
 ---@field calcTemp                    fun(self:MapGen.Layer, value:number, height:number):number
 ---@field calcHumidity                fun(self:MapGen.Layer, value:number, height:number):number
 ---@field peaksList                   {['landscape']:MapGen.Peak[],['temp']:MapGen.Peak[],['humidity']:MapGen.Peak[]}
----@field colorsList                  {['landscape']:table<ColorString, NoiseParams>,['temp']:table<ColorString, NoiseParams>,['humidity']:table<ColorString, NoiseParams>}
+---@field noisesByColor               {['landscape']:table<ColorString, ValueNoise>,['temp']:table<ColorString, ValueNoise>,['humidity']:table<ColorString, ValueNoise>}
+---@field noisesParamsByColor         {['landscape']:table<ColorString, NoiseParams>,['temp']:table<ColorString, NoiseParams>,['humidity']:table<ColorString, NoiseParams>}
 ---@field biomesByName                table<string, MapGen.Biome>
 ---@field biomesList                  MapGen.Biome[]
 ---@field biomesDiagram               table
@@ -18,15 +19,20 @@
 ---@field biomesVerticalScattering    number
 ---@field cavernsByName               table<string, MapGen.Cavern>
 ---@field cavernsList                 MapGen.Cavern[]
----@field trianglesList               MapGen.Triangle[]
----@field tetrahedronsList            MapGen.Tetrahedron[]
+---@field trianglesList               {['landscape']:MapGen.Triangle[],['temp']:MapGen.Triangle[],['humidity']:MapGen.Triangle[]}
+---@field tetrahedronsList            MapGen.Tetrahedron[] **Not supported**
 local Layer = {
 	peaksList        = {
 		landscape = {},
 		temp      = {},
 		humidity  = {},
 	},
-	colorsList = {
+	noisesByColor = {
+		landscape = {},
+		temp      = {},
+		humidity  = {},
+	},
+	noisesParamsByColor = {
 		landscape = {},
 		temp      = {},
 		humidity  = {},
@@ -36,7 +42,11 @@ local Layer = {
 	biomesDiagram    = {},
 	cavernsByName    = {},
 	cavernsList      = {},
-	trianglesList    = {},
+	trianglesList    = {
+		landscape = {},
+		temp      = {},
+		humidity  = {},
+	},
 	tetrahedronsList = {},
 }
 
@@ -97,9 +107,11 @@ function Layer:new(name, def)
 	return instance
 end
 
+---@alias  MapGen.Layer.Category  'landscape'|'temp'|'humidity'
+
 ---Adds a peak to the `Layer.peaksList`
----@param category  'landscape'|'temp'|'humidity'
----@param peak      MapGen.Peak
+---@param category  MapGen.Layer.Category  TODO: описание
+---@param peak      MapGen.Peak  TODO: описание
 function Layer:addPeak(category, peak)
 	if category == 'landscape' then
 		table.insert(self.peaksList.landscape, peak)
@@ -112,20 +124,49 @@ function Layer:addPeak(category, peak)
 	end
 end
 
----Adds a color to the `Layer.colorsList`
----@param category  'landscape'|'temp'|'humidity'
----@param color     ColorString
-function Layer:addColor(category, color)
+---Adds a NoiseParams color to the `Layer.noisesParamsByColor`
+---@param category     MapGen.Layer.Category  TODO: описание
+---@param color        ColorString  TODO: описание
+---@param noiseParams  NoiseParams
+function Layer:addNoiseParamsColor(category, color, noiseParams)
 	color = core.colorspec_to_colorstring(core.colorspec_to_table(color))
 
+	local noisesParams = self.noisesParamsByColor
+
 	if category == 'landscape' then
-		table.insert(self.colorsList.landscape, color)
+		assert(noisesParams.landscape[color] == nil, ('The color `%s` already exists.'):format(color))
+		noisesParams.landscape[color] = noiseParams
 	elseif category == 'temp' then
-		table.insert(self.colorsList.temp, color)
+		assert(noisesParams.temp[color] == nil, ('The color `%s` already exists.'):format(color))
+		noisesParams.temp[color] = noiseParams
 	elseif category == 'humidity' then
-		table.insert(self.colorsList.humidity, color)
+		assert(noisesParams.humidity[color] == nil, ('The color `%s` already exists.'):format(color))
+		noisesParams.humidity[color] = noiseParams
 	else
-		error(('There is no color category named %s.'):format(category))
+		error(('There is no color category named `%s`.'):format(category))
+	end
+end
+
+---Returns noise corresponding to a color.
+---@param category  MapGen.Layer.Category  TODO: описание
+---@param color     ColorString  TODO: описание
+---@return          ValueNoise
+function Layer:getNoiseByColor(category, color)
+	color = core.colorspec_to_colorstring(core.colorspec_to_table(color))
+
+	local noises = self.noisesByColor
+
+	if category == 'landscape' then
+		assert(noises.landscape[color] ~= nil, ('`%s` color does not exist.'):format(color))
+		return noises.landscape[color]
+	elseif category == 'temp' then
+		assert(noises.temp[color] ~= nil, ('`%s` color does not exist.'):format(color))
+		return noises.temp[color]
+	elseif category == 'humidity' then
+		assert(noises.humidity[color] ~= nil, ('`%s` color does not exist.'):format(color))
+		return noises.humidity[color]
+	else
+		error(('There is no color category named `%s`.'):format(category))
 	end
 end
 
@@ -162,6 +203,19 @@ local function getBiomesNamesByHeight(height, biomesList)
 	table.sort(biomesNames)
 
 	return biomesNames, biomes
+end
+
+---Initializes noise for generation.
+---
+---Should only be called after the mapgen object has been loaded.
+function Layer:initNoises()
+	local noises = self.noisesByColor
+
+	for category, noisesParams in pairs(self.noisesParamsByColor) do
+		for color, noiseParams in pairs(noisesParams) do
+			noises[category][color] = core.get_value_noise(noiseParams)
+		end
+	end
 end
 
 ---Initialization of the biome diagram using the Voronoi method.

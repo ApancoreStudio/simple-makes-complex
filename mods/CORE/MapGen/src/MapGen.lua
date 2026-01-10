@@ -232,6 +232,31 @@ function MapGen:register2DPeaks(layerName, multinoise, peakPoses, groups)
 	end
 end
 
+---TODO: описание
+---@alias PeakColors  table<ColorString, {noise:MapGen.Peak.MultinoiseParams, groups:table<string, number>?}>
+
+---TODO: описание
+---@param layerName   string      The name of the layer in which the new peaks will be included.
+---@param map         string      TODO
+---@param zeroPos     Position2d
+---@param peakColors  PeakColors  TODO
+function MapGen:register2DPeaksFromFile(layerName, map, zeroPos,peakColors)
+	local modPath = core.get_modpath(core.get_current_modname())
+	local peaks = Api.ff2luat(modPath .. '/textures/maps/' .. map)
+	local mapSize = peaks.size
+	peaks.size = nil
+
+	print(dump(peaks))
+	for color, peaksPos in pairs(peaks) do
+		local peakParams = peakColors[color]
+		assert(peakParams ~= nil, ('There are no generation settings declared for the color `%s`'):format(color))
+
+		for _, peakPos in ipairs(peaksPos) do
+			self:register2DPeak(layerName, vector.new(peakPos.x - zeroPos.x, 0, peakPos.y - zeroPos.y), peakParams.noise, peakParams.groups)
+		end
+	end
+end
+
 ---Mark a point on the biomes diagram and constrain the world area by height to mark it as `MapGen.Biome`.
 ---@param layerName  string           The name of the layer in which the new biome will be included.
 ---@param biomeName  string           The name to be assigned to the biome. The name must be unique for each biome.

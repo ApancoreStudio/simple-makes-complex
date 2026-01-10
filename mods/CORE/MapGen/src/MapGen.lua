@@ -244,6 +244,7 @@ function MapGen:register2DPeaksFromFile(layerName, map, zeroPos,peakColors)
 	local modPath = core.get_modpath(core.get_current_modname())
 	local peaks = Api.ff2luat(modPath .. '/textures/maps/' .. map)
 	local mapSize = peaks.size
+	peaks.size = nil
 
 	print(dump(peaks))
 	for color, peaksPos in pairs(peaks) do

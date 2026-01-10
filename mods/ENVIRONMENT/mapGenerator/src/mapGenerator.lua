@@ -61,7 +61,7 @@ local land1 = {
 }
 
 local land2 = {
-	offset = 20,
+	offset = 10,
 	scale = 5,
 	spread = {x = 30, y = 30, z = 30},
 	seed = 47,
@@ -133,22 +133,42 @@ mapGenerator:register2DPeaks('midgard',
 	v(200, 0, 100),
 	v(-300, 0, -200),
 })--]]
-
+--[[
 mapGenerator:register2DPeaksFromFile('midgard', 'map.ff', {x=250, y=250}, {
-	['#396fffff'] = {noise = {
+	['#396FFFFF'] = {noise = {
 			landscapeNoise = land1,
 			tempNoise      = climat2,
 			humidityNoise  = climat2,
 		}
 	},
-	['3fff26ff'] = {noise = {
+	['#3FFF26FF'] = {noise = {
 			landscapeNoise = land2,
 			tempNoise      = climat2,
 			humidityNoise  = climat2,
 		}
 	}
-})
+})--]]
 
+local N = 32
+for x = -10, 10 do
+	for z = - 10, 10 do
+		local land
+		if math.random(0,1) == 0 then
+			land = land1
+		else
+			land = land2
+		end
+
+		print(x)
+
+		mapGenerator:register2DPeak('midgard', vector.new(x*N, 0, z*N), {
+			landscapeNoise = land,
+			tempNoise      = climat2,
+			humidityNoise  = climat2,
+		})
+	end
+end
+--[[
 mapGenerator:registerCavern('midgard', 'cavern1', {
 	minY = -48,
 	maxY = 0,
@@ -163,7 +183,7 @@ mapGenerator:registerCavern('midgard', 'cavern1', {
 		persistence = 0.5,
 		lacunarity = 2.0
 	},
-})
+})--]]
 
 -- --- Biomes ---
 

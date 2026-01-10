@@ -9,7 +9,8 @@
 ---@field waterLevel                  number
 ---@field calcTemp                    fun(self:MapGen.Layer, value:number, height:number):number
 ---@field calcHumidity                fun(self:MapGen.Layer, value:number, height:number):number
----@field peaksList                   MapGen.Peak[]
+---@field peaksList                   {['landscape']:MapGen.Peak[],['temp']:MapGen.Peak[],['humidity']:MapGen.Peak[]}
+---@field colorsList                  {['landscape']:table<ColorString, NoiseParams>,['temp']:table<ColorString, NoiseParams>,['humidity']:table<ColorString, NoiseParams>}
 ---@field biomesByName                table<string, MapGen.Biome>
 ---@field biomesList                  MapGen.Biome[]
 ---@field biomesDiagram               table
@@ -20,7 +21,16 @@
 ---@field trianglesList               MapGen.Triangle[]
 ---@field tetrahedronsList            MapGen.Tetrahedron[]
 local Layer = {
-	peaksList        = {},
+	peaksList        = {
+		landscape = {},
+		temp      = {},
+		humidity  = {},
+	},
+	colorsList = {
+		landscape = {},
+		temp      = {},
+		humidity  = {},
+	},
 	biomesByName     = {},
 	biomesList       = {},
 	biomesDiagram    = {},
@@ -88,9 +98,35 @@ function Layer:new(name, def)
 end
 
 ---Adds a peak to the `Layer.peaksList`
----@param peak  MapGen.Peak
-function Layer:addPeak(peak)
-	table.insert(self.peaksList, peak)
+---@param category  'landscape'|'temp'|'humidity'
+---@param peak      MapGen.Peak
+function Layer:addPeak(category, peak)
+	if category == 'landscape' then
+		table.insert(self.peaksList.landscape, peak)
+	elseif category == 'temp' then
+		table.insert(self.peaksList.temp, peak)
+	elseif category == 'humidity' then
+		table.insert(self.peaksList.humidity, peak)
+	else
+		error(('There is no peak category named %s.'):format(category))
+	end
+end
+
+---Adds a color to the `Layer.colorsList`
+---@param category  'landscape'|'temp'|'humidity'
+---@param color     ColorString
+function Layer:addColor(category, color)
+	color = core.colorspec_to_colorstring(core.colorspec_to_table(color))
+
+	if category == 'landscape' then
+		table.insert(self.colorsList.landscape, color)
+	elseif category == 'temp' then
+		table.insert(self.colorsList.temp, color)
+	elseif category == 'humidity' then
+		table.insert(self.colorsList.humidity, color)
+	else
+		error(('There is no color category named %s.'):format(category))
+	end
 end
 
 ---Adds a biome to the `Layer.biomesByName` & `Layer.biomesList`
